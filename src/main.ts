@@ -2,9 +2,13 @@ import Phaser from 'phaser'
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
-  width: 800,
-  height: 600,
   parent: 'game-container',
+  scale: {
+    mode: Phaser.Scale.RESIZE,
+    width: window.innerWidth,
+    height: window.innerHeight,
+    autoCenter: Phaser.Scale.CENTER_BOTH
+  },
   scene: {
     preload() {},
     create() {
