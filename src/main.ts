@@ -15,9 +15,13 @@ const config: Phaser.Types.Core.GameConfig = {
     preload() {},
     create() {
       const dungeon = new DungeonView(this)
+      ;(this as any).dungeon = dungeon
       dungeon.draw()
     },
-    update() {}
+    update() {
+      const dungeon: DungeonView | undefined = (this as any).dungeon
+      dungeon?.update()
+    }
   }
 }
 

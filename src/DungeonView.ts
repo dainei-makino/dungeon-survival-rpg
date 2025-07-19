@@ -13,12 +13,21 @@ export default class DungeonView {
   private graphics: Phaser.GameObjects.Graphics
   private map: string[]
   private player: Player
+  private keys: Record<string, Phaser.Input.Keyboard.Key>
+  private dirVectors: Record<Direction, { dx: number; dy: number; left: { dx: number; dy: number }; right: { dx: number; dy: number } }>
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene
     this.graphics = scene.add.graphics()
     this.map = mapData.tiles
     this.player = { ...mapData.playerStart }
+    this.keys = scene.input.keyboard.addKeys('W,S,A,D,J,K') as Record<string, Phaser.Input.Keyboard.Key>
+    this.dirVectors = {
+      north: { dx: 0, dy: -1, left: { dx: -1, dy: 0 }, right: { dx: 1, dy: 0 } },
+      east: { dx: 1, dy: 0, left: { dx: 0, dy: -1 }, right: { dx: 0, dy: 1 } },
+      south: { dx: 0, dy: 1, left: { dx: 1, dy: 0 }, right: { dx: -1, dy: 0 } },
+      west: { dx: -1, dy: 0, left: { dx: 0, dy: 1 }, right: { dx: 0, dy: -1 } },
+    }
   }
 
   private tileAt(x: number, y: number): string | undefined {
@@ -37,12 +46,7 @@ export default class DungeonView {
     g.fillRect(0, 0, width, height)
     g.lineStyle(1, 0xffffff, 1)
 
-    const dirVectors: Record<Direction, { dx: number; dy: number; left: { dx: number; dy: number }; right: { dx: number; dy: number } }> = {
-      north: { dx: 0, dy: -1, left: { dx: -1, dy: 0 }, right: { dx: 1, dy: 0 } },
-      east: { dx: 1, dy: 0, left: { dx: 0, dy: -1 }, right: { dx: 0, dy: 1 } },
-      south: { dx: 0, dy: 1, left: { dx: 1, dy: 0 }, right: { dx: -1, dy: 0 } },
-      west: { dx: -1, dy: 0, left: { dx: 0, dy: 1 }, right: { dx: 0, dy: -1 } },
-    }
+
 
     const viewDepth = 3
     const centerX = width / 2
@@ -61,7 +65,7 @@ export default class DungeonView {
     }
 
     for (let step = 1; step <= viewDepth; step++) {
-      const { dx, dy, left, right } = dirVectors[this.player.dir]
+      const { dx, dy, left, right } = this.dirVectors[this.player.dir]
       const tx = this.player.x + dx * step
       const ty = this.player.y + dy * step
 
@@ -94,6 +98,61 @@ export default class DungeonView {
           g.strokePath()
         }
       }
+    }
+  }
+
+  update() {
+    let changed = false
+
+    if (Phaser.Input.Keyboard.JustDown(this.keys.J)) {
+      const order: Direction[] = ['north', 'east', 'south', 'west']
+      const idx = order.indexOf(this.player.dir)
+      this.player.dir = order[(idx + 3) % 4]
+      changed = true
+    } else if (Phaser.Input.Keyboard.JustDown(this.keys.K)) {
+      const order: Direction[] = ['north', 'east', 'south', 'west']
+      const idx = order.indexOf(this.player.dir)
+      this.player.dir = order[(idx + 1) % 4]
+      changed = true
+    }
+
+    const vectors = this.dirVectors[this.player.dir]
+    if (Phaser.Input.Keyboard.JustDown(this.keys.W)) {
+      const nx = this.player.x + vectors.dx
+      const ny = this.player.y + vectors.dy
+      if (this.tileAt(nx, ny) !== '#') {
+        this.player.x = nx
+        this.player.y = ny
+        changed = true
+      }
+    } else if (Phaser.Input.Keyboard.JustDown(this.keys.S)) {
+      const nx = this.player.x - vectors.dx
+      const ny = this.player.y - vectors.dy
+      if (this.tileAt(nx, ny) !== '#') {
+        this.player.x = nx
+        this.player.y = ny
+        changed = true
+      }
+    } else if (Phaser.Input.Keyboard.JustDown(this.keys.A)) {
+      const nx = this.player.x + vectors.left.dx
+      const ny = this.player.y + vectors.left.dy
+      if (this.tileAt(nx, ny) !== '#') {
+        this.player.x = nx
+        this.player.y = ny
+        changed = true
+      }
+    } else if (Phaser.Input.Keyboard.JustDown(this.keys.D)) {
+      const nx = this.player.x + vectors.right.dx
+      const ny = this.player.y + vectors.right.dy
+      if (this.tileAt(nx, ny) !== '#') {
+        this.player.x = nx
+        this.player.y = ny
+        changed = true
+      }
+    }
+
+    if (changed) {
+      this.draw()
     }
   }
 }
