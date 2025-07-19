@@ -1,0 +1,12 @@
+{
+  "name": "dungeon-survival-rpg",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "vite build",
+    "preview": "vite preview --port 4173"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0",
+    "phaser": "^3.70.0"
+  }
+}
