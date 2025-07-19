@@ -3,17 +3,49 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>My Phaser Game</title>
+  <title>Dynamic Tabs</title>
   <style>
-    html, body, #game-container {
+    html, body, #content {
       width: 100%;
       height: 100%;
       margin: 0;
     }
+    #menu-button {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 1000;
+      background: transparent;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+    }
+    #menu {
+      position: absolute;
+      top: 40px;
+      left: 10px;
+      background: white;
+      border: 1px solid #ccc;
+      padding: 0;
+      list-style: none;
+    }
+    #menu li {
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+    #menu li:hover {
+      background: #eee;
+    }
   </style>
 </head>
 <body>
-  <div id="game-container"></div>
+  <button id="menu-button">\u2630</button>
+  <ul id="menu" hidden>
+    <li data-tab="top">トップ</li>
+    <li data-tab="novel">小説</li>
+    <li data-tab="game">ビデオゲーム</li>
+  </ul>
+  <div id="content"></div>
   <script type="module" src="/main.ts"></script>
 </body>
 </html>
