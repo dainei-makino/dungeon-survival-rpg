@@ -1,8 +1,10 @@
 import Phaser from 'phaser'
+import DungeonView from './DungeonView'
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
   parent: 'game-container',
+  backgroundColor: '#000000',
   scale: {
     mode: Phaser.Scale.RESIZE,
     width: window.innerWidth,
@@ -12,7 +14,8 @@ const config: Phaser.Types.Core.GameConfig = {
   scene: {
     preload() {},
     create() {
-      this.add.text(400, 300, 'Hello Phaser!', { color: '#ffffff' }).setOrigin(0.5)
+      const dungeon = new DungeonView(this)
+      dungeon.draw()
     },
     update() {}
   }
