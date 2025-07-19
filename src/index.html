@@ -10,41 +10,25 @@
       height: 100%;
       margin: 0;
     }
-    #menu-button {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      z-index: 1000;
-      background: transparent;
-      border: none;
-      font-size: 24px;
-      cursor: pointer;
+    .tiles {
+      display: flex;
+      gap: 1rem;
+      padding: 1rem;
     }
-    #menu {
-      position: absolute;
-      top: 40px;
-      left: 10px;
-      background: white;
-      border: 1px solid #ccc;
-      padding: 0;
-      list-style: none;
-    }
-    #menu li {
-      padding: 8px 12px;
-      cursor: pointer;
-    }
-    #menu li:hover {
+    .tile {
+      flex: 1;
       background: #eee;
+      border: 1px solid #ccc;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      font-size: 1.2rem;
+      padding: 2rem;
     }
   </style>
 </head>
 <body>
-  <button id="menu-button">&#9776;</button>
-  <ul id="menu" hidden>
-    <li data-tab="top">トップ</li>
-    <li data-tab="novel">小説</li>
-    <li data-tab="game">ビデオゲーム</li>
-  </ul>
   <div id="content"></div>
   <script type="module" src="/main.ts"></script>
 </body>
