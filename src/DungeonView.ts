@@ -13,6 +13,7 @@ export default class DungeonView {
   private readonly FOV = Math.PI / 3
   private readonly numRays = 120
   private readonly maxDepth = 20
+  private readonly eyeOffset = 0.3
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene
@@ -93,9 +94,18 @@ export default class DungeonView {
     }
   }
 
+  private eyePos() {
+    const ang = this.angleForDir(this.player.dir)
+    return {
+      x: this.player.x + 0.5 - Math.cos(ang) * this.eyeOffset,
+      y: this.player.y + 0.5 - Math.sin(ang) * this.eyeOffset,
+    }
+  }
+
   private castRay(angle: number): number {
-    let x = this.player.x + 0.5
-    let y = this.player.y + 0.5
+    const start = this.eyePos()
+    let x = start.x
+    let y = start.y
     const cos = Math.cos(angle)
     const sin = Math.sin(angle)
     let dist = 0
@@ -116,8 +126,10 @@ export default class DungeonView {
     const g = this.graphics
 
     g.clear()
-    g.fillStyle(0x000000, 1)
-    g.fillRect(0, 0, width, height)
+    g.fillStyle(0x666666, 1)
+    g.fillRect(0, 0, width, height / 2)
+    g.fillStyle(0x333333, 1)
+    g.fillRect(0, height / 2, width, height / 2)
 
     const dirAngle = this.angleForDir(this.player.dir)
     const sliceW = width / this.numRays
@@ -127,7 +139,8 @@ export default class DungeonView {
         dirAngle - this.FOV / 2 + (i / this.numRays) * this.FOV
       const dist = this.castRay(rayAngle)
       const corrected = dist * Math.cos(rayAngle - dirAngle)
-      const h = Math.min(height, (1 / corrected) * height)
+      const wallScale = width * 0.3
+      const h = Math.min(height, wallScale / Math.max(corrected, 0.0001))
       const shade = Math.max(0, 200 - corrected * 40)
       const color = Phaser.Display.Color.GetColor(shade, shade, shade)
       g.fillStyle(color, 1)
