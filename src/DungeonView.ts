@@ -10,6 +10,9 @@ export default class DungeonView {
   private dirVectors: Record<Direction, { dx: number; dy: number; left: { dx: number; dy: number }; right: { dx: number; dy: number } }>
   private debugText: Phaser.GameObjects.Text
   private miniMap: Phaser.GameObjects.Graphics
+  private readonly FOV = Math.PI / 3
+  private readonly numRays = 120
+  private readonly maxDepth = 20
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene
@@ -77,6 +80,36 @@ export default class DungeonView {
     g.fillCircle(px, py, Math.min(cellW, cellH) / 3)
   }
 
+  private angleForDir(dir: Direction): number {
+    switch (dir) {
+      case 'north':
+        return -Math.PI / 2
+      case 'east':
+        return 0
+      case 'south':
+        return Math.PI / 2
+      case 'west':
+        return Math.PI
+    }
+  }
+
+  private castRay(angle: number): number {
+    let x = this.player.x + 0.5
+    let y = this.player.y + 0.5
+    const cos = Math.cos(angle)
+    const sin = Math.sin(angle)
+    let dist = 0
+    while (dist < this.maxDepth) {
+      x += cos * 0.05
+      y += sin * 0.05
+      dist += 0.05
+      if (this.tileAt(Math.floor(x), Math.floor(y)) === '#') {
+        break
+      }
+    }
+    return dist
+  }
+
   draw() {
     const width = this.scene.scale.width
     const height = this.scene.scale.height
@@ -85,78 +118,20 @@ export default class DungeonView {
     g.clear()
     g.fillStyle(0x000000, 1)
     g.fillRect(0, 0, width, height)
-    g.lineStyle(1, 0xffffff, 1)
 
+    const dirAngle = this.angleForDir(this.player.dir)
+    const sliceW = width / this.numRays
 
-
-    const viewDepth = 3
-    const centerX = width / 2
-    const centerY = height / 2
-
-    const getRect = (d: number) => {
-      const scale = 1 - d * 0.3
-      const w = width * scale
-      const h = height * scale
-      return {
-        x: centerX - w / 2,
-        y: centerY - h / 2,
-        w,
-        h,
-      }
-    }
-
-    for (let step = 1; step <= viewDepth; step++) {
-      const { dx, dy, left, right } = this.dirVectors[this.player.dir]
-      const tx = this.player.x + dx * step
-      const ty = this.player.y + dy * step
-
-      const rectFar = getRect(step)
-      const rectNear = getRect(step - 1)
-
-      const front = this.tileAt(tx, ty)
-
-      if (front === '#') {
-        // When facing a wall, draw side panels regardless of what lies beyond
-        g.beginPath()
-        g.moveTo(rectNear.x, rectNear.y)
-        g.lineTo(rectFar.x, rectFar.y)
-        g.lineTo(rectFar.x, rectFar.y + rectFar.h)
-        g.lineTo(rectNear.x, rectNear.y + rectNear.h)
-        g.closePath()
-        g.strokePath()
-
-        g.beginPath()
-        g.moveTo(rectNear.x + rectNear.w, rectNear.y)
-        g.lineTo(rectFar.x + rectFar.w, rectFar.y)
-        g.lineTo(rectFar.x + rectFar.w, rectFar.y + rectFar.h)
-        g.lineTo(rectNear.x + rectNear.w, rectNear.y + rectNear.h)
-        g.closePath()
-        g.strokePath()
-
-        g.strokeRect(rectFar.x, rectFar.y, rectFar.w, rectFar.h)
-        break
-      }
-
-      const leftCell = this.tileAt(tx + left.dx, ty + left.dy)
-      if (leftCell === '#') {
-        g.beginPath()
-        g.moveTo(rectNear.x, rectNear.y)
-        g.lineTo(rectFar.x, rectFar.y)
-        g.lineTo(rectFar.x, rectFar.y + rectFar.h)
-        g.lineTo(rectNear.x, rectNear.y + rectNear.h)
-        g.closePath()
-        g.strokePath()
-      }
-      const rightCell = this.tileAt(tx + right.dx, ty + right.dy)
-      if (rightCell === '#') {
-        g.beginPath()
-        g.moveTo(rectNear.x + rectNear.w, rectNear.y)
-        g.lineTo(rectFar.x + rectFar.w, rectFar.y)
-        g.lineTo(rectFar.x + rectFar.w, rectFar.y + rectFar.h)
-        g.lineTo(rectNear.x + rectNear.w, rectNear.y + rectNear.h)
-        g.closePath()
-        g.strokePath()
-      }
+    for (let i = 0; i < this.numRays; i++) {
+      const rayAngle =
+        dirAngle - this.FOV / 2 + (i / this.numRays) * this.FOV
+      const dist = this.castRay(rayAngle)
+      const corrected = dist * Math.cos(rayAngle - dirAngle)
+      const h = Math.min(height, (1 / corrected) * height)
+      const shade = Math.max(0, 200 - corrected * 40)
+      const color = Phaser.Display.Color.GetColor(shade, shade, shade)
+      g.fillStyle(color, 1)
+      g.fillRect(i * sliceW, (height - h) / 2, sliceW + 1, h)
     }
 
     this.drawMiniMap()
