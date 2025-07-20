@@ -1,21 +1,19 @@
-import Phaser from 'phaser'
+const content = document.getElementById('content') as HTMLElement;
 
-const config: Phaser.Types.Core.GameConfig = {
-  type: Phaser.AUTO,
-  parent: 'game-container',
-  scale: {
-    mode: Phaser.Scale.RESIZE,
-    width: window.innerWidth,
-    height: window.innerHeight,
-    autoCenter: Phaser.Scale.CENTER_BOTH
-  },
-  scene: {
-    preload() {},
-    create() {
-      this.add.text(400, 300, 'Hello Phaser!', { color: '#ffffff' }).setOrigin(0.5)
-    },
-    update() {}
+type Tab = 'top' | 'novel' | 'game';
+
+async function loadTab(tab: Tab) {
+  if (tab === 'top') {
+    const { default: showTop } = await import('./top');
+    showTop(content, loadTab);
+  } else if (tab === 'novel') {
+    const { default: showNovel } = await import('./novel');
+    showNovel(content, loadTab);
+  } else if (tab === 'game') {
+    const { default: initGame } = await import('./game');
+    initGame(content, loadTab);
   }
 }
 
-new Phaser.Game(config)
+// load default tab
+loadTab('top');
