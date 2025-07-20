@@ -1,5 +1,6 @@
 import DungeonMap from './DungeonMap'
 import Player, { Direction } from './Player'
+import { animationSpeed } from './config'
 
 export default class DungeonView {
   private scene: Phaser.Scene
@@ -12,8 +13,8 @@ export default class DungeonView {
   private miniMap: Phaser.GameObjects.Graphics
   private isMoving = false
   private isRotating = false
-  private readonly moveDuration = 150
-  private readonly rotateDuration = 150
+  private readonly moveDuration = 150 * animationSpeed
+  private readonly rotateDuration = 150 * animationSpeed
   private readonly FOV = Math.PI / 3
   private readonly numRays = 120
   private readonly maxDepth = 20
