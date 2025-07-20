@@ -4,13 +4,11 @@ export default class Player {
   x: number
   y: number
   dir: Direction
-  angle: number
 
   constructor(start: { x: number; y: number; dir: Direction }) {
     this.x = start.x
     this.y = start.y
     this.dir = start.dir
-    this.angle = 0
   }
 
   rotateLeft() {

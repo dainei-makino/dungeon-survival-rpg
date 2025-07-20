@@ -7,6 +7,9 @@ export default class DungeonView {
   private graphics: Phaser.GameObjects.Graphics
   private map: DungeonMap
   private player: Player
+  private viewX: number
+  private viewY: number
+  private viewAngle: number
   private keys: Record<string, Phaser.Input.Keyboard.Key>
   private dirVectors: Record<Direction, { dx: number; dy: number; left: { dx: number; dy: number }; right: { dx: number; dy: number } }>
   private debugText: Phaser.GameObjects.Text
@@ -25,7 +28,9 @@ export default class DungeonView {
     this.graphics = scene.add.graphics()
     this.map = new DungeonMap()
     this.player = new Player(this.map.playerStart)
-    this.player.angle = this.angleForDir(this.player.dir)
+    this.viewX = this.player.x
+    this.viewY = this.player.y
+    this.viewAngle = this.angleForDir(this.player.dir)
     this.keys = scene.input.keyboard.addKeys('W,S,A,D,J,K') as Record<string, Phaser.Input.Keyboard.Key>
     this.dirVectors = {
       north: { dx: 0, dy: -1, left: { dx: -1, dy: 0 }, right: { dx: 1, dy: 0 } },
@@ -60,10 +65,12 @@ export default class DungeonView {
 
   private startMove(nx: number, ny: number) {
     this.isMoving = true
+    this.player.x = nx
+    this.player.y = ny
     this.scene.tweens.add({
-      targets: this.player,
-      x: nx,
-      y: ny,
+      targets: this,
+      viewX: nx,
+      viewY: ny,
       duration: this.moveDuration,
       onUpdate: () => {
         this.draw()
@@ -85,21 +92,20 @@ export default class DungeonView {
 
   private startRotate(delta: number) {
     this.isRotating = true
-    const startAngle = this.player.angle
-    const endAngle = startAngle + (delta > 0 ? 1 : -1) * (Math.PI / 2)
     const endDir = this.rotateDir(this.player.dir, delta)
+    const endAngle = this.angleForDir(endDir)
+    this.player.dir = endDir
     this.scene.tweens.add({
-      targets: this.player,
-      angle: endAngle,
+      targets: this,
+      viewAngle: endAngle,
       duration: this.rotateDuration,
       onUpdate: () => {
         this.draw()
         this.updateDebugText()
       },
       onComplete: () => {
-        this.player.angle = endAngle
-        this.player.dir = endDir
         this.isRotating = false
+        this.viewAngle = endAngle
         this.draw()
         this.updateDebugText()
       },
@@ -129,8 +135,8 @@ export default class DungeonView {
         g.strokeRect(x + c * cellW, y + r * cellH, cellW, cellH)
       }
     }
-    const px = x + this.player.x * cellW + cellW / 2
-    const py = y + this.player.y * cellH + cellH / 2
+    const px = x + this.viewX * cellW + cellW / 2
+    const py = y + this.viewY * cellH + cellH / 2
     g.fillStyle(0xff0000, 1)
     g.fillCircle(px, py, Math.min(cellW, cellH) / 3)
   }
@@ -149,10 +155,10 @@ export default class DungeonView {
   }
 
   private eyePos() {
-    const ang = this.player.angle
+    const ang = this.viewAngle
     return {
-      x: this.player.x + 0.5 - Math.cos(ang) * this.eyeOffset,
-      y: this.player.y + 0.5 - Math.sin(ang) * this.eyeOffset,
+      x: this.viewX + 0.5 - Math.cos(ang) * this.eyeOffset,
+      y: this.viewY + 0.5 - Math.sin(ang) * this.eyeOffset,
     }
   }
 
@@ -229,9 +235,9 @@ export default class DungeonView {
     g.fillStyle(0x333333, 1)
     g.fillRect(0, height / 2, width, height / 2)
 
-    const dx = Math.round(Math.cos(this.player.angle))
-    const dy = Math.round(Math.sin(this.player.angle))
-    const front = this.tileAt(this.player.x + dx, this.player.y + dy)
+    const dx = Math.round(Math.cos(this.viewAngle))
+    const dy = Math.round(Math.sin(this.viewAngle))
+    const front = this.tileAt(this.viewX + dx, this.viewY + dy)
 
     let fov = this.FOV
     let rayCount = this.numRays
@@ -240,7 +246,7 @@ export default class DungeonView {
       rayCount = Math.round(this.numRays * (fov / this.FOV))
     }
 
-    const dirAngle = this.player.angle
+    const dirAngle = this.viewAngle
     const sliceW = width / rayCount
 
     for (let i = 0; i < rayCount; i++) {
