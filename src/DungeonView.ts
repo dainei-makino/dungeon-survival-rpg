@@ -206,10 +206,10 @@ export default class DungeonView {
   update() {
     let changed = false
 
-    if (Phaser.Input.Keyboard.JustDown(this.keys.J)) {
+    if (Phaser.Input.Keyboard.JustDown(this.keys.A)) {
       this.player.rotateLeft()
       changed = true
-    } else if (Phaser.Input.Keyboard.JustDown(this.keys.K)) {
+    } else if (Phaser.Input.Keyboard.JustDown(this.keys.D)) {
       this.player.rotateRight()
       changed = true
     }
@@ -231,7 +231,7 @@ export default class DungeonView {
         this.player.y = ny
         changed = true
       }
-    } else if (Phaser.Input.Keyboard.JustDown(this.keys.A)) {
+    } else if (Phaser.Input.Keyboard.JustDown(this.keys.J)) {
       const nx = this.player.x + vectors.left.dx
       const ny = this.player.y + vectors.left.dy
       if (this.tileAt(nx, ny) !== '#') {
@@ -239,7 +239,7 @@ export default class DungeonView {
         this.player.y = ny
         changed = true
       }
-    } else if (Phaser.Input.Keyboard.JustDown(this.keys.D)) {
+    } else if (Phaser.Input.Keyboard.JustDown(this.keys.K)) {
       const nx = this.player.x + vectors.right.dx
       const ny = this.player.y + vectors.right.dy
       if (this.tileAt(nx, ny) !== '#') {
