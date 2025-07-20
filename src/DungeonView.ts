@@ -9,6 +9,7 @@ export default class DungeonView {
   private player: Player
   private viewX: number
   private viewY: number
+  private viewZ: number
   private viewAngle: number
   private keys: Record<string, Phaser.Input.Keyboard.Key>
   private dirVectors: Record<Direction, { dx: number; dy: number; left: { dx: number; dy: number }; right: { dx: number; dy: number } }>
@@ -30,6 +31,7 @@ export default class DungeonView {
     this.player = new Player(this.map.playerStart)
     this.viewX = this.player.x
     this.viewY = this.player.y
+    this.viewZ = this.player.z
     this.viewAngle = this.angleForDir(this.player.dir)
     this.keys = scene.input.keyboard.addKeys('W,S,A,D,J,K') as Record<string, Phaser.Input.Keyboard.Key>
     this.dirVectors = {
@@ -54,7 +56,7 @@ export default class DungeonView {
       .map(([name]) => name)
       .join(' ')
     this.debugText.setText(
-      `Keys: ${pressed}\nPos: ${this.player.x},${this.player.y}\nDir: ${this.player.dir}`
+      `Keys: ${pressed}\nPos: ${this.player.x},${this.player.y},${this.player.z}\nDir: ${this.player.dir}`
     )
     this.debugText.setPosition(this.scene.scale.width - 10, 10)
   }
@@ -67,10 +69,13 @@ export default class DungeonView {
     this.isMoving = true
     this.player.x = nx
     this.player.y = ny
+    const nz = this.map.floorAt(nx, ny) + 0.5
+    this.player.z = nz
     this.scene.tweens.add({
       targets: this,
       viewX: nx,
       viewY: ny,
+      viewZ: nz,
       duration: this.moveDuration,
       onUpdate: () => {
         this.draw()
@@ -78,6 +83,7 @@ export default class DungeonView {
       },
       onComplete: () => {
         this.isMoving = false
+        this.viewZ = nz
         this.draw()
         this.updateDebugText()
       },
@@ -159,10 +165,11 @@ export default class DungeonView {
     return {
       x: this.viewX + 0.5 - Math.cos(ang) * this.eyeOffset,
       y: this.viewY + 0.5 - Math.sin(ang) * this.eyeOffset,
+      z: this.viewZ,
     }
   }
 
-  private castRay(angle: number): number {
+  private castRay(angle: number): { dist: number; hitX: number; hitY: number } {
     const pos = this.eyePos()
     const mapX = Math.floor(pos.x)
     const mapY = Math.floor(pos.y)
@@ -214,13 +221,21 @@ export default class DungeonView {
     }
 
     if (!hit) {
-      return this.maxDepth
+      return { dist: this.maxDepth, hitX: currentX, hitY: currentY }
     }
 
     if (side === 0) {
-      return (currentX - pos.x + (1 - stepX) / 2) / (rayDirX === 0 ? 1e-6 : rayDirX)
+      return {
+        dist: (currentX - pos.x + (1 - stepX) / 2) / (rayDirX === 0 ? 1e-6 : rayDirX),
+        hitX: currentX,
+        hitY: currentY,
+      }
     } else {
-      return (currentY - pos.y + (1 - stepY) / 2) / (rayDirY === 0 ? 1e-6 : rayDirY)
+      return {
+        dist: (currentY - pos.y + (1 - stepY) / 2) / (rayDirY === 0 ? 1e-6 : rayDirY),
+        hitX: currentX,
+        hitY: currentY,
+      }
     }
   }
 
@@ -251,14 +266,20 @@ export default class DungeonView {
 
     for (let i = 0; i < rayCount; i++) {
       const rayAngle = dirAngle - fov / 2 + (i / rayCount) * fov
-      const dist = this.castRay(rayAngle)
-      const corrected = dist * Math.cos(rayAngle - dirAngle)
+      const ray = this.castRay(rayAngle)
+      const corrected = ray.dist * Math.cos(rayAngle - dirAngle)
       const wallScale = width * 0.3
-      const h = Math.min(height, wallScale / Math.max(corrected, 0.0001))
+      const floor = this.map.floorAt(ray.hitX, ray.hitY)
+      const ceil = this.map.ceilingAt(ray.hitX, ray.hitY)
+      const topY =
+        height / 2 - (wallScale * (ceil - this.viewZ)) / Math.max(corrected, 0.0001)
+      const bottomY =
+        height / 2 + (wallScale * (this.viewZ - floor)) / Math.max(corrected, 0.0001)
+      const h = bottomY - topY
       const shade = Math.max(0, 200 - corrected * 40)
       const color = Phaser.Display.Color.GetColor(shade, shade, shade)
       g.fillStyle(color, 1)
-      g.fillRect(i * sliceW, (height - h) / 2, sliceW + 1, h)
+      g.fillRect(i * sliceW, topY, sliceW + 1, h)
     }
 
     this.drawMiniMap()

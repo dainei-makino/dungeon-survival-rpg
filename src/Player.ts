@@ -3,11 +3,13 @@ export type Direction = 'north' | 'east' | 'south' | 'west'
 export default class Player {
   x: number
   y: number
+  z: number
   dir: Direction
 
-  constructor(start: { x: number; y: number; dir: Direction }) {
+  constructor(start: { x: number; y: number; z: number; dir: Direction }) {
     this.x = start.x
     this.y = start.y
+    this.z = start.z
     this.dir = start.dir
   }
 
