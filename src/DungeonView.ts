@@ -76,16 +76,17 @@ export default class DungeonView {
     })
   }
 
+  private rotateDir(dir: Direction, delta: number): Direction {
+    const order: Direction[] = ['north', 'east', 'south', 'west']
+    const idx = order.indexOf(dir)
+    return order[(idx + (delta > 0 ? 1 : -1) + 4) % 4]
+  }
+
   private startRotate(delta: number) {
     this.isRotating = true
     const startAngle = this.player.angle
-    if (delta < 0) {
-      this.player.rotateLeft()
-    } else {
-      this.player.rotateRight()
-    }
-    const endAngle = this.angleForDir(this.player.dir)
-    this.player.angle = startAngle
+    const endAngle = startAngle + (delta > 0 ? 1 : -1) * (Math.PI / 2)
+    const endDir = this.rotateDir(this.player.dir, delta)
     this.scene.tweens.add({
       targets: this.player,
       angle: endAngle,
@@ -96,6 +97,7 @@ export default class DungeonView {
       },
       onComplete: () => {
         this.player.angle = endAngle
+        this.player.dir = endDir
         this.isRotating = false
         this.draw()
         this.updateDebugText()
