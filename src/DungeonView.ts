@@ -11,7 +11,9 @@ export default class DungeonView {
   private debugText: Phaser.GameObjects.Text
   private miniMap: Phaser.GameObjects.Graphics
   private isMoving = false
+  private isRotating = false
   private readonly moveDuration = 150
+  private readonly rotateDuration = 150
   private readonly FOV = Math.PI / 3
   private readonly numRays = 120
   private readonly maxDepth = 20
@@ -22,6 +24,7 @@ export default class DungeonView {
     this.graphics = scene.add.graphics()
     this.map = new DungeonMap()
     this.player = new Player(this.map.playerStart)
+    this.player.angle = this.angleForDir(this.player.dir)
     this.keys = scene.input.keyboard.addKeys('W,S,A,D,J,K') as Record<string, Phaser.Input.Keyboard.Key>
     this.dirVectors = {
       north: { dx: 0, dy: -1, left: { dx: -1, dy: 0 }, right: { dx: 1, dy: 0 } },
@@ -73,6 +76,33 @@ export default class DungeonView {
     })
   }
 
+  private startRotate(delta: number) {
+    this.isRotating = true
+    const startAngle = this.player.angle
+    if (delta < 0) {
+      this.player.rotateLeft()
+    } else {
+      this.player.rotateRight()
+    }
+    const endAngle = this.angleForDir(this.player.dir)
+    this.player.angle = startAngle
+    this.scene.tweens.add({
+      targets: this.player,
+      angle: endAngle,
+      duration: this.rotateDuration,
+      onUpdate: () => {
+        this.draw()
+        this.updateDebugText()
+      },
+      onComplete: () => {
+        this.player.angle = endAngle
+        this.isRotating = false
+        this.draw()
+        this.updateDebugText()
+      },
+    })
+  }
+
   private drawMiniMap() {
     const size = 80
     const margin = 10
@@ -116,7 +146,7 @@ export default class DungeonView {
   }
 
   private eyePos() {
-    const ang = this.angleForDir(this.player.dir)
+    const ang = this.player.angle
     return {
       x: this.player.x + 0.5 - Math.cos(ang) * this.eyeOffset,
       y: this.player.y + 0.5 - Math.sin(ang) * this.eyeOffset,
@@ -206,7 +236,7 @@ export default class DungeonView {
       rayCount = Math.round(this.numRays * (fov / this.FOV))
     }
 
-    const dirAngle = this.angleForDir(this.player.dir)
+    const dirAngle = this.player.angle
     const sliceW = width / rayCount
 
     for (let i = 0; i < rayCount; i++) {
@@ -225,20 +255,18 @@ export default class DungeonView {
   }
 
   update() {
-    if (this.isMoving) {
+    if (this.isMoving || this.isRotating) {
       this.draw()
       this.updateDebugText()
       return
     }
 
-    let changed = false
-
     if (Phaser.Input.Keyboard.JustDown(this.keys.A)) {
-      this.player.rotateLeft()
-      changed = true
+      this.startRotate(-1)
+      return
     } else if (Phaser.Input.Keyboard.JustDown(this.keys.D)) {
-      this.player.rotateRight()
-      changed = true
+      this.startRotate(1)
+      return
     }
 
     const vectors = this.dirVectors[this.player.dir]
@@ -272,9 +300,7 @@ export default class DungeonView {
       }
     }
 
-    if (changed) {
-      this.draw()
-    }
+    this.draw()
     this.updateDebugText()
   }
 }
