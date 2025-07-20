@@ -91,31 +91,31 @@ export default class DungeonView {
       const rectFar = getRect(step)
       const rectNear = getRect(step - 1)
 
+      const leftCell = this.tileAt(tx + left.dx, ty + left.dy)
+      if (leftCell === '#') {
+        g.beginPath()
+        g.moveTo(rectNear.x, rectNear.y)
+        g.lineTo(rectFar.x, rectFar.y)
+        g.lineTo(rectFar.x, rectFar.y + rectFar.h)
+        g.lineTo(rectNear.x, rectNear.y + rectNear.h)
+        g.closePath()
+        g.strokePath()
+      }
+      const rightCell = this.tileAt(tx + right.dx, ty + right.dy)
+      if (rightCell === '#') {
+        g.beginPath()
+        g.moveTo(rectNear.x + rectNear.w, rectNear.y)
+        g.lineTo(rectFar.x + rectFar.w, rectFar.y)
+        g.lineTo(rectFar.x + rectFar.w, rectFar.y + rectFar.h)
+        g.lineTo(rectNear.x + rectNear.w, rectNear.y + rectNear.h)
+        g.closePath()
+        g.strokePath()
+      }
+
       const front = this.tileAt(tx, ty)
       if (front === '#') {
         g.strokeRect(rectFar.x, rectFar.y, rectFar.w, rectFar.h)
         break
-      } else {
-        const leftCell = this.tileAt(tx + left.dx, ty + left.dy)
-        if (leftCell === '#') {
-          g.beginPath()
-          g.moveTo(rectNear.x, rectNear.y)
-          g.lineTo(rectFar.x, rectFar.y)
-          g.lineTo(rectFar.x, rectFar.y + rectFar.h)
-          g.lineTo(rectNear.x, rectNear.y + rectNear.h)
-          g.closePath()
-          g.strokePath()
-        }
-        const rightCell = this.tileAt(tx + right.dx, ty + right.dy)
-        if (rightCell === '#') {
-          g.beginPath()
-          g.moveTo(rectNear.x + rectNear.w, rectNear.y)
-          g.lineTo(rectFar.x + rectFar.w, rectFar.y)
-          g.lineTo(rectFar.x + rectFar.w, rectFar.y + rectFar.h)
-          g.lineTo(rectNear.x + rectNear.w, rectNear.y + rectNear.h)
-          g.closePath()
-          g.strokePath()
-        }
       }
     }
   }
