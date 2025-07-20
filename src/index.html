@@ -5,27 +5,86 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>牧野大寧</title>
   <style>
-    html, body, #content {
+    html,
+    body {
       width: 100%;
       height: 100%;
       margin: 0;
-      background: #000;
     }
+
+    body {
+      background: linear-gradient(-45deg, #ff9a9e, #fad0c4, #fbc2eb, #a1c4fd);
+      background-size: 400% 400%;
+      animation: gradient-wave 15s ease infinite;
+      font-family: system-ui, sans-serif;
+      color: #333;
+    }
+
+    @keyframes gradient-wave {
+      0% {
+        background-position: 0% 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+
+    #content {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      box-sizing: border-box;
+    }
+
+    header {
+      margin-top: 2rem;
+      font-size: 2rem;
+      font-weight: bold;
+      color: #fff;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
     .tiles {
       display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
       gap: 1rem;
       padding: 1rem;
+      width: 100%;
+      max-width: 600px;
     }
+
     .tile {
-      flex: 1;
-      background: #eee;
-      border: 1px solid #ccc;
+      flex: 1 0 150px;
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
       display: flex;
       justify-content: center;
       align-items: center;
       cursor: pointer;
       font-size: 1.2rem;
-      padding: 2rem;
+      padding: 2rem 1rem;
+      color: #333;
+      font-weight: bold;
+      transition: transform 0.2s;
+    }
+
+    .tile:hover {
+      transform: translateY(-4px);
+    }
+
+    footer {
+      color: #fff;
+      margin-bottom: 1rem;
+      font-size: 0.8rem;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
   </style>
 </head>

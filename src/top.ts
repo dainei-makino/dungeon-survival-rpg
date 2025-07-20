@@ -3,14 +3,15 @@ export default function showTop(
   loadTab: (tab: 'novel' | 'game') => void
 ) {
   container.innerHTML = `
-    <h1>トップページ</h1>
+    <header>牧野大寧公式サイト</header>
     <div class="tiles">
       <div class="tile" data-tab="novel">小説</div>
       <div class="tile" data-tab="game">ビデオゲーム</div>
     </div>
+    <footer>&copy; 牧野大寧</footer>
   `;
   const tiles = container.querySelectorAll('.tile');
-  tiles.forEach(tile => {
+  tiles.forEach((tile) => {
     tile.addEventListener('click', () => {
       const tab = (tile as HTMLElement).dataset.tab as 'novel' | 'game';
       loadTab(tab);
