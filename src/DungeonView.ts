@@ -16,6 +16,9 @@ export default class DungeonView {
   private isRotating = false
   private readonly moveDuration = 150 * animationSpeed
   private readonly rotateDuration = 150 * animationSpeed
+  private readonly WALL_COLOR = 0xcccccc
+  private readonly FLOOR_COLOR = 0x996633
+  private readonly CEILING_COLOR = 0x6666ff
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene
@@ -83,25 +86,34 @@ export default class DungeonView {
     this.mesh.addVertices(verts, uvs, undefined, true, undefined, color)
   }
 
-  private addFloor() {
+  private addPlane(z: number, color: number) {
     const verts: number[] = []
     const uvs: number[] = []
     const w = this.map.width
     const h = this.map.height
-    const p0 = [0, 0, 0]
-    const p1 = [w, 0, 0]
-    const p2 = [w, h, 0]
-    const p3 = [0, h, 0]
+    const p0 = [0, 0, z]
+    const p1 = [w, 0, z]
+    const p2 = [w, h, z]
+    const p3 = [0, h, z]
     this.addFace(verts, uvs, p0, p1, p2, p3)
-    this.mesh.addVertices(verts, uvs, undefined, true, undefined, 0x444444)
+    this.mesh.addVertices(verts, uvs, undefined, true, undefined, color)
+  }
+
+  private addFloor() {
+    this.addPlane(0, this.FLOOR_COLOR)
+  }
+
+  private addCeiling() {
+    this.addPlane(1, this.CEILING_COLOR)
   }
 
   private buildWorld() {
     this.addFloor()
+    this.addCeiling()
     for (let y = 0; y < this.map.height; y++) {
       for (let x = 0; x < this.map.width; x++) {
         if (this.map.tileAt(x, y) === '#') {
-          this.addCube(x + 0.5, y + 0.5, 0.5, 1, 0x888888)
+          this.addCube(x + 0.5, y + 0.5, 0.5, 1, this.WALL_COLOR)
         }
       }
     }
