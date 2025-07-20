@@ -1,15 +1,13 @@
+import Phaser from 'phaser'
 import DungeonMap from './DungeonMap'
 import Player, { Direction } from './Player'
 import { animationSpeed } from './config'
 
 export default class DungeonView {
   private scene: Phaser.Scene
-  private graphics: Phaser.GameObjects.Graphics
   private map: DungeonMap
   private player: Player
-  private viewX: number
-  private viewY: number
-  private viewAngle: number
+  private mesh: Phaser.GameObjects.Mesh
   private keys: Record<string, Phaser.Input.Keyboard.Key>
   private dirVectors: Record<Direction, { dx: number; dy: number; left: { dx: number; dy: number }; right: { dx: number; dy: number } }>
   private debugText: Phaser.GameObjects.Text
@@ -18,19 +16,16 @@ export default class DungeonView {
   private isRotating = false
   private readonly moveDuration = 150 * animationSpeed
   private readonly rotateDuration = 150 * animationSpeed
-  private readonly FOV = Math.PI / 3
-  private readonly numRays = 120
-  private readonly maxDepth = 20
-  private readonly eyeOffset = 0.3
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene
-    this.graphics = scene.add.graphics()
     this.map = new DungeonMap()
     this.player = new Player(this.map.playerStart)
-    this.viewX = this.player.x
-    this.viewY = this.player.y
-    this.viewAngle = this.angleForDir(this.player.dir)
+
+    this.mesh = scene.add.mesh(0, 0, '__DEFAULT')
+    this.mesh.setPerspective(scene.scale.width, scene.scale.height, 60, 0.1, 1000)
+    this.buildWorld()
+
     this.keys = scene.input.keyboard.addKeys('W,S,A,D,J,K') as Record<string, Phaser.Input.Keyboard.Key>
     this.dirVectors = {
       north: { dx: 0, dy: -1, left: { dx: -1, dy: 0 }, right: { dx: 1, dy: 0 } },
@@ -46,6 +41,84 @@ export default class DungeonView {
     this.debugText.setOrigin(1, 0)
     this.miniMap = scene.add.graphics()
     this.updateDebugText()
+    this.updateView()
+  }
+
+  private addFace(verts: number[], uvs: number[], p1: number[], p2: number[], p3: number[], p4: number[]) {
+    verts.push(
+      ...p1, ...p2, ...p3,
+      ...p1, ...p3, ...p4
+    )
+    uvs.push(
+      0, 1,
+      1, 1,
+      1, 0,
+      0, 1,
+      1, 0,
+      0, 0
+    )
+  }
+
+  private addCube(x: number, y: number, z: number, size: number, color: number) {
+    const s = size / 2
+    const p0 = [x - s, y - s, z - s]
+    const p1 = [x + s, y - s, z - s]
+    const p2 = [x + s, y + s, z - s]
+    const p3 = [x - s, y + s, z - s]
+    const p4 = [x - s, y - s, z + s]
+    const p5 = [x + s, y - s, z + s]
+    const p6 = [x + s, y + s, z + s]
+    const p7 = [x - s, y + s, z + s]
+
+    const verts: number[] = []
+    const uvs: number[] = []
+
+    this.addFace(verts, uvs, p4, p5, p6, p7) // front
+    this.addFace(verts, uvs, p1, p0, p3, p2) // back
+    this.addFace(verts, uvs, p0, p4, p7, p3) // left
+    this.addFace(verts, uvs, p5, p1, p2, p6) // right
+    this.addFace(verts, uvs, p3, p7, p6, p2) // top
+    this.addFace(verts, uvs, p0, p1, p5, p4) // bottom
+
+    this.mesh.addVertices(verts, uvs, undefined, true, undefined, color)
+  }
+
+  private addFloor() {
+    const verts: number[] = []
+    const uvs: number[] = []
+    const w = this.map.width
+    const h = this.map.height
+    const p0 = [0, 0, 0]
+    const p1 = [w, 0, 0]
+    const p2 = [w, h, 0]
+    const p3 = [0, h, 0]
+    this.addFace(verts, uvs, p0, p1, p2, p3)
+    this.mesh.addVertices(verts, uvs, undefined, true, undefined, 0x444444)
+  }
+
+  private buildWorld() {
+    this.addFloor()
+    for (let y = 0; y < this.map.height; y++) {
+      for (let x = 0; x < this.map.width; x++) {
+        if (this.map.tileAt(x, y) === '#') {
+          this.addCube(x + 0.5, y + 0.5, 0.5, 1, 0x888888)
+        }
+      }
+    }
+  }
+
+  private updateView() {
+    const angle = this.angleForDir(this.player.dir)
+    const px = this.player.x + 0.5
+    const py = this.player.y + 0.5
+    const cos = Math.cos(angle)
+    const sin = Math.sin(angle)
+    this.mesh.modelRotation.set(0, 0, -angle)
+    this.mesh.viewPosition.set(
+      px * cos - py * sin,
+      px * sin + py * cos,
+      1.5
+    )
   }
 
   private updateDebugText() {
@@ -65,20 +138,20 @@ export default class DungeonView {
 
   private startMove(nx: number, ny: number) {
     this.isMoving = true
-    this.player.x = nx
-    this.player.y = ny
     this.scene.tweens.add({
-      targets: this,
-      viewX: nx,
-      viewY: ny,
+      targets: this.player,
+      x: nx,
+      y: ny,
       duration: this.moveDuration,
       onUpdate: () => {
-        this.draw()
+        this.updateView()
         this.updateDebugText()
       },
       onComplete: () => {
         this.isMoving = false
-        this.draw()
+        this.player.x = nx
+        this.player.y = ny
+        this.updateView()
         this.updateDebugText()
       },
     })
@@ -94,19 +167,21 @@ export default class DungeonView {
     this.isRotating = true
     const endDir = this.rotateDir(this.player.dir, delta)
     const endAngle = this.angleForDir(endDir)
-    this.player.dir = endDir
+    const startAngle = this.angleForDir(this.player.dir)
     this.scene.tweens.add({
-      targets: this,
-      viewAngle: endAngle,
+      targets: { t: startAngle },
+      t: endAngle,
       duration: this.rotateDuration,
-      onUpdate: () => {
-        this.draw()
+      onUpdate: (tween) => {
+        const val = tween.getValue() as number
+        this.player.dir = this.angleToDir(val)
+        this.updateView()
         this.updateDebugText()
       },
       onComplete: () => {
         this.isRotating = false
-        this.viewAngle = endAngle
-        this.draw()
+        this.player.dir = endDir
+        this.updateView()
         this.updateDebugText()
       },
     })
@@ -135,8 +210,8 @@ export default class DungeonView {
         g.strokeRect(x + c * cellW, y + r * cellH, cellW, cellH)
       }
     }
-    const px = x + this.viewX * cellW + cellW / 2
-    const py = y + this.viewY * cellH + cellH / 2
+    const px = x + (this.player.x + 0.5) * cellW
+    const py = y + (this.player.y + 0.5) * cellH
     g.fillStyle(0xff0000, 1)
     g.fillCircle(px, py, Math.min(cellW, cellH) / 3)
   }
@@ -154,120 +229,21 @@ export default class DungeonView {
     }
   }
 
-  private eyePos() {
-    const ang = this.viewAngle
-    return {
-      x: this.viewX + 0.5 - Math.cos(ang) * this.eyeOffset,
-      y: this.viewY + 0.5 - Math.sin(ang) * this.eyeOffset,
-    }
-  }
-
-  private castRay(angle: number): number {
-    const pos = this.eyePos()
-    const mapX = Math.floor(pos.x)
-    const mapY = Math.floor(pos.y)
-    const rayDirX = Math.cos(angle)
-    const rayDirY = Math.sin(angle)
-
-    const deltaDistX = Math.abs(1 / (rayDirX === 0 ? 1e-6 : rayDirX))
-    const deltaDistY = Math.abs(1 / (rayDirY === 0 ? 1e-6 : rayDirY))
-
-    let stepX: number
-    let stepY: number
-    let sideDistX: number
-    let sideDistY: number
-
-    if (rayDirX < 0) {
-      stepX = -1
-      sideDistX = (pos.x - mapX) * deltaDistX
-    } else {
-      stepX = 1
-      sideDistX = (mapX + 1 - pos.x) * deltaDistX
-    }
-
-    if (rayDirY < 0) {
-      stepY = -1
-      sideDistY = (pos.y - mapY) * deltaDistY
-    } else {
-      stepY = 1
-      sideDistY = (mapY + 1 - pos.y) * deltaDistY
-    }
-
-    let currentX = mapX
-    let currentY = mapY
-    let side = 0
-    let hit = false
-
-    while (!hit && Math.hypot(currentX - mapX, currentY - mapY) < this.maxDepth) {
-      if (sideDistX < sideDistY) {
-        sideDistX += deltaDistX
-        currentX += stepX
-        side = 0
-      } else {
-        sideDistY += deltaDistY
-        currentY += stepY
-        side = 1
-      }
-      if (this.tileAt(currentX, currentY) === '#') {
-        hit = true
-      }
-    }
-
-    if (!hit) {
-      return this.maxDepth
-    }
-
-    if (side === 0) {
-      return (currentX - pos.x + (1 - stepX) / 2) / (rayDirX === 0 ? 1e-6 : rayDirX)
-    } else {
-      return (currentY - pos.y + (1 - stepY) / 2) / (rayDirY === 0 ? 1e-6 : rayDirY)
-    }
+  private angleToDir(angle: number): Direction {
+    const a = Phaser.Math.Angle.Wrap(angle)
+    if (a > -Math.PI / 4 && a <= Math.PI / 4) return 'east'
+    if (a > Math.PI / 4 && a <= (3 * Math.PI) / 4) return 'south'
+    if (a <= -Math.PI / 4 && a > -(3 * Math.PI) / 4) return 'north'
+    return 'west'
   }
 
   draw() {
-    const width = this.scene.scale.width
-    const height = this.scene.scale.height
-    const g = this.graphics
-
-    g.clear()
-    g.fillStyle(0x666666, 1)
-    g.fillRect(0, 0, width, height / 2)
-    g.fillStyle(0x333333, 1)
-    g.fillRect(0, height / 2, width, height / 2)
-
-    const dx = Math.round(Math.cos(this.viewAngle))
-    const dy = Math.round(Math.sin(this.viewAngle))
-    const front = this.tileAt(this.viewX + dx, this.viewY + dy)
-
-    let fov = this.FOV
-    let rayCount = this.numRays
-    if (front === '#') {
-      fov = Math.PI / 2
-      rayCount = Math.round(this.numRays * (fov / this.FOV))
-    }
-
-    const dirAngle = this.viewAngle
-    const sliceW = width / rayCount
-
-    for (let i = 0; i < rayCount; i++) {
-      const rayAngle = dirAngle - fov / 2 + (i / rayCount) * fov
-      const dist = this.castRay(rayAngle)
-      const corrected = dist * Math.cos(rayAngle - dirAngle)
-      const wallScale = width * 0.3
-      const h = Math.min(height, wallScale / Math.max(corrected, 0.0001))
-      const shade = Math.max(0, 200 - corrected * 40)
-      const color = Phaser.Display.Color.GetColor(shade, shade, shade)
-      g.fillStyle(color, 1)
-      g.fillRect(i * sliceW, (height - h) / 2, sliceW + 1, h)
-    }
-
     this.drawMiniMap()
   }
 
   update() {
     if (this.isMoving || this.isRotating) {
       this.draw()
-      this.updateDebugText()
       return
     }
 
@@ -311,6 +287,7 @@ export default class DungeonView {
     }
 
     this.draw()
+    this.updateView()
     this.updateDebugText()
   }
 }
