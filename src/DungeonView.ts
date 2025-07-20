@@ -16,6 +16,7 @@ export default class DungeonView {
   private keys: Record<string, Phaser.Input.Keyboard.Key>
   private dirVectors: Record<Direction, { dx: number; dy: number; left: { dx: number; dy: number }; right: { dx: number; dy: number } }>
   private debugText: Phaser.GameObjects.Text
+  private miniMap: Phaser.GameObjects.Graphics
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene
@@ -35,6 +36,7 @@ export default class DungeonView {
       fontFamily: 'monospace',
     })
     this.debugText.setOrigin(1, 0)
+    this.miniMap = scene.add.graphics()
     this.updateDebugText()
   }
 
@@ -53,6 +55,35 @@ export default class DungeonView {
     if (y < 0 || y >= this.map.length) return undefined
     if (x < 0 || x >= this.map[0].length) return undefined
     return this.map[y][x]
+  }
+
+  private drawMiniMap() {
+    const size = 80
+    const margin = 10
+    const rows = this.map.length
+    const cols = this.map[0].length
+    const cellW = size / cols
+    const cellH = size / rows
+    const x = this.scene.scale.width - size - margin
+    const y = this.debugText.y + this.debugText.height + 5
+
+    const g = this.miniMap
+    g.clear()
+    g.fillStyle(0x000000, 1)
+    g.fillRect(x - 1, y - 1, size + 2, size + 2)
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const cell = this.tileAt(c, r)
+        g.fillStyle(cell === '#' ? 0x555555 : 0x222222, 1)
+        g.fillRect(x + c * cellW, y + r * cellH, cellW, cellH)
+        g.lineStyle(1, 0x888888, 1)
+        g.strokeRect(x + c * cellW, y + r * cellH, cellW, cellH)
+      }
+    }
+    const px = x + this.player.x * cellW + cellW / 2
+    const py = y + this.player.y * cellH + cellH / 2
+    g.fillStyle(0xff0000, 1)
+    g.fillCircle(px, py, Math.min(cellW, cellH) / 3)
   }
 
   draw() {
@@ -118,6 +149,8 @@ export default class DungeonView {
         break
       }
     }
+
+    this.drawMiniMap()
   }
 
   update() {
