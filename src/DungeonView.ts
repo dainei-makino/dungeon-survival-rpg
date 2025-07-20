@@ -229,8 +229,9 @@ export default class DungeonView {
     g.fillStyle(0x333333, 1)
     g.fillRect(0, height / 2, width, height / 2)
 
-    const vectors = this.dirVectors[this.player.dir]
-    const front = this.tileAt(this.player.x + vectors.dx, this.player.y + vectors.dy)
+    const dx = Math.round(Math.cos(this.player.angle))
+    const dy = Math.round(Math.sin(this.player.angle))
+    const front = this.tileAt(this.player.x + dx, this.player.y + dy)
 
     let fov = this.FOV
     let rayCount = this.numRays
