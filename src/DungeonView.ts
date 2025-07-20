@@ -131,12 +131,21 @@ export default class DungeonView {
     g.fillStyle(0x333333, 1)
     g.fillRect(0, height / 2, width, height / 2)
 
-    const dirAngle = this.angleForDir(this.player.dir)
-    const sliceW = width / this.numRays
+    const vectors = this.dirVectors[this.player.dir]
+    const front = this.tileAt(this.player.x + vectors.dx, this.player.y + vectors.dy)
 
-    for (let i = 0; i < this.numRays; i++) {
-      const rayAngle =
-        dirAngle - this.FOV / 2 + (i / this.numRays) * this.FOV
+    let fov = this.FOV
+    let rayCount = this.numRays
+    if (front === '#') {
+      fov = Math.PI / 2
+      rayCount = Math.round(this.numRays * (fov / this.FOV))
+    }
+
+    const dirAngle = this.angleForDir(this.player.dir)
+    const sliceW = width / rayCount
+
+    for (let i = 0; i < rayCount; i++) {
+      const rayAngle = dirAngle - fov / 2 + (i / rayCount) * fov
       const dist = this.castRay(rayAngle)
       const corrected = dist * Math.cos(rayAngle - dirAngle)
       const wallScale = width * 0.3
