@@ -86,15 +86,16 @@ export default class DungeonView {
     this.mesh.addVertices(verts, uvs, undefined, true, undefined, color)
   }
 
-  private addPlane(z: number, color: number) {
+  // Add a horizontal plane (floor or ceiling)
+  private addPlane(y: number, color: number) {
     const verts: number[] = []
     const uvs: number[] = []
     const w = this.map.width
     const h = this.map.height
-    const p0 = [0, 0, z]
-    const p1 = [w, 0, z]
-    const p2 = [w, h, z]
-    const p3 = [0, h, z]
+    const p0 = [0, y, 0]
+    const p1 = [w, y, 0]
+    const p2 = [w, y, h]
+    const p3 = [0, y, h]
     this.addFace(verts, uvs, p0, p1, p2, p3)
     this.mesh.addVertices(verts, uvs, undefined, true, undefined, color)
   }
@@ -110,10 +111,10 @@ export default class DungeonView {
   private buildWorld() {
     this.addFloor()
     this.addCeiling()
-    for (let y = 0; y < this.map.height; y++) {
-      for (let x = 0; x < this.map.width; x++) {
-        if (this.map.tileAt(x, y) === '#') {
-          this.addCube(x + 0.5, y + 0.5, 0.5, 1, this.WALL_COLOR)
+    for (let row = 0; row < this.map.height; row++) {
+      for (let col = 0; col < this.map.width; col++) {
+        if (this.map.tileAt(col, row) === '#') {
+          this.addCube(col + 0.5, 0.5, row + 0.5, 1, this.WALL_COLOR)
         }
       }
     }
@@ -122,15 +123,10 @@ export default class DungeonView {
   private updateView() {
     const angle = this.angleForDir(this.player.dir)
     const px = this.player.x + 0.5
-    const py = this.player.y + 0.5
-    const cos = Math.cos(angle)
-    const sin = Math.sin(angle)
-    this.mesh.modelRotation.set(0, 0, -angle)
-    this.mesh.viewPosition.set(
-      -(px * cos + py * sin),
-      px * sin - py * cos,
-      1.5
-    )
+    const py = 0.5
+    const pz = this.player.y + 0.5
+    this.mesh.modelRotation.set(0, -angle, 0)
+    this.mesh.viewPosition.set(px, py, pz)
   }
 
   private updateDebugText() {
