@@ -1,3 +1,4 @@
+
 const content = document.getElementById('content') as HTMLElement;
 
 type Tab = 'top' | 'novel' | 'game';

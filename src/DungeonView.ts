@@ -1,0 +1,216 @@
+import DungeonMap from './DungeonMap'
+import Player, { Direction } from './Player'
+
+export default class DungeonView {
+  private scene: Phaser.Scene
+  private graphics: Phaser.GameObjects.Graphics
+  private map: DungeonMap
+  private player: Player
+  private keys: Record<string, Phaser.Input.Keyboard.Key>
+  private dirVectors: Record<Direction, { dx: number; dy: number; left: { dx: number; dy: number }; right: { dx: number; dy: number } }>
+  private debugText: Phaser.GameObjects.Text
+  private miniMap: Phaser.GameObjects.Graphics
+
+  constructor(scene: Phaser.Scene) {
+    this.scene = scene
+    this.graphics = scene.add.graphics()
+    this.map = new DungeonMap()
+    this.player = new Player(this.map.playerStart)
+    this.keys = scene.input.keyboard.addKeys('W,S,A,D,J,K') as Record<string, Phaser.Input.Keyboard.Key>
+    this.dirVectors = {
+      north: { dx: 0, dy: -1, left: { dx: -1, dy: 0 }, right: { dx: 1, dy: 0 } },
+      east: { dx: 1, dy: 0, left: { dx: 0, dy: -1 }, right: { dx: 0, dy: 1 } },
+      south: { dx: 0, dy: 1, left: { dx: 1, dy: 0 }, right: { dx: -1, dy: 0 } },
+      west: { dx: -1, dy: 0, left: { dx: 0, dy: 1 }, right: { dx: 0, dy: -1 } },
+    }
+    this.debugText = scene.add.text(0, 0, '', {
+      color: '#ffffff',
+      fontSize: '14px',
+      fontFamily: 'monospace',
+    })
+    this.debugText.setOrigin(1, 0)
+    this.miniMap = scene.add.graphics()
+    this.updateDebugText()
+  }
+
+  private updateDebugText() {
+    const pressed = Object.entries(this.keys)
+      .filter(([, key]) => key.isDown)
+      .map(([name]) => name)
+      .join(' ')
+    this.debugText.setText(
+      `Keys: ${pressed}\nPos: ${this.player.x},${this.player.y}\nDir: ${this.player.dir}`
+    )
+    this.debugText.setPosition(this.scene.scale.width - 10, 10)
+  }
+
+  private tileAt(x: number, y: number): string {
+    return this.map.tileAt(x, y)
+  }
+
+  private drawMiniMap() {
+    const size = 80
+    const margin = 10
+    const rows = this.map.height
+    const cols = this.map.width
+    const cellW = size / cols
+    const cellH = size / rows
+    const x = this.scene.scale.width - size - margin
+    const y = this.debugText.y + this.debugText.height + 5
+
+    const g = this.miniMap
+    g.clear()
+    g.fillStyle(0x000000, 1)
+    g.fillRect(x - 1, y - 1, size + 2, size + 2)
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const cell = this.tileAt(c, r)
+        g.fillStyle(cell === '#' ? 0x555555 : 0x222222, 1)
+        g.fillRect(x + c * cellW, y + r * cellH, cellW, cellH)
+        g.lineStyle(1, 0x888888, 1)
+        g.strokeRect(x + c * cellW, y + r * cellH, cellW, cellH)
+      }
+    }
+    const px = x + this.player.x * cellW + cellW / 2
+    const py = y + this.player.y * cellH + cellH / 2
+    g.fillStyle(0xff0000, 1)
+    g.fillCircle(px, py, Math.min(cellW, cellH) / 3)
+  }
+
+  draw() {
+    const width = this.scene.scale.width
+    const height = this.scene.scale.height
+    const g = this.graphics
+
+    g.clear()
+    g.fillStyle(0x000000, 1)
+    g.fillRect(0, 0, width, height)
+    g.lineStyle(1, 0xffffff, 1)
+
+
+
+    const viewDepth = 3
+    const centerX = width / 2
+    const centerY = height / 2
+
+    const getRect = (d: number) => {
+      const scale = 1 - d * 0.3
+      const w = width * scale
+      const h = height * scale
+      return {
+        x: centerX - w / 2,
+        y: centerY - h / 2,
+        w,
+        h,
+      }
+    }
+
+    for (let step = 1; step <= viewDepth; step++) {
+      const { dx, dy, left, right } = this.dirVectors[this.player.dir]
+      const tx = this.player.x + dx * step
+      const ty = this.player.y + dy * step
+
+      const rectFar = getRect(step)
+      const rectNear = getRect(step - 1)
+
+      const front = this.tileAt(tx, ty)
+
+      if (front === '#') {
+        // When facing a wall, draw side panels regardless of what lies beyond
+        g.beginPath()
+        g.moveTo(rectNear.x, rectNear.y)
+        g.lineTo(rectFar.x, rectFar.y)
+        g.lineTo(rectFar.x, rectFar.y + rectFar.h)
+        g.lineTo(rectNear.x, rectNear.y + rectNear.h)
+        g.closePath()
+        g.strokePath()
+
+        g.beginPath()
+        g.moveTo(rectNear.x + rectNear.w, rectNear.y)
+        g.lineTo(rectFar.x + rectFar.w, rectFar.y)
+        g.lineTo(rectFar.x + rectFar.w, rectFar.y + rectFar.h)
+        g.lineTo(rectNear.x + rectNear.w, rectNear.y + rectNear.h)
+        g.closePath()
+        g.strokePath()
+
+        g.strokeRect(rectFar.x, rectFar.y, rectFar.w, rectFar.h)
+        break
+      }
+
+      const leftCell = this.tileAt(tx + left.dx, ty + left.dy)
+      if (leftCell === '#') {
+        g.beginPath()
+        g.moveTo(rectNear.x, rectNear.y)
+        g.lineTo(rectFar.x, rectFar.y)
+        g.lineTo(rectFar.x, rectFar.y + rectFar.h)
+        g.lineTo(rectNear.x, rectNear.y + rectNear.h)
+        g.closePath()
+        g.strokePath()
+      }
+      const rightCell = this.tileAt(tx + right.dx, ty + right.dy)
+      if (rightCell === '#') {
+        g.beginPath()
+        g.moveTo(rectNear.x + rectNear.w, rectNear.y)
+        g.lineTo(rectFar.x + rectFar.w, rectFar.y)
+        g.lineTo(rectFar.x + rectFar.w, rectFar.y + rectFar.h)
+        g.lineTo(rectNear.x + rectNear.w, rectNear.y + rectNear.h)
+        g.closePath()
+        g.strokePath()
+      }
+    }
+
+    this.drawMiniMap()
+  }
+
+  update() {
+    let changed = false
+
+    if (Phaser.Input.Keyboard.JustDown(this.keys.J)) {
+      this.player.rotateLeft()
+      changed = true
+    } else if (Phaser.Input.Keyboard.JustDown(this.keys.K)) {
+      this.player.rotateRight()
+      changed = true
+    }
+
+    const vectors = this.dirVectors[this.player.dir]
+    if (Phaser.Input.Keyboard.JustDown(this.keys.W)) {
+      const nx = this.player.x + vectors.dx
+      const ny = this.player.y + vectors.dy
+      if (this.tileAt(nx, ny) !== '#') {
+        this.player.x = nx
+        this.player.y = ny
+        changed = true
+      }
+    } else if (Phaser.Input.Keyboard.JustDown(this.keys.S)) {
+      const nx = this.player.x - vectors.dx
+      const ny = this.player.y - vectors.dy
+      if (this.tileAt(nx, ny) !== '#') {
+        this.player.x = nx
+        this.player.y = ny
+        changed = true
+      }
+    } else if (Phaser.Input.Keyboard.JustDown(this.keys.A)) {
+      const nx = this.player.x + vectors.left.dx
+      const ny = this.player.y + vectors.left.dy
+      if (this.tileAt(nx, ny) !== '#') {
+        this.player.x = nx
+        this.player.y = ny
+        changed = true
+      }
+    } else if (Phaser.Input.Keyboard.JustDown(this.keys.D)) {
+      const nx = this.player.x + vectors.right.dx
+      const ny = this.player.y + vectors.right.dy
+      if (this.tileAt(nx, ny) !== '#') {
+        this.player.x = nx
+        this.player.y = ny
+        changed = true
+      }
+    }
+
+    if (changed) {
+      this.draw()
+    }
+    this.updateDebugText()
+  }
+}
