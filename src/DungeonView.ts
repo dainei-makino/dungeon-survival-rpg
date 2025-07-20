@@ -103,21 +103,65 @@ export default class DungeonView {
   }
 
   private castRay(angle: number): number {
-    const start = this.eyePos()
-    let x = start.x
-    let y = start.y
-    const cos = Math.cos(angle)
-    const sin = Math.sin(angle)
-    let dist = 0
-    while (dist < this.maxDepth) {
-      x += cos * 0.05
-      y += sin * 0.05
-      dist += 0.05
-      if (this.tileAt(Math.floor(x), Math.floor(y)) === '#') {
-        break
+    const pos = this.eyePos()
+    const mapX = Math.floor(pos.x)
+    const mapY = Math.floor(pos.y)
+    const rayDirX = Math.cos(angle)
+    const rayDirY = Math.sin(angle)
+
+    const deltaDistX = Math.abs(1 / (rayDirX === 0 ? 1e-6 : rayDirX))
+    const deltaDistY = Math.abs(1 / (rayDirY === 0 ? 1e-6 : rayDirY))
+
+    let stepX: number
+    let stepY: number
+    let sideDistX: number
+    let sideDistY: number
+
+    if (rayDirX < 0) {
+      stepX = -1
+      sideDistX = (pos.x - mapX) * deltaDistX
+    } else {
+      stepX = 1
+      sideDistX = (mapX + 1 - pos.x) * deltaDistX
+    }
+
+    if (rayDirY < 0) {
+      stepY = -1
+      sideDistY = (pos.y - mapY) * deltaDistY
+    } else {
+      stepY = 1
+      sideDistY = (mapY + 1 - pos.y) * deltaDistY
+    }
+
+    let currentX = mapX
+    let currentY = mapY
+    let side = 0
+    let hit = false
+
+    while (!hit && Math.hypot(currentX - mapX, currentY - mapY) < this.maxDepth) {
+      if (sideDistX < sideDistY) {
+        sideDistX += deltaDistX
+        currentX += stepX
+        side = 0
+      } else {
+        sideDistY += deltaDistY
+        currentY += stepY
+        side = 1
+      }
+      if (this.tileAt(currentX, currentY) === '#') {
+        hit = true
       }
     }
-    return dist
+
+    if (!hit) {
+      return this.maxDepth
+    }
+
+    if (side === 0) {
+      return (currentX - pos.x + (1 - stepX) / 2) / (rayDirX === 0 ? 1e-6 : rayDirX)
+    } else {
+      return (currentY - pos.y + (1 - stepY) / 2) / (rayDirY === 0 ? 1e-6 : rayDirY)
+    }
   }
 
   draw() {
