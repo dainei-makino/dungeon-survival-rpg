@@ -16,9 +16,11 @@ export default class DungeonMap {
   }
 
   tileAt(x: number, y: number): string {
-    if (y < 0 || y >= this.height || x < 0 || x >= this.width) {
+    const ix = Math.floor(x)
+    const iy = Math.floor(y)
+    if (iy < 0 || iy >= this.height || ix < 0 || ix >= this.width) {
       return '#'
     }
-    return this.tiles[y][x]
+    return this.tiles[iy][ix]
   }
 }
