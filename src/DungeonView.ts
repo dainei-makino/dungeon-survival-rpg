@@ -1,17 +1,10 @@
-import mapData from './maps/basicMap.json'
-
-export type Direction = 'north' | 'east' | 'south' | 'west'
-
-interface Player {
-  x: number
-  y: number
-  dir: Direction
-}
+import DungeonMap from './DungeonMap'
+import Player, { Direction } from './Player'
 
 export default class DungeonView {
   private scene: Phaser.Scene
   private graphics: Phaser.GameObjects.Graphics
-  private map: string[]
+  private map: DungeonMap
   private player: Player
   private keys: Record<string, Phaser.Input.Keyboard.Key>
   private dirVectors: Record<Direction, { dx: number; dy: number; left: { dx: number; dy: number }; right: { dx: number; dy: number } }>
@@ -21,8 +14,8 @@ export default class DungeonView {
   constructor(scene: Phaser.Scene) {
     this.scene = scene
     this.graphics = scene.add.graphics()
-    this.map = mapData.tiles
-    this.player = { ...mapData.playerStart }
+    this.map = new DungeonMap()
+    this.player = new Player(this.map.playerStart)
     this.keys = scene.input.keyboard.addKeys('W,S,A,D,J,K') as Record<string, Phaser.Input.Keyboard.Key>
     this.dirVectors = {
       north: { dx: 0, dy: -1, left: { dx: -1, dy: 0 }, right: { dx: 1, dy: 0 } },
@@ -51,17 +44,15 @@ export default class DungeonView {
     this.debugText.setPosition(this.scene.scale.width - 10, 10)
   }
 
-  private tileAt(x: number, y: number): string | undefined {
-    if (y < 0 || y >= this.map.length) return undefined
-    if (x < 0 || x >= this.map[0].length) return undefined
-    return this.map[y][x]
+  private tileAt(x: number, y: number): string {
+    return this.map.tileAt(x, y)
   }
 
   private drawMiniMap() {
     const size = 80
     const margin = 10
-    const rows = this.map.length
-    const cols = this.map[0].length
+    const rows = this.map.height
+    const cols = this.map.width
     const cellW = size / cols
     const cellH = size / rows
     const x = this.scene.scale.width - size - margin
@@ -175,14 +166,10 @@ export default class DungeonView {
     let changed = false
 
     if (Phaser.Input.Keyboard.JustDown(this.keys.J)) {
-      const order: Direction[] = ['north', 'east', 'south', 'west']
-      const idx = order.indexOf(this.player.dir)
-      this.player.dir = order[(idx + 3) % 4]
+      this.player.rotateLeft()
       changed = true
     } else if (Phaser.Input.Keyboard.JustDown(this.keys.K)) {
-      const order: Direction[] = ['north', 'east', 'south', 'west']
-      const idx = order.indexOf(this.player.dir)
-      this.player.dir = order[(idx + 1) % 4]
+      this.player.rotateRight()
       changed = true
     }
 
