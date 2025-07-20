@@ -127,8 +127,8 @@ export default class DungeonView {
     const sin = Math.sin(angle)
     this.mesh.modelRotation.set(0, 0, -angle)
     this.mesh.viewPosition.set(
-      px * cos - py * sin,
-      px * sin + py * cos,
+      -(px * cos + py * sin),
+      px * sin - py * cos,
       1.5
     )
   }
