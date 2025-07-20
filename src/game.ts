@@ -1,4 +1,5 @@
-import Phaser from 'phaser';
+import Phaser from 'phaser'
+import DungeonView from './DungeonView'
 
 export default function initGame(
   container: HTMLElement,
@@ -10,6 +11,8 @@ export default function initGame(
   `;
   const back = container.querySelector('#back-to-top') as HTMLButtonElement;
   back.addEventListener('click', () => loadTab('top'));
+
+  let view: DungeonView
 
   const config: Phaser.Types.Core.GameConfig = {
     type: Phaser.AUTO,
@@ -23,11 +26,14 @@ export default function initGame(
     scene: {
       preload() {},
       create() {
-        this.add.text(400, 300, 'Hello Phaser!', { color: '#ffffff' }).setOrigin(0.5);
+        view = new DungeonView(this)
+        view.draw()
       },
-      update() {},
+      update() {
+        view.update()
+      },
     },
-  };
+  }
 
   new Phaser.Game(config);
 }
