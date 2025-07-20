@@ -1,28 +1,20 @@
-import Phaser from 'phaser'
-import DungeonView from './DungeonView'
 
-const config: Phaser.Types.Core.GameConfig = {
-  type: Phaser.AUTO,
-  parent: 'game-container',
-  backgroundColor: '#000000',
-  scale: {
-    mode: Phaser.Scale.RESIZE,
-    width: window.innerWidth,
-    height: window.innerHeight,
-    autoCenter: Phaser.Scale.CENTER_BOTH
-  },
-  scene: {
-    preload() {},
-    create() {
-      const dungeon = new DungeonView(this)
-      ;(this as any).dungeon = dungeon
-      dungeon.draw()
-    },
-    update() {
-      const dungeon: DungeonView | undefined = (this as any).dungeon
-      dungeon?.update()
-    }
+const content = document.getElementById('content') as HTMLElement;
+
+type Tab = 'top' | 'novel' | 'game';
+
+async function loadTab(tab: Tab) {
+  if (tab === 'top') {
+    const { default: showTop } = await import('./top');
+    showTop(content, loadTab);
+  } else if (tab === 'novel') {
+    const { default: showNovel } = await import('./novel');
+    showNovel(content, loadTab);
+  } else if (tab === 'game') {
+    const { default: initGame } = await import('./game');
+    initGame(content, loadTab);
   }
 }
 
-new Phaser.Game(config)
+// load default tab
+loadTab('top');
