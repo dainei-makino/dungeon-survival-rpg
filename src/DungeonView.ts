@@ -1,15 +1,23 @@
 import DungeonMap from './DungeonMap'
 import Player, { Direction } from './Player'
+import { animationSpeed } from './config'
 
 export default class DungeonView {
   private scene: Phaser.Scene
   private graphics: Phaser.GameObjects.Graphics
   private map: DungeonMap
   private player: Player
+  private viewX: number
+  private viewY: number
+  private viewAngle: number
   private keys: Record<string, Phaser.Input.Keyboard.Key>
   private dirVectors: Record<Direction, { dx: number; dy: number; left: { dx: number; dy: number }; right: { dx: number; dy: number } }>
   private debugText: Phaser.GameObjects.Text
   private miniMap: Phaser.GameObjects.Graphics
+  private isMoving = false
+  private isRotating = false
+  private readonly moveDuration = 150 * animationSpeed
+  private readonly rotateDuration = 150 * animationSpeed
   private readonly FOV = Math.PI / 3
   private readonly numRays = 120
   private readonly maxDepth = 20
@@ -20,6 +28,9 @@ export default class DungeonView {
     this.graphics = scene.add.graphics()
     this.map = new DungeonMap()
     this.player = new Player(this.map.playerStart)
+    this.viewX = this.player.x
+    this.viewY = this.player.y
+    this.viewAngle = this.angleForDir(this.player.dir)
     this.keys = scene.input.keyboard.addKeys('W,S,A,D,J,K') as Record<string, Phaser.Input.Keyboard.Key>
     this.dirVectors = {
       north: { dx: 0, dy: -1, left: { dx: -1, dy: 0 }, right: { dx: 1, dy: 0 } },
@@ -52,6 +63,55 @@ export default class DungeonView {
     return this.map.tileAt(x, y)
   }
 
+  private startMove(nx: number, ny: number) {
+    this.isMoving = true
+    this.player.x = nx
+    this.player.y = ny
+    this.scene.tweens.add({
+      targets: this,
+      viewX: nx,
+      viewY: ny,
+      duration: this.moveDuration,
+      onUpdate: () => {
+        this.draw()
+        this.updateDebugText()
+      },
+      onComplete: () => {
+        this.isMoving = false
+        this.draw()
+        this.updateDebugText()
+      },
+    })
+  }
+
+  private rotateDir(dir: Direction, delta: number): Direction {
+    const order: Direction[] = ['north', 'east', 'south', 'west']
+    const idx = order.indexOf(dir)
+    return order[(idx + (delta > 0 ? 1 : -1) + 4) % 4]
+  }
+
+  private startRotate(delta: number) {
+    this.isRotating = true
+    const endDir = this.rotateDir(this.player.dir, delta)
+    const endAngle = this.angleForDir(endDir)
+    this.player.dir = endDir
+    this.scene.tweens.add({
+      targets: this,
+      viewAngle: endAngle,
+      duration: this.rotateDuration,
+      onUpdate: () => {
+        this.draw()
+        this.updateDebugText()
+      },
+      onComplete: () => {
+        this.isRotating = false
+        this.viewAngle = endAngle
+        this.draw()
+        this.updateDebugText()
+      },
+    })
+  }
+
   private drawMiniMap() {
     const size = 80
     const margin = 10
@@ -75,8 +135,8 @@ export default class DungeonView {
         g.strokeRect(x + c * cellW, y + r * cellH, cellW, cellH)
       }
     }
-    const px = x + this.player.x * cellW + cellW / 2
-    const py = y + this.player.y * cellH + cellH / 2
+    const px = x + this.viewX * cellW + cellW / 2
+    const py = y + this.viewY * cellH + cellH / 2
     g.fillStyle(0xff0000, 1)
     g.fillCircle(px, py, Math.min(cellW, cellH) / 3)
   }
@@ -95,10 +155,10 @@ export default class DungeonView {
   }
 
   private eyePos() {
-    const ang = this.angleForDir(this.player.dir)
+    const ang = this.viewAngle
     return {
-      x: this.player.x + 0.5 - Math.cos(ang) * this.eyeOffset,
-      y: this.player.y + 0.5 - Math.sin(ang) * this.eyeOffset,
+      x: this.viewX + 0.5 - Math.cos(ang) * this.eyeOffset,
+      y: this.viewY + 0.5 - Math.sin(ang) * this.eyeOffset,
     }
   }
 
@@ -175,8 +235,9 @@ export default class DungeonView {
     g.fillStyle(0x333333, 1)
     g.fillRect(0, height / 2, width, height / 2)
 
-    const vectors = this.dirVectors[this.player.dir]
-    const front = this.tileAt(this.player.x + vectors.dx, this.player.y + vectors.dy)
+    const dx = Math.round(Math.cos(this.viewAngle))
+    const dy = Math.round(Math.sin(this.viewAngle))
+    const front = this.tileAt(this.viewX + dx, this.viewY + dy)
 
     let fov = this.FOV
     let rayCount = this.numRays
@@ -185,7 +246,7 @@ export default class DungeonView {
       rayCount = Math.round(this.numRays * (fov / this.FOV))
     }
 
-    const dirAngle = this.angleForDir(this.player.dir)
+    const dirAngle = this.viewAngle
     const sliceW = width / rayCount
 
     for (let i = 0; i < rayCount; i++) {
@@ -204,14 +265,18 @@ export default class DungeonView {
   }
 
   update() {
-    let changed = false
+    if (this.isMoving || this.isRotating) {
+      this.draw()
+      this.updateDebugText()
+      return
+    }
 
     if (Phaser.Input.Keyboard.JustDown(this.keys.A)) {
-      this.player.rotateLeft()
-      changed = true
+      this.startRotate(-1)
+      return
     } else if (Phaser.Input.Keyboard.JustDown(this.keys.D)) {
-      this.player.rotateRight()
-      changed = true
+      this.startRotate(1)
+      return
     }
 
     const vectors = this.dirVectors[this.player.dir]
@@ -219,39 +284,33 @@ export default class DungeonView {
       const nx = this.player.x + vectors.dx
       const ny = this.player.y + vectors.dy
       if (this.tileAt(nx, ny) !== '#') {
-        this.player.x = nx
-        this.player.y = ny
-        changed = true
+        this.startMove(nx, ny)
+        return
       }
     } else if (Phaser.Input.Keyboard.JustDown(this.keys.S)) {
       const nx = this.player.x - vectors.dx
       const ny = this.player.y - vectors.dy
       if (this.tileAt(nx, ny) !== '#') {
-        this.player.x = nx
-        this.player.y = ny
-        changed = true
+        this.startMove(nx, ny)
+        return
       }
     } else if (Phaser.Input.Keyboard.JustDown(this.keys.J)) {
       const nx = this.player.x + vectors.left.dx
       const ny = this.player.y + vectors.left.dy
       if (this.tileAt(nx, ny) !== '#') {
-        this.player.x = nx
-        this.player.y = ny
-        changed = true
+        this.startMove(nx, ny)
+        return
       }
     } else if (Phaser.Input.Keyboard.JustDown(this.keys.K)) {
       const nx = this.player.x + vectors.right.dx
       const ny = this.player.y + vectors.right.dy
       if (this.tileAt(nx, ny) !== '#') {
-        this.player.x = nx
-        this.player.y = ny
-        changed = true
+        this.startMove(nx, ny)
+        return
       }
     }
 
-    if (changed) {
-      this.draw()
-    }
+    this.draw()
     this.updateDebugText()
   }
 }
