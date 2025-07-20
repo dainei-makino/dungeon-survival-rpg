@@ -109,24 +109,12 @@ export default class DungeonView {
   }
 
   private buildWorld() {
-    this.addFloor()
-    this.addCeiling()
-    for (let row = 0; row < this.map.height; row++) {
-      for (let col = 0; col < this.map.width; col++) {
-        if (this.map.tileAt(col, row) === '#') {
-          this.addCube(col + 0.5, 0.5, row + 0.5, 1, this.WALL_COLOR)
-        }
-      }
-    }
+    this.addCube(0, 0, 0, 1, this.WALL_COLOR)
   }
 
   private updateView() {
-    const angle = this.angleForDir(this.player.dir)
-    const px = this.player.x + 0.5
-    const py = 0.5
-    const pz = this.player.y + 0.5
-    this.mesh.modelRotation.set(0, -angle, 0)
-    this.mesh.viewPosition.set(px, py, pz)
+    this.mesh.modelRotation.set(0, 0, 0)
+    this.mesh.viewPosition.set(0, 0, 5)
   }
 
   private updateDebugText() {

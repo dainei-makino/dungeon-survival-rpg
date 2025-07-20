@@ -17,6 +17,8 @@ export default function initGame(
   const config: Phaser.Types.Core.GameConfig = {
     type: Phaser.AUTO,
     parent: 'game-container',
+    transparent: true,
+    backgroundColor: 'transparent',
     scale: {
       mode: Phaser.Scale.RESIZE,
       width: window.innerWidth,
