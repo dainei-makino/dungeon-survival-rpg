@@ -10,6 +10,8 @@ export default class DungeonView {
   private dirVectors: Record<Direction, { dx: number; dy: number; left: { dx: number; dy: number }; right: { dx: number; dy: number } }>
   private debugText: Phaser.GameObjects.Text
   private miniMap: Phaser.GameObjects.Graphics
+  private isMoving = false
+  private readonly moveDuration = 150
   private readonly FOV = Math.PI / 3
   private readonly numRays = 120
   private readonly maxDepth = 20
@@ -50,6 +52,25 @@ export default class DungeonView {
 
   private tileAt(x: number, y: number): string {
     return this.map.tileAt(x, y)
+  }
+
+  private startMove(nx: number, ny: number) {
+    this.isMoving = true
+    this.scene.tweens.add({
+      targets: this.player,
+      x: nx,
+      y: ny,
+      duration: this.moveDuration,
+      onUpdate: () => {
+        this.draw()
+        this.updateDebugText()
+      },
+      onComplete: () => {
+        this.isMoving = false
+        this.draw()
+        this.updateDebugText()
+      },
+    })
   }
 
   private drawMiniMap() {
@@ -204,6 +225,12 @@ export default class DungeonView {
   }
 
   update() {
+    if (this.isMoving) {
+      this.draw()
+      this.updateDebugText()
+      return
+    }
+
     let changed = false
 
     if (Phaser.Input.Keyboard.JustDown(this.keys.A)) {
@@ -219,33 +246,29 @@ export default class DungeonView {
       const nx = this.player.x + vectors.dx
       const ny = this.player.y + vectors.dy
       if (this.tileAt(nx, ny) !== '#') {
-        this.player.x = nx
-        this.player.y = ny
-        changed = true
+        this.startMove(nx, ny)
+        return
       }
     } else if (Phaser.Input.Keyboard.JustDown(this.keys.S)) {
       const nx = this.player.x - vectors.dx
       const ny = this.player.y - vectors.dy
       if (this.tileAt(nx, ny) !== '#') {
-        this.player.x = nx
-        this.player.y = ny
-        changed = true
+        this.startMove(nx, ny)
+        return
       }
     } else if (Phaser.Input.Keyboard.JustDown(this.keys.J)) {
       const nx = this.player.x + vectors.left.dx
       const ny = this.player.y + vectors.left.dy
       if (this.tileAt(nx, ny) !== '#') {
-        this.player.x = nx
-        this.player.y = ny
-        changed = true
+        this.startMove(nx, ny)
+        return
       }
     } else if (Phaser.Input.Keyboard.JustDown(this.keys.K)) {
       const nx = this.player.x + vectors.right.dx
       const ny = this.player.y + vectors.right.dy
       if (this.tileAt(nx, ny) !== '#') {
-        this.player.x = nx
-        this.player.y = ny
-        changed = true
+        this.startMove(nx, ny)
+        return
       }
     }
 
