@@ -15,6 +15,7 @@ export default class DungeonView {
   private player: Player
   private keys: Record<string, Phaser.Input.Keyboard.Key>
   private dirVectors: Record<Direction, { dx: number; dy: number; left: { dx: number; dy: number }; right: { dx: number; dy: number } }>
+  private debugText: Phaser.GameObjects.Text
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene
@@ -28,6 +29,24 @@ export default class DungeonView {
       south: { dx: 0, dy: 1, left: { dx: 1, dy: 0 }, right: { dx: -1, dy: 0 } },
       west: { dx: -1, dy: 0, left: { dx: 0, dy: 1 }, right: { dx: 0, dy: -1 } },
     }
+    this.debugText = scene.add.text(0, 0, '', {
+      color: '#ffffff',
+      fontSize: '14px',
+      fontFamily: 'monospace',
+    })
+    this.debugText.setOrigin(1, 0)
+    this.updateDebugText()
+  }
+
+  private updateDebugText() {
+    const pressed = Object.entries(this.keys)
+      .filter(([, key]) => key.isDown)
+      .map(([name]) => name)
+      .join(' ')
+    this.debugText.setText(
+      `Keys: ${pressed}\nPos: ${this.player.x},${this.player.y}\nDir: ${this.player.dir}`
+    )
+    this.debugText.setPosition(this.scene.scale.width - 10, 10)
   }
 
   private tileAt(x: number, y: number): string | undefined {
@@ -154,5 +173,6 @@ export default class DungeonView {
     if (changed) {
       this.draw()
     }
+    this.updateDebugText()
   }
 }
