@@ -4,6 +4,7 @@ import DungeonMap from '../dungeon-rpg/DungeonMap'
 import Player, { Direction } from '../dungeon-rpg/Player'
 import Hero from '../dungeon-rpg/Hero'
 import Enemy, { skeletonWarrior } from '../dungeon-rpg/Enemy'
+import skeletonShape from '../../assets/enemies/json/skeleton-warrior.json'
 
 export default class DungeonView3D {
   private scene: THREE.Scene
@@ -361,13 +362,33 @@ export default class DungeonView3D {
   }
 
   private spawnEnemies() {
-    const enemyGeo = new THREE.BoxGeometry(0.8 * this.cellSize, 1.6, 0.8 * this.cellSize)
-    const enemyMat = new THREE.MeshBasicMaterial({ color: 0xaa0000 })
+    const shapes = (skeletonShape.paths as number[][][]).map((pts) => {
+      const sh = new THREE.Shape()
+      pts.forEach(([x, y], idx) => {
+        if (idx === 0) sh.moveTo(x, -y)
+        else sh.lineTo(x, -y)
+      })
+      return sh
+    })
+    const enemyGeo = new THREE.ShapeGeometry(shapes)
+    enemyGeo.computeBoundingBox()
+    if (enemyGeo.boundingBox) {
+      const bb = enemyGeo.boundingBox
+      const offX = -(bb.min.x + bb.max.x) / 2
+      const offY = -bb.min.y
+      enemyGeo.translate(offX, offY, 0)
+    }
+    const enemyMat = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      side: THREE.DoubleSide,
+    })
     this.enemies.forEach((e) => {
       const mesh = new THREE.Mesh(enemyGeo, enemyMat)
+      const scale = 0.08 * this.cellSize
+      mesh.scale.set(scale, scale, scale)
       mesh.position.set(
         e.x * this.cellSize + this.cellSize / 2,
-        0.8,
+        0,
         e.y * this.cellSize + this.cellSize / 2
       )
       e.mesh = mesh
@@ -398,6 +419,15 @@ export default class DungeonView3D {
         this.animStart = null
       }
     }
+
+    // orient billboard enemies toward the camera
+    this.enemies.forEach((e) => {
+      if (e.mesh) {
+        const camPos = this.camera.position.clone()
+        camPos.y = e.mesh.position.y
+        e.mesh.lookAt(camPos)
+      }
+    })
 
     this.renderMiniMap()
   }
