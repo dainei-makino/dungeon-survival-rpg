@@ -484,30 +484,34 @@ export default class DungeonView3D {
   }
 
   spawnEnemyNearPlayer(enemy: Enemy) {
-    const offsets = [
-      [1, 0],
-      [1, 1],
-      [0, 1],
-      [-1, 1],
-      [-1, 0],
-      [-1, -1],
-      [0, -1],
-      [1, -1],
-    ]
-    for (const [dx, dy] of offsets) {
-      const x = Math.floor(this.player.x) + dx
-      const y = Math.floor(this.player.y) + dy
-      if (this.isValidSpawn(x, y)) {
-        this.enemies.push({
-          enemy,
-          x,
-          y,
-          dir: 'south',
-          nextMove: performance.now() + Math.random() * 1000,
-        })
-        this.addEnemies()
-        break
+    const px = Math.floor(this.player.x)
+    const py = Math.floor(this.player.y)
+    const maxRadius = 3
+    let spawned = false
+    for (let r = 1; r <= maxRadius; r++) {
+      for (let dy = -r; dy <= r; dy++) {
+        for (let dx = -r; dx <= r; dx++) {
+          if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue
+          const x = px + dx
+          const y = py + dy
+          if (
+            this.isValidSpawn(x, y) &&
+            !this.enemies.some((e) => e.x === x && e.y === y)
+          ) {
+            this.enemies.push({
+              enemy,
+              x,
+              y,
+              dir: 'south',
+              nextMove: performance.now() + Math.random() * 1000,
+            })
+            spawned = true
+          }
+        }
       }
+    }
+    if (spawned) {
+      this.addEnemies()
     }
   }
 
