@@ -112,35 +112,18 @@ export default class DungeonView {
       tweenAngle += Math.PI * 2
     }
 
-    const overshoot = Phaser.Math.DegToRad(1) * (delta > 0 ? 1 : -1)
-    const overshootAngle = tweenAngle + overshoot
-
     const blur = this.graphics.postFX.addBlur(0, 1, 1, 0.4)
 
     this.player.dir = endDir
-    this.scene.tweens.chain({
-      tweens: [
-        {
-          targets: this,
-          viewAngle: overshootAngle,
-          duration: this.rotateDuration * 0.7,
-          ease: Phaser.Math.Easing.Sine.In,
-          onUpdate: () => {
-            this.draw()
-            this.updateDebugText()
-          },
-        },
-        {
-          targets: this,
-          viewAngle: tweenAngle,
-          duration: this.rotateDuration * 0.3,
-          ease: Phaser.Math.Easing.Sine.Out,
-          onUpdate: () => {
-            this.draw()
-            this.updateDebugText()
-          },
-        },
-      ],
+    this.scene.tweens.add({
+      targets: this,
+      viewAngle: tweenAngle,
+      duration: this.rotateDuration,
+      ease: Phaser.Math.Easing.Sine.InOut,
+      onUpdate: () => {
+        this.draw()
+        this.updateDebugText()
+      },
       onComplete: () => {
         this.isRotating = false
         this.graphics.postFX.remove(blur)
