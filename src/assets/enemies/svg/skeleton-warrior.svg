@@ -1,4 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10">
-  <path d="M4 1 H6 V4 H9 V6 H6 V9 H4 V6 H1 V4 H4 Z"/>
-  <path d="M5 0 m-1 0 a1 1 0 1 0 2 0 a1 1 0 1 0 -2 0"/>
+  <path d="M4 2 L6 2 L6 6 L4 6 Z" />
+  <path d="M2.5 3 L4 3 L4 4 L2.5 4 Z" />
+  <path d="M6 3 L7.5 3 L7.5 4 L6 4 Z" />
+  <path d="M4 6 L5 6 L5 9 L4 9 Z" />
+  <path d="M5 6 L6 6 L6 9 L5 9 Z" />
+  <path d="M5 1 m-1 0 a1 1 0 1 0 2 0 a1 1 0 1 0 -2 0" />
 </svg>
