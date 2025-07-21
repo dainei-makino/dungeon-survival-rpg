@@ -1,6 +1,6 @@
 import DungeonMap from './DungeonMap'
 import Player, { Direction } from './Player'
-import { animationSpeed } from './config'
+import { animationSpeed, BASE_STEP_TIME_MS } from './config'
 
 export default class DungeonView {
   private scene: Phaser.Scene
@@ -17,8 +17,8 @@ export default class DungeonView {
   private isMoving = false
   private isRotating = false
   private bobOffset = 0
-  private bobTween?: Phaser.Tweens.Tween
-  private readonly moveDuration = 150 * animationSpeed
+  private readonly bobAmplitude = 2
+  private readonly moveDuration = (BASE_STEP_TIME_MS * animationSpeed) / 3
   private readonly rotateDuration = 150 * animationSpeed
   private readonly FOV = Math.PI / 3
   private readonly numRays = 120
@@ -69,26 +69,25 @@ export default class DungeonView {
     this.isMoving = true
     this.player.x = nx
     this.player.y = ny
-    this.bobTween = this.scene.tweens.add({
-      targets: this,
-      bobOffset: 3,
-      duration: this.moveDuration / 4,
-      ease: 'Sine.easeInOut',
-      yoyo: true,
-      repeat: -1,
-    })
-    this.scene.tweens.add({
-      targets: this,
-      viewX: nx,
-      viewY: ny,
+    const sx = this.viewX
+    const sy = this.viewY
+    this.scene.tweens.addCounter({
+      from: 0,
+      to: 1,
       duration: this.moveDuration,
-      onUpdate: () => {
+      onUpdate: (tw) => {
+        const t = tw.getValue() as number
+        const progress = 0.5 - 0.5 * Math.cos(Math.PI * t)
+        this.viewX = Phaser.Math.Linear(sx, nx, progress)
+        this.viewY = Phaser.Math.Linear(sy, ny, progress)
+        this.bobOffset = Math.sin(Math.PI * t) * this.bobAmplitude
         this.draw()
         this.updateDebugText()
       },
       onComplete: () => {
         this.isMoving = false
-        this.bobTween?.stop()
+        this.viewX = nx
+        this.viewY = ny
         this.bobOffset = 0
         this.draw()
         this.updateDebugText()
