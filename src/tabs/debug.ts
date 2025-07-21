@@ -29,28 +29,18 @@ export default function showDebug(
   const zoomIn = container.querySelector('#zoom-in') as HTMLButtonElement
   const zoomOut = container.querySelector('#zoom-out') as HTMLButtonElement
 
-  const characters = [
-    {
-      name: 'Blocky Doll',
-      url: new URL('../assets/characters/blocky-doll.json', import.meta.url).href,
-    },
-    {
-      name: 'Skeleton Warrior',
-      url: new URL('../assets/characters/skeleton-warrior-blocky.json', import.meta.url).href,
-    },
-    {
-      name: 'Quadruped Base',
-      url: new URL('../assets/characters/quadruped-base.json', import.meta.url).href,
-    },
-    {
-      name: 'Slime',
-      url: new URL('../assets/characters/slime.json', import.meta.url).href,
-    },
-    {
-      name: 'Hero',
-      url: new URL('../assets/characters/hero.json', import.meta.url).href,
-    },
-  ]
+  const characterModules = import.meta.glob('../assets/characters/*.json', {
+    as: 'url',
+    eager: true,
+  }) as Record<string, string>
+  const characters = Object.entries(characterModules).map(([path, url]) => {
+    const file = path.split('/').pop() ?? ''
+    const name = file
+      .replace(/\.json$/, '')
+      .replace(/-/g, ' ')
+      .replace(/\b\w/g, (c) => c.toUpperCase())
+    return { name, url }
+  })
   characters.forEach((c) => {
     const opt = document.createElement('option')
     opt.value = c.url
