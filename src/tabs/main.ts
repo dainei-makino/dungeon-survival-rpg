@@ -2,7 +2,7 @@ import { startAmbientBgm } from '../audio/ambient'
 
 const content = document.getElementById('content') as HTMLElement
 
-type Tab = 'top' | 'novel' | 'game'
+type Tab = 'top' | 'novel' | 'game' | 'debug'
 
 async function loadTab(tab: Tab) {
   // update location hash so reloading the page keeps the current tab
@@ -17,6 +17,9 @@ async function loadTab(tab: Tab) {
   } else if (tab === 'game') {
     const { default: initGame } = await import('../games/dungeon-rpg-three/initGame')
     initGame(content, loadTab)
+  } else if (tab === 'debug') {
+    const { default: showDebug } = await import('./debug')
+    showDebug(content, loadTab)
   }
 }
 
