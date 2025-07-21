@@ -27,7 +27,7 @@ export default class AmbientPadSynth {
   /**
    * Smoothly adjust the master gain.
    */
-  setMasterGain(value: number, time = 0.5) {
+  setMasterGain(value: number, time = 15) {
     const now = this.ctx.currentTime
     this.output.gain.linearRampToValueAtTime(value, now + time)
   }

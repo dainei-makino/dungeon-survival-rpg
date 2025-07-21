@@ -53,7 +53,7 @@ export default class AmbientMusicGenerator {
     }
   }
 
-  async playIntro(fadeSec = 3) {
+  async playIntro(fadeSec = 15) {
     this.stop()
     this.synth.setMasterGain(0, 0)
     const steps = [0, 2, 4, 2]
@@ -66,7 +66,7 @@ export default class AmbientMusicGenerator {
     this.start()
   }
 
-  async playBridge(fadeSec = 1) {
+  async playBridge(fadeSec = 15) {
     this.stop()
     this.synth.setMasterGain(0, fadeSec)
     await this.wait(fadeSec * 1000)

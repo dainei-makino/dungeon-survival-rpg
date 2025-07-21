@@ -21,7 +21,7 @@ export async function setAmbientBiome(name: string, bridge = true) {
   generator.setScale(cfg.scale)
   generator.setRoot(cfg.root)
   synth.setNoiseLevel(cfg.noise)
-  synth.setMasterGain(0.03, 1)
+  synth.setMasterGain(0.03, 15)
   generator.start()
 }
 
