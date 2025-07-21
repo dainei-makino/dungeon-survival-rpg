@@ -5,10 +5,38 @@ const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
 const synth = new AmbientPadSynth(ctx, 'triangle')
 const generator = new AmbientMusicGenerator(ctx, synth)
 
-const biomeConfigs: Record<string, { patch: AmbientPatch; scale: number[]; root: number; noise: number }> = {
-  forest: { patch: 'triangle', scale: [0, 2, 5, 7, 9], root: 220, noise: 0.1 },
-  cave: { patch: 'noise', scale: [0, 3, 5, 7, 10], root: 110, noise: 0.4 },
-  plain: { patch: 'saw', scale: [0, 2, 4, 7, 9], root: 220, noise: 0.4 }
+const biomeConfigs: Record<string, {
+  patch: AmbientPatch
+  scales: number[][]
+  root: number
+  noise: number
+  decay: number
+  intensity: number
+}> = {
+  forest: {
+    patch: 'triangle',
+    scales: [[0, 2, 5, 7, 9], [0, 4, 5, 7, 11]],
+    root: 220,
+    noise: 0.05,
+    decay: 10,
+    intensity: 0.3
+  },
+  cave: {
+    patch: 'noise',
+    scales: [[0, 3, 5, 7, 10], [0, 2, 5, 7, 9]],
+    root: 110,
+    noise: 0.4,
+    decay: 6,
+    intensity: 0.4
+  },
+  plain: {
+    patch: 'saw',
+    scales: [[0, 2, 4, 7, 9], [0, 2, 5, 7, 9]],
+    root: 220,
+    noise: 0.2,
+    decay: 8,
+    intensity: 0.6
+  }
 }
 
 export async function setAmbientBiome(name: string, bridge = true) {
@@ -18,9 +46,11 @@ export async function setAmbientBiome(name: string, bridge = true) {
     await generator.playBridge()
   }
   synth.setPatch(cfg.patch)
-  generator.setScale(cfg.scale)
+  generator.setScales(cfg.scales)
   generator.setRoot(cfg.root)
   synth.setNoiseLevel(cfg.noise)
+  synth.setDecay(cfg.decay)
+  generator.setIntensity(cfg.intensity)
   synth.setMasterGain(0.03, 15)
   generator.start()
 }

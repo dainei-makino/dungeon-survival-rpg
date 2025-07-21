@@ -2,7 +2,7 @@ import AmbientPadSynth from './AmbientPadSynth'
 
 export default class AmbientMusicGenerator {
   private timer: number | null = null
-  private longTermScales = [
+  private longTermScales: number[][] = [
     [0, 3, 5, 7, 10],
     [0, 2, 5, 7, 9],
     [0, 3, 6, 8, 10]
@@ -31,8 +31,16 @@ export default class AmbientMusicGenerator {
   }
 
   setScale(scale: number[]) {
-    this.longTermScales = [scale]
+    this.setScales([scale])
+  }
+
+  setScales(scales: number[][]) {
+    this.longTermScales = scales
     this.longTermIndex = 0
+  }
+
+  setTempo(intervalMs: number) {
+    this.chordIntervalMs = intervalMs
   }
 
   setIntensity(level: number) {

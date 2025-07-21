@@ -5,6 +5,7 @@ export default class AmbientPadSynth {
   private output: GainNode
   private noiseBuffer: AudioBuffer
   private noiseLevel = 0.4
+  private decay = 8
 
   constructor(private ctx: AudioContext, private patch: AmbientPatch = 'saw') {
     this.filter = ctx.createBiquadFilter()
@@ -46,13 +47,21 @@ export default class AmbientPadSynth {
     this.noiseLevel = level
   }
 
-  playNote(freq: number, duration = 8) {
+  /**
+   * Set decay time for notes.
+   */
+  setDecay(time: number) {
+    this.decay = time
+  }
+
+  playNote(freq: number, duration = this.decay) {
     const now = this.ctx.currentTime
     const gain = this.ctx.createGain()
     gain.gain.setValueAtTime(0, now)
     const peak = this.patch === 'noise' ? this.noiseLevel : 0.4
-    gain.gain.linearRampToValueAtTime(peak, now + 2)
-    gain.gain.linearRampToValueAtTime(0, now + duration)
+    const attack = 2
+    gain.gain.linearRampToValueAtTime(peak, now + attack)
+    gain.gain.linearRampToValueAtTime(0, now + attack + duration)
     gain.connect(this.filter)
 
     if (this.patch === 'noise') {
@@ -61,7 +70,7 @@ export default class AmbientPadSynth {
       src.loop = true
       src.connect(gain)
       src.start(now)
-      src.stop(now + duration)
+      src.stop(now + attack + duration)
       return
     }
 
@@ -73,7 +82,7 @@ export default class AmbientPadSynth {
       osc.detune.value = d
       osc.connect(gain)
       osc.start(now)
-      osc.stop(now + duration)
+      osc.stop(now + attack + duration)
     }
   }
 }
