@@ -22,6 +22,9 @@ import EnvironmentCharacter, {
   stump,
   fallenLeaves,
 } from '../dungeon-rpg/Environment'
+import Instrument from '../../audio/instruments/Instrument'
+import Piano from '../../audio/instruments/Piano'
+import Pad from '../../audio/instruments/Pad'
 
 export interface Biome {
   name: string
@@ -37,6 +40,7 @@ export interface Biome {
   floorTexture?: () => THREE.Texture
   treeTexture?: () => THREE.Texture
   leavesTexture?: () => THREE.Texture
+  music?: () => Instrument[]
 }
 
 export const forestBiome: Biome = {
@@ -53,6 +57,7 @@ export const forestBiome: Biome = {
   floorTexture: swampTexture,
   treeTexture: () => treeTexture(40),
   leavesTexture: () => createLeavesTexture(20),
+  music: () => [new Pad(), new Piano()],
 }
 
 export const caveBiome: Biome = {
@@ -63,6 +68,7 @@ export const caveBiome: Biome = {
   fog: '#555555',
   weather: 'damp',
   lighting: { color: 0x888888, intensity: 0.5 },
+  music: () => [new Pad()],
 }
 
 export const plainBiome: Biome = {
@@ -73,6 +79,7 @@ export const plainBiome: Biome = {
   fog: '#ccffcc',
   weather: 'windy',
   lighting: { color: 0xffffff, intensity: 1 },
+  music: () => [new Piano()],
 }
 
 export const biomes = {

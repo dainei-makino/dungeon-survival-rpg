@@ -15,6 +15,8 @@ import {
   treeTexture,
   leavesTexture,
 } from './utils/textures'
+import MusicGenerator, { Track } from '../../audio/MusicGenerator'
+import Instrument from '../../audio/instruments/Instrument'
 
 
 export default class DungeonView3D {
@@ -57,6 +59,7 @@ export default class DungeonView3D {
   private mapCenterY = 0
   private enemyBase?: THREE.Group
   private items: { name: string; x: number; y: number; mesh: THREE.Object3D }[] = []
+  private musicTracks: Track[] | null = null
 
   constructor(
     container: HTMLElement,
@@ -137,6 +140,7 @@ export default class DungeonView3D {
 
     this.buildScene()
     this.arms = new PlayerArms(this.camera)
+    this.setupMusic()
     // set initial camera state without animation
     const h0 = this.map.getHeight(this.player.x, this.player.y) * this.cellSize
     this.camera.position.set(
@@ -184,6 +188,13 @@ export default class DungeonView3D {
     this.scene.add(this.torch)
     this.spawnEnemies()
     this.spawnEnvironment()
+  }
+
+  private setupMusic() {
+    if (!this.biome.music) return
+    const instruments = this.biome.music()
+    this.musicTracks = MusicGenerator.generateFixedTracks(instruments)
+    MusicGenerator.playTracks(this.musicTracks)
   }
 
   private handleKeyDown = (e: KeyboardEvent) => {
@@ -700,6 +711,11 @@ export default class DungeonView3D {
 
   getHero() {
     return this.hero
+  }
+
+  setBiome(biome: Biome) {
+    this.biome = biome
+    this.setupMusic()
   }
 
   getDetailedDebug(): string {
