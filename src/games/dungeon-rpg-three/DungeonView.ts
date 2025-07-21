@@ -23,6 +23,12 @@ export default class DungeonView3D {
   private miniMap?: HTMLCanvasElement
   private miniCtx?: CanvasRenderingContext2D
   private torch?: THREE.Mesh
+  private animStart: number | null = null
+  private startPos = new THREE.Vector3()
+  private startRot = 0
+  private targetPos = new THREE.Vector3()
+  private targetRot = 0
+  private readonly animDuration = 200 // ms
 
   constructor(container: HTMLElement, miniMap?: HTMLCanvasElement) {
     this.map = new DungeonMap()
@@ -53,7 +59,13 @@ export default class DungeonView3D {
     window.addEventListener('keydown', this.handleKeyDown)
 
     this.buildScene()
-    this.updateCamera()
+    // set initial camera state without animation
+    this.camera.position.set(this.player.x + 0.5, 1.6, this.player.y + 0.5)
+    this.camera.rotation.set(0, this.angleForDir(this.player.dir), 0)
+    this.startPos.copy(this.camera.position)
+    this.startRot = this.camera.rotation.y
+    this.targetPos.copy(this.startPos)
+    this.targetRot = this.startRot
   }
 
   private checkerTexture(color1: string, color2: string, squares = 8) {
@@ -197,6 +209,25 @@ export default class DungeonView3D {
     if (this.torch) {
       this.torch.rotation.y += 0.01
     }
+
+    if (this.animStart !== null) {
+      const elapsed = performance.now() - this.animStart
+      const t = Math.min(1, elapsed / this.animDuration)
+      this.camera.position.lerpVectors(this.startPos, this.targetPos, t)
+      this.camera.rotation.y =
+        this.startRot + (this.targetRot - this.startRot) * t
+      if (this.torch) {
+        this.torch.position.set(
+          this.camera.position.x,
+          1.6,
+          this.camera.position.z
+        )
+      }
+      if (t === 1) {
+        this.animStart = null
+      }
+    }
+
     this.renderMiniMap()
   }
 
@@ -214,8 +245,11 @@ export default class DungeonView3D {
   }
 
   updateCamera() {
-    this.camera.position.set(this.player.x + 0.5, 1.6, this.player.y + 0.5)
-    this.camera.rotation.set(0, this.angleForDir(this.player.dir), 0)
+    this.startPos.copy(this.camera.position)
+    this.startRot = this.camera.rotation.y
+    this.targetPos.set(this.player.x + 0.5, 1.6, this.player.y + 0.5)
+    this.targetRot = this.angleForDir(this.player.dir)
+    this.animStart = performance.now()
   }
 
   render() {
