@@ -30,7 +30,7 @@ export default class BasicSynth {
       throw new Error('No AudioContext available')
     }
     this.master = this.context.createGain()
-    this.master.gain.value = options.masterGain ?? 0.01
+    this.master.gain.value = options.masterGain ?? 0.003
     this.master.connect(this.context.destination)
     this.type = options.type ?? 'sine'
     this.gain = options.gain ?? 0.2

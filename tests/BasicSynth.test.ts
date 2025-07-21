@@ -35,7 +35,7 @@ class MockContext {
 async function run() {
   const context = new MockContext()
   const synth = new BasicSynth({ context: context as any })
-  assert.strictEqual((synth as any).master.gain.value, 0.01)
+  assert.strictEqual((synth as any).master.gain.value, 0.003)
   assert.strictEqual((synth as any).attack, 0.02)
   assert.strictEqual((synth as any).release, 0.1)
   synth.fadeIn(0.5)
