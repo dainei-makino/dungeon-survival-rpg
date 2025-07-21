@@ -1,3 +1,4 @@
+import Phaser from 'phaser'
 import DungeonMap from './DungeonMap'
 import Player, { Direction } from './Player'
 import { animationSpeed, BASE_STEP_TIME_MS } from './config'
@@ -24,10 +25,14 @@ export default class DungeonView {
   private readonly numRays = 120
   private readonly maxDepth = 20
   private readonly eyeOffset = 0.6
+  private readonly fogColor = { r: 220, g: 220, b: 230 }
+  private readonly fogStrength = 0.6
+  private godRayGraphics: Phaser.GameObjects.Graphics
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene
     this.graphics = scene.add.graphics()
+    this.godRayGraphics = scene.add.graphics({ blendMode: Phaser.BlendModes.ADD })
     this.map = new DungeonMap()
     this.player = new Player(this.map.playerStart)
     this.viewX = this.player.x
@@ -158,6 +163,26 @@ export default class DungeonView {
     g.fillCircle(px, py, Math.min(cellW, cellH) / 3)
   }
 
+  private drawGodRays() {
+    const g = this.godRayGraphics
+    const width = this.scene.scale.width
+    const height = this.scene.scale.height
+    const centerX = width / 2
+    const centerY = -50
+    const rays = 8
+    const radius = Math.max(width, height) * 1.2
+    g.clear()
+    for (let i = 0; i < rays; i++) {
+      const angle = (i / rays - 0.5) * 0.5
+      const x1 = centerX + Math.cos(angle - 0.05) * radius
+      const y1 = centerY + Math.sin(angle - 0.05) * radius
+      const x2 = centerX + Math.cos(angle + 0.05) * radius
+      const y2 = centerY + Math.sin(angle + 0.05) * radius
+      g.fillStyle(0xffffff, 0.05)
+      g.fillTriangle(centerX, centerY, x1, y1, x2, y2)
+    }
+  }
+
   private angleForDir(dir: Direction): number {
     switch (dir) {
       case 'north':
@@ -281,7 +306,16 @@ export default class DungeonView {
       const wallScale = width * 0.35
       const h = Math.min(height, wallScale / Math.max(corrected, 0.0001))
       const shade = Math.max(0, 200 - corrected * 40)
-      const color = Phaser.Display.Color.GetColor(shade, shade, shade)
+      const baseColor = Phaser.Display.Color.GetColor(shade, shade, shade)
+      const fogFactor = Phaser.Math.Clamp(hit.dist / this.maxDepth, 0, 1)
+      const c = Phaser.Display.Color.ValueToColor(baseColor)
+      const fog = Phaser.Display.Color.Interpolate.ColorWithColor(
+        c,
+        this.fogColor,
+        1,
+        fogFactor * this.fogStrength
+      )
+      const color = Phaser.Display.Color.GetColor(fog.r, fog.g, fog.b)
       g.fillStyle(color, 1)
       g.fillRect(i * sliceW, (height - h) / 2, sliceW + 1, h)
 
@@ -295,6 +329,7 @@ export default class DungeonView {
       prevSide = hit.side
     }
 
+    this.drawGodRays()
     this.drawMiniMap()
   }
 
