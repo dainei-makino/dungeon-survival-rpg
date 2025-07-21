@@ -9,10 +9,11 @@ export default class PlayerArms {
   private rightUpper: THREE.Mesh
   private rightLower: THREE.Mesh
   private rightFist: THREE.Mesh
-
   private spacing = 0.4
   private lowerDist = -0.06
   private fistDist = 0
+  private rightUpper: THREE.Mesh
+  private rightLower: THREE.Mesh
 
   constructor(camera: THREE.Camera) {
     this.group = new THREE.Group()
@@ -64,6 +65,7 @@ export default class PlayerArms {
     this.rightUpper.rotation.x = 2.5
     this.rightUpper.rotation.z = -0.15
     const scale = 1.1
+
     this.leftUpper.scale.setScalar(scale)
     this.leftLower.scale.setScalar(scale)
     this.rightUpper.scale.setScalar(scale)
@@ -101,6 +103,7 @@ export default class PlayerArms {
     lowerDist?: number
     fistDist?: number
   }) {
+
     if (settings.posY !== undefined) this.group.position.y = settings.posY
     if (settings.upperRotX !== undefined) {
       this.leftUpper.rotation.x = settings.upperRotX
@@ -120,6 +123,7 @@ export default class PlayerArms {
       this.rightUpper.scale.setScalar(settings.scale)
       this.rightLower.scale.setScalar(settings.scale)
     }
+
     if (settings.spacing !== undefined) {
       this.spacing = settings.spacing
       this.leftUpper.position.x = -this.spacing

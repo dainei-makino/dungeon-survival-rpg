@@ -350,12 +350,14 @@ export default class DungeonView3D {
     lowerRotX?: number
     rotZ?: number
     scale?: number
+
     spacing?: number
     lowerDist?: number
     fistDist?: number
   }) {
     this.arms.update(settings)
   }
+
   update() {
     if (this.torch) {
       this.torch.rotation.y += 0.01

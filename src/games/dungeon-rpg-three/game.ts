@@ -65,6 +65,7 @@ export default function initThreeGame(
   }
 
   ;[posY, upperX, lowerX, rotZ, scale, spacing, lowerDist, fistDist].forEach((input) => {
+
     input.addEventListener('input', updateFromInputs)
   })
 
