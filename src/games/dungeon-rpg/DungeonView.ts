@@ -175,23 +175,36 @@ export default class DungeonView {
 
   private drawFloor(width: number, height: number) {
     const g = this.graphics
-    const step = 4
-    const scale = 0.1
-    for (let y = height / 2; y < height; y += step) {
-      for (let x = 0; x < width; x += step) {
-        const nx = this.viewX * 0.3 + x * scale
-        const ny = this.viewY * 0.3 + y * scale
-        let n = this.noise.noise(nx, ny)
-        n = (n + 1) / 2
-        const base = 80
-        const shade = Math.floor(base + n * 60)
-        const color = Phaser.Display.Color.GetColor(
-          shade,
-          shade * 0.8,
-          shade * 0.5
-        )
-        g.fillStyle(color, 1)
-        g.fillRect(x, y, step, step)
+    const tileSize = 16
+    const noiseStep = 4
+    const scale = 0.2
+    const startY = height / 2
+    const tilesX = Math.ceil(width / tileSize)
+    const tilesY = Math.ceil((height / 2) / tileSize)
+    const startX = Math.floor(this.viewX) - Math.floor(tilesX / 2)
+    const startTileY = Math.floor(this.viewY)
+
+    for (let ty = 0; ty < tilesY; ty++) {
+      for (let tx = 0; tx < tilesX; tx++) {
+        const worldX = startX + tx
+        const worldY = startTileY + ty
+        for (let py = 0; py < tileSize; py += noiseStep) {
+          for (let px = 0; px < tileSize; px += noiseStep) {
+            const nx = (worldX + px / tileSize) * scale
+            const ny = (worldY + py / tileSize) * scale
+            let n = this.noise.noise(nx, ny)
+            n = (n + 1) / 2
+            const shade = Math.floor(n * 255)
+            const color = Phaser.Display.Color.GetColor(shade, shade, shade)
+            g.fillStyle(color, 1)
+            g.fillRect(
+              tx * tileSize + px,
+              startY + ty * tileSize + py,
+              noiseStep,
+              noiseStep
+            )
+          }
+        }
       }
     }
   }
