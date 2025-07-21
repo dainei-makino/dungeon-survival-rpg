@@ -1,4 +1,5 @@
 import DungeonView3D from './DungeonView3D'
+import sound from '../../audio'
 
 export default function initThreeGame(
   container: HTMLElement,
@@ -31,6 +32,7 @@ export default function initThreeGame(
   const debugDiv = container.querySelector('#debug-info') as HTMLDivElement
   container.style.position = 'relative'
   const view = new DungeonView3D(wrapper, miniMap)
+  sound.playBgm('main')
 
   const armControls = container.querySelector('#arm-controls') as HTMLDivElement
   const posY = armControls.querySelector('#arm-pos-y') as HTMLInputElement

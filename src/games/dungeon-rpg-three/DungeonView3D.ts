@@ -6,6 +6,7 @@ import Enemy, { skeletonWarrior } from '../dungeon-rpg/Enemy'
 import PlayerArms from './components/PlayerArms'
 import skeletonShape from '../../assets/enemies/json/skeleton-warrior.json'
 import { floorTexture, wallTexture, perlinTexture } from './utils/textures'
+import sound from '../../audio'
 
 export default class DungeonView3D {
   private scene: THREE.Scene
@@ -289,8 +290,10 @@ export default class DungeonView3D {
       } else {
         console.log(`${left ? 'Left' : 'Right'} hand finds nothing`)
       }
+      sound.playSe('beep')
     } else {
       console.log(`${left ? 'Left' : 'Right'} hand uses ${item}`)
+      sound.playSe('beep')
     }
   }
 
