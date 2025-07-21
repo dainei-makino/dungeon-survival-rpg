@@ -28,7 +28,9 @@ following biomes are defined:
 - **forest** – default biome using a multi‑octave Perlin terrain generator. The
   landscape features steep hills and occasional caves filled with swamp and tree
   voxels. Apples, stumps and piles of fallen leaves appear scattered around the
-  woods. No ceiling is placed and a distant dark sky texture surrounds the map.
+  woods. A handful of skeleton warriors are placed randomly when the map is
+  generated. No ceiling is placed and a distant dark sky texture surrounds the
+  map.
 - **cave** – darker environment with damp weather.
 - **plain** – open terrain with windy weather.
 
