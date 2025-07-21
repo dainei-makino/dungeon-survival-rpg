@@ -1,5 +1,3 @@
-import { startAmbientBgm } from '../audio/ambient'
-
 const content = document.getElementById('content') as HTMLElement
 
 type Tab = 'top' | 'novel' | 'game' | 'debug'
@@ -27,5 +25,3 @@ async function loadTab(tab: Tab) {
 const initialTab = (location.hash.replace('#', '') as Tab) || 'top';
 loadTab(initialTab);
 
-// start ambient background music
-startAmbientBgm().catch(console.error)
