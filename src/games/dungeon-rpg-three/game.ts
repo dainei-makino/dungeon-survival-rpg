@@ -14,6 +14,9 @@ export default function initThreeGame(
       <div>Lower X <input id="arm-lower-x" type="range" min="-3.14" max="3.14" step="0.01"></div>
       <div>Rot Z <input id="arm-rot-z" type="range" min="-1.57" max="1.57" step="0.01"></div>
       <div>Scale <input id="arm-scale" type="range" min="0.3" max="2" step="0.01"></div>
+      <div>Spacing <input id="arm-spacing" type="range" min="0" max="1" step="0.01"></div>
+      <div>Lower Dist <input id="arm-lower-dist" type="range" min="-1" max="0" step="0.01"></div>
+      <div>Fist Dist <input id="arm-fist-dist" type="range" min="-1" max="0" step="0.01"></div>
       <button id="arm-copy">copy</button>
     </div>
     <div id="three-game" style="width:100%;height:100%"></div>
@@ -33,6 +36,9 @@ export default function initThreeGame(
   const lowerX = armControls.querySelector('#arm-lower-x') as HTMLInputElement
   const rotZ = armControls.querySelector('#arm-rot-z') as HTMLInputElement
   const scale = armControls.querySelector('#arm-scale') as HTMLInputElement
+  const spacing = armControls.querySelector('#arm-spacing') as HTMLInputElement
+  const lowerDist = armControls.querySelector('#arm-lower-dist') as HTMLInputElement
+  const fistDist = armControls.querySelector('#arm-fist-dist') as HTMLInputElement
   const copyBtn = armControls.querySelector('#arm-copy') as HTMLButtonElement
 
   const settings = view.getArmSettings()
@@ -41,6 +47,9 @@ export default function initThreeGame(
   lowerX.value = settings.lowerRotX.toString()
   rotZ.value = settings.rotZ.toString()
   scale.value = settings.scale.toString()
+  spacing.value = settings.spacing.toString()
+  lowerDist.value = settings.lowerDist.toString()
+  fistDist.value = settings.fistDist.toString()
 
   function updateFromInputs() {
     view.updateArms({
@@ -49,10 +58,14 @@ export default function initThreeGame(
       lowerRotX: parseFloat(lowerX.value),
       rotZ: parseFloat(rotZ.value),
       scale: parseFloat(scale.value),
+      spacing: parseFloat(spacing.value),
+      lowerDist: parseFloat(lowerDist.value),
+      fistDist: parseFloat(fistDist.value),
     })
   }
 
-  ;[posY, upperX, lowerX, rotZ, scale].forEach((input) => {
+  ;[posY, upperX, lowerX, rotZ, scale, spacing, lowerDist, fistDist].forEach((input) => {
+
     input.addEventListener('input', updateFromInputs)
   })
 

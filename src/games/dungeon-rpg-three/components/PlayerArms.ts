@@ -5,6 +5,13 @@ export default class PlayerArms {
   private group: THREE.Group
   private leftUpper: THREE.Mesh
   private leftLower: THREE.Mesh
+  private leftFist: THREE.Mesh
+  private rightUpper: THREE.Mesh
+  private rightLower: THREE.Mesh
+  private rightFist: THREE.Mesh
+  private spacing = 0.4
+  private lowerDist = -0.06
+  private fistDist = 0
   private rightUpper: THREE.Mesh
   private rightLower: THREE.Mesh
 
@@ -35,12 +42,12 @@ export default class PlayerArms {
     const makeArm = () => {
       const upper = new THREE.Mesh(upperGeo, armMat)
       const lower = new THREE.Mesh(lowerGeo, armMat)
-      lower.position.y = -0.3
+      lower.position.y = this.lowerDist
       const fist = new THREE.Mesh(fistGeo, armMat)
-      fist.position.y = -0.14
+      fist.position.y = this.fistDist
       lower.add(fist)
       upper.add(lower)
-      return { upper, lower }
+      return { upper, lower, fist }
     }
 
     const left = makeArm()
@@ -48,25 +55,28 @@ export default class PlayerArms {
 
     this.leftUpper = left.upper
     this.leftLower = left.lower
+    this.leftFist = left.fist
     this.rightUpper = right.upper
     this.rightLower = right.lower
+    this.rightFist = right.fist
 
-    this.leftUpper.rotation.x = 2.08
-    this.leftUpper.rotation.z = 0.33
-    this.rightUpper.rotation.x = 2.08
-    this.rightUpper.rotation.z = -0.33
-    const scale = 1.2
+    this.leftUpper.rotation.x = 2.5
+    this.leftUpper.rotation.z = 0.15
+    this.rightUpper.rotation.x = 2.5
+    this.rightUpper.rotation.z = -0.15
+    const scale = 1.1
+
     this.leftUpper.scale.setScalar(scale)
     this.leftLower.scale.setScalar(scale)
     this.rightUpper.scale.setScalar(scale)
     this.rightLower.scale.setScalar(scale)
 
-    this.leftUpper.position.set(-0.25, 0, -0.6)
-    this.rightUpper.position.set(0.25, 0, -0.6)
+    this.leftUpper.position.set(-this.spacing, 0, -0.6)
+    this.rightUpper.position.set(this.spacing, 0, -0.6)
 
     this.group.add(this.leftUpper)
     this.group.add(this.rightUpper)
-    this.group.position.y = -0.45
+    this.group.position.y = -0.6
     camera.add(this.group)
   }
 
@@ -77,10 +87,23 @@ export default class PlayerArms {
       lowerRotX: this.leftLower.rotation.x,
       rotZ: this.leftUpper.rotation.z,
       scale: this.leftUpper.scale.x,
+      spacing: Math.abs(this.leftUpper.position.x),
+      lowerDist: this.leftLower.position.y,
+      fistDist: this.leftFist.position.y,
     }
   }
 
-  update(settings: { posY?: number; upperRotX?: number; lowerRotX?: number; rotZ?: number; scale?: number }) {
+  update(settings: {
+    posY?: number
+    upperRotX?: number
+    lowerRotX?: number
+    rotZ?: number
+    scale?: number
+    spacing?: number
+    lowerDist?: number
+    fistDist?: number
+  }) {
+
     if (settings.posY !== undefined) this.group.position.y = settings.posY
     if (settings.upperRotX !== undefined) {
       this.leftUpper.rotation.x = settings.upperRotX
@@ -99,6 +122,22 @@ export default class PlayerArms {
       this.leftLower.scale.setScalar(settings.scale)
       this.rightUpper.scale.setScalar(settings.scale)
       this.rightLower.scale.setScalar(settings.scale)
+    }
+
+    if (settings.spacing !== undefined) {
+      this.spacing = settings.spacing
+      this.leftUpper.position.x = -this.spacing
+      this.rightUpper.position.x = this.spacing
+    }
+    if (settings.lowerDist !== undefined) {
+      this.lowerDist = settings.lowerDist
+      this.leftLower.position.y = this.lowerDist
+      this.rightLower.position.y = this.lowerDist
+    }
+    if (settings.fistDist !== undefined) {
+      this.fistDist = settings.fistDist
+      this.leftFist.position.y = this.fistDist
+      this.rightFist.position.y = this.fistDist
     }
   }
 }
