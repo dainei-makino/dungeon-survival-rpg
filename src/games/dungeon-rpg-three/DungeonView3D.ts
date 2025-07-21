@@ -243,7 +243,7 @@ export default class DungeonView3D {
         const h = this.map.getHeight(x, y)
         for (let z = h; z < this.map.depth; z++) {
           const voxel = this.map.voxelAt(x, y, z)
-          if (voxel !== VoxelType.Tree && voxel !== VoxelType.Leaves && this.map.tileAt(x, y) !== '#') {
+          if (voxel !== VoxelType.Tree && voxel !== VoxelType.Leaves) {
             continue
           }
           const geom = new THREE.BoxGeometry(this.cellSize, 2, this.cellSize)
