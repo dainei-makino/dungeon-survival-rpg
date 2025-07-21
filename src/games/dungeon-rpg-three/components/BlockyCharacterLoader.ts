@@ -42,8 +42,11 @@ export default class BlockyCharacterLoader {
   async fromSpec(spec: CharacterSpec, baseUrl?: string): Promise<THREE.Group> {
     const group = new THREE.Group()
     ;(group.userData.parts ||= {})
-    const urlBase =
-      baseUrl || this.url.substring(0, this.url.lastIndexOf('/') + 1)
+    let urlBase = baseUrl || this.url.substring(0, this.url.lastIndexOf('/') + 1)
+    // ensure the base URL is valid so relative asset paths resolve correctly
+    if (!urlBase) {
+      if (typeof window !== 'undefined') urlBase = window.location.origin + '/'
+    }
     if (typeof spec.voxelHeight === 'number') {
       group.userData.voxelHeight = spec.voxelHeight
     }
