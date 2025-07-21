@@ -306,9 +306,10 @@ export default class DungeonView3D {
         const mesh = this.enemyBase.clone(true)
         const scale = 0.3 * this.cellSize
         mesh.scale.set(scale, scale, scale)
+        const h = this.map.getHeight(e.x, e.y) * this.cellSize
         mesh.position.set(
           e.x * this.cellSize + this.cellSize / 2,
-          0,
+          h,
           e.y * this.cellSize + this.cellSize / 2
         )
         e.mesh = mesh
@@ -339,9 +340,10 @@ export default class DungeonView3D {
           }
         }
       }
+      const h = this.map.getHeight(x, y) * this.cellSize
       doll.position.set(
         x * this.cellSize + this.cellSize / 2,
-        0,
+        h,
         y * this.cellSize + this.cellSize / 2
       )
       this.blockyNPC = doll
