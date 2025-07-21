@@ -93,11 +93,17 @@ export default class DungeonView {
   private startRotate(delta: number) {
     this.isRotating = true
     const endDir = this.rotateDir(this.player.dir, delta)
-    const endAngle = this.angleForDir(endDir)
+    const finalAngle = this.angleForDir(endDir)
+    let tweenAngle = finalAngle
+    if (tweenAngle - this.viewAngle > Math.PI) {
+      tweenAngle -= Math.PI * 2
+    } else if (this.viewAngle - tweenAngle > Math.PI) {
+      tweenAngle += Math.PI * 2
+    }
     this.player.dir = endDir
     this.scene.tweens.add({
       targets: this,
-      viewAngle: endAngle,
+      viewAngle: tweenAngle,
       duration: this.rotateDuration,
       onUpdate: () => {
         this.draw()
@@ -105,7 +111,7 @@ export default class DungeonView {
       },
       onComplete: () => {
         this.isRotating = false
-        this.viewAngle = endAngle
+        this.viewAngle = finalAngle
         this.draw()
         this.updateDebugText()
       },
