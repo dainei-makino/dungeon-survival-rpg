@@ -203,11 +203,11 @@ export default class DungeonView3D {
   private angleForDir(dir: Direction): number {
     switch (dir) {
       case 'north':
-        return Math.PI
+        return 0
       case 'east':
         return -Math.PI / 2
       case 'south':
-        return 0
+        return Math.PI
       case 'west':
         return Math.PI / 2
     }
