@@ -4,7 +4,7 @@ import { Biome, forestBiome } from '../world/biomes'
 import { VoxelType } from '../world/voxels'
 import Player, { Direction } from '../dungeon-rpg/Player'
 import Hero from '../dungeon-rpg/Hero'
-import Enemy from '../dungeon-rpg/Enemy'
+import Enemy, { skeletonWarrior } from '../dungeon-rpg/Enemy'
 import EnvironmentCharacter from '../dungeon-rpg/Environment'
 import PlayerArms from './components/PlayerArms'
 import BlockyCharacterLoader from './components/BlockyCharacterLoader'
@@ -758,5 +758,90 @@ export default class DungeonView3D {
       lines.push(`${e.template.name} @ (${e.x}, ${e.y})`)
     )
     return lines.join('\n')
+  }
+
+  getSpawnOptions(): { id: string; label: string }[] {
+    const opts: { id: string; label: string }[] = [
+      { id: 'enemy:skeleton', label: skeletonWarrior.name },
+    ]
+    this.biome.environment.forEach((env) =>
+      opts.push({ id: `env:${env.name}`, label: env.name })
+    )
+    return opts
+  }
+
+  spawnCharacter(id: string) {
+    if (id === 'enemy:skeleton') {
+      this.spawnEnemyNearPlayer(skeletonWarrior)
+    } else if (id.startsWith('env:')) {
+      const name = id.slice(4)
+      const env = this.biome.environment.find((e) => e.name === name)
+      if (env) this.spawnEnvironmentNearPlayer(env)
+    }
+  }
+
+  private spawnEnemyNearPlayer(template: Enemy) {
+    const px = Math.floor(this.player.x)
+    const py = Math.floor(this.player.y)
+    const offsets = [
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1],
+      [1, 1],
+      [-1, -1],
+      [1, -1],
+      [-1, 1],
+    ]
+    let x = px
+    let y = py
+    for (const [dx, dy] of offsets) {
+      const nx = px + dx
+      const ny = py + dy
+      if (this.map.tileAt(nx, ny) === '.') {
+        x = nx
+        y = ny
+        break
+      }
+    }
+    this.enemies.push({ enemy: template, x, y })
+    if (this.enemyBase) {
+      this.addEnemies()
+    } else {
+      const loader = new BlockyCharacterLoader(
+        new URL('../../assets/characters/skeleton-warrior-blocky.json', import.meta.url).href
+      )
+      loader.load().then((base) => {
+        this.enemyBase = base
+        this.addEnemies()
+      })
+    }
+  }
+
+  private spawnEnvironmentNearPlayer(template: EnvironmentCharacter) {
+    const px = Math.floor(this.player.x)
+    const py = Math.floor(this.player.y)
+    const offsets = [
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1],
+      [1, 1],
+      [-1, -1],
+      [1, -1],
+      [-1, 1],
+    ]
+    let x = px
+    let y = py
+    for (const [dx, dy] of offsets) {
+      const nx = px + dx
+      const ny = py + dy
+      if (this.map.tileAt(nx, ny) === '.') {
+        x = nx
+        y = ny
+        break
+      }
+    }
+    this.spawnEnvironmentMesh(template, x, y)
   }
 }

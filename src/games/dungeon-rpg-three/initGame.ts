@@ -38,6 +38,11 @@ export default function initThreeGame(
           <div style="font-weight:bold;margin-bottom:4px;">Characters</div>
           <pre id="character-list" style="font:12px monospace;white-space:pre;"></pre>
         </div>
+        <div id="spawn-panel" style="padding:10px;border-left:1px solid #888;min-width:200px;">
+          <div style="font-weight:bold;margin-bottom:4px;">Spawn</div>
+          <select id="spawn-select" style="width:100%;margin-bottom:4px;"></select>
+          <button id="spawn-btn">Spawn</button>
+        </div>
         </div>
       </div>
     </div>
@@ -53,6 +58,8 @@ export default function initThreeGame(
   const statusDiv = container.querySelector('#status-display') as HTMLDivElement
   const debugDiv = container.querySelector('#debug-info') as HTMLPreElement
   const charList = container.querySelector('#character-list') as HTMLPreElement
+  const spawnSelect = container.querySelector('#spawn-select') as HTMLSelectElement
+  const spawnBtn = container.querySelector('#spawn-btn') as HTMLButtonElement
   const heroControls = container.querySelector('#hero-controls') as HTMLDivElement
   const heroHp = heroControls.querySelector('#hero-hp') as HTMLInputElement
   const heroHunger = heroControls.querySelector('#hero-hunger') as HTMLInputElement
@@ -64,6 +71,17 @@ export default function initThreeGame(
   heroHp.value = view.getHero().hp.toString()
   heroHunger.value = view.getHero().hunger.toString()
   heroStamina.value = view.getHero().stamina.toString()
+
+  view.getSpawnOptions().forEach((opt) => {
+    const option = document.createElement('option')
+    option.value = opt.id
+    option.textContent = opt.label
+    spawnSelect.appendChild(option)
+  })
+
+  spawnBtn.addEventListener('click', () => {
+    view.spawnCharacter(spawnSelect.value)
+  })
 
   function updateHero() {
     const hero = view.getHero()
