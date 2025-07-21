@@ -1,4 +1,4 @@
-import DungeonView3D from './DungeonView'
+import DungeonView3D from './DungeonView3D'
 
 export default function initThreeGame(
   container: HTMLElement,
@@ -63,17 +63,13 @@ export default function initThreeGame(
       fistDist: parseFloat(fistDist.value),
     })
   }
-
-  ;[posY, upperX, lowerX, rotZ, scale, spacing, lowerDist, fistDist].forEach((input) => {
-
+  [posY, upperX, lowerX, rotZ, scale, spacing, lowerDist, fistDist].forEach((input) => {
     input.addEventListener('input', updateFromInputs)
   })
-
   copyBtn.addEventListener('click', () => {
     const txt = JSON.stringify(view.getArmSettings())
     navigator.clipboard.writeText(txt)
   })
-
   function animate() {
     view.update()
     view.render()

@@ -12,8 +12,6 @@ export default class PlayerArms {
   private spacing = 0.4
   private lowerDist = -0.06
   private fistDist = 0
-  private rightUpper: THREE.Mesh
-  private rightLower: THREE.Mesh
 
   constructor(camera: THREE.Camera) {
     this.group = new THREE.Group()
