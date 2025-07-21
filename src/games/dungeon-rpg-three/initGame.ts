@@ -1,5 +1,6 @@
 import DungeonView3D from './DungeonView3D'
 import { forestBiome } from '../world/biomes'
+import Enemy, { skeletonWarrior } from '../dungeon-rpg/Enemy'
 
 export default function initThreeGame(
   container: HTMLElement,
@@ -26,11 +27,15 @@ export default function initThreeGame(
           <div>Fist Dist <input id="arm-fist-dist" type="range" min="-1" max="0" step="0.01"></div>
           <button id="arm-copy">copy</button>
         </div>
-        <div id="hero-controls" style="margin-top:10px;font:12px monospace;">
-          <div>HP <input id="hero-hp" type="number" style="width:60px;"></div>
-          <div>Hunger <input id="hero-hunger" type="number" style="width:60px;"></div>
-          <div>Stamina <input id="hero-stamina" type="number" style="width:60px;"></div>
-        </div>
+          <div id="hero-controls" style="margin-top:10px;font:12px monospace;">
+            <div>HP <input id="hero-hp" type="number" style="width:60px;"></div>
+            <div>Hunger <input id="hero-hunger" type="number" style="width:60px;"></div>
+            <div>Stamina <input id="hero-stamina" type="number" style="width:60px;"></div>
+          </div>
+          <div id="spawn-controls" style="margin-top:10px;font:12px monospace;">
+            <select id="spawn-select"></select>
+            <button id="spawn-btn">spawn</button>
+          </div>
         </div>
       </div>
     </div>
@@ -49,12 +54,28 @@ export default function initThreeGame(
   const heroHp = heroControls.querySelector('#hero-hp') as HTMLInputElement
   const heroHunger = heroControls.querySelector('#hero-hunger') as HTMLInputElement
   const heroStamina = heroControls.querySelector('#hero-stamina') as HTMLInputElement
+  const spawnSelect = container.querySelector('#spawn-select') as HTMLSelectElement
+  const spawnBtn = container.querySelector('#spawn-btn') as HTMLButtonElement
   container.style.position = 'relative'
   const view = new DungeonView3D(wrapper, miniMap, forestBiome)
 
   heroHp.value = view.getHero().hp.toString()
   heroHunger.value = view.getHero().hunger.toString()
   heroStamina.value = view.getHero().stamina.toString()
+
+  const spawnOptions: { name: string; enemy: Enemy }[] = [
+    { name: skeletonWarrior.name, enemy: skeletonWarrior },
+  ]
+  spawnOptions.forEach((o) => {
+    const opt = document.createElement('option')
+    opt.value = o.name
+    opt.textContent = o.name
+    spawnSelect.appendChild(opt)
+  })
+  spawnBtn.addEventListener('click', () => {
+    const selected = spawnOptions.find((o) => o.name === spawnSelect.value)
+    if (selected) view.spawnEnemyNearPlayer(selected.enemy)
+  })
 
   function updateHero() {
     const hero = view.getHero()

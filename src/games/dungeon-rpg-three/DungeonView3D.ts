@@ -469,6 +469,34 @@ export default class DungeonView3D {
     })
   }
 
+  spawnEnemyNearPlayer(enemy: Enemy) {
+    const offsets = [
+      [1, 0],
+      [1, 1],
+      [0, 1],
+      [-1, 1],
+      [-1, 0],
+      [-1, -1],
+      [0, -1],
+      [1, -1],
+    ]
+    for (const [dx, dy] of offsets) {
+      const x = Math.floor(this.player.x) + dx
+      const y = Math.floor(this.player.y) + dy
+      if (this.map.tileAt(x, y) !== '#') {
+        this.enemies.push({
+          enemy,
+          x,
+          y,
+          dir: 'south',
+          nextMove: performance.now() + Math.random() * 1000,
+        })
+        this.addEnemies()
+        break
+      }
+    }
+  }
+
   private updateEnemies() {
     const now = performance.now()
     this.enemies.forEach((e) => {
