@@ -14,7 +14,7 @@ async function loadTab(tab: Tab) {
     const { default: showNovel } = await import('../novel/novel');
     showNovel(content, loadTab);
   } else if (tab === 'game') {
-    const { default: initGame } = await import('../games/dungeon-rpg/game');
+    const { default: initGame } = await import('../games/three-demo/game');
     initGame(content, loadTab);
   }
 }

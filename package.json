@@ -7,6 +7,6 @@
   },
   "devDependencies": {
     "vite": "^5.0.0",
-    "phaser": "^3.70.0"
+    "three": "^0.161.0"
   }
 }
