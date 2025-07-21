@@ -442,4 +442,14 @@ export default class DungeonView3D {
       `Enemies: ${enemyInfo}`
     )
   }
+
+  getArmDebugText(): string {
+    const p = this.arms.getDebugParams()
+    return (
+      `angle L:${p.leftAngle.toFixed(2)} R:${p.rightAngle.toFixed(2)}\n` +
+      `centerDist:${p.centerDistance.toFixed(2)}\n` +
+      `upperLower L:${p.leftUpperLowerDistance.toFixed(2)} R:${p.rightUpperLowerDistance.toFixed(2)}\n` +
+      `fists:${p.fistsDistance.toFixed(2)}`
+    )
+  }
 }

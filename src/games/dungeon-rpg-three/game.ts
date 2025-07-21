@@ -15,6 +15,7 @@ export default function initThreeGame(
       <div>Rot Z <input id="arm-rot-z" type="range" min="-1.57" max="1.57" step="0.01"></div>
       <div>Scale <input id="arm-scale" type="range" min="0.3" max="2" step="0.01"></div>
       <button id="arm-copy">copy</button>
+      <pre id="arm-debug-text" style="margin-top:4px"></pre>
     </div>
     <div id="three-game" style="width:100%;height:100%"></div>
   `
@@ -34,6 +35,7 @@ export default function initThreeGame(
   const rotZ = armControls.querySelector('#arm-rot-z') as HTMLInputElement
   const scale = armControls.querySelector('#arm-scale') as HTMLInputElement
   const copyBtn = armControls.querySelector('#arm-copy') as HTMLButtonElement
+  const debugPre = armControls.querySelector('#arm-debug-text') as HTMLPreElement
 
   const settings = view.getArmSettings()
   posY.value = settings.posY.toString()
@@ -66,6 +68,9 @@ export default function initThreeGame(
     view.render()
     if (debugDiv) {
       debugDiv.textContent = view.getDebugText()
+    }
+    if (debugPre) {
+      debugPre.textContent = view.getArmDebugText()
     }
     requestAnimationFrame(animate)
   }

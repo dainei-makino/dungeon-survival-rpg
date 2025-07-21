@@ -7,6 +7,8 @@ export default class PlayerArms {
   private leftLower: THREE.Mesh
   private rightUpper: THREE.Mesh
   private rightLower: THREE.Mesh
+  private leftFist: THREE.Mesh
+  private rightFist: THREE.Mesh
 
   constructor(camera: THREE.Camera) {
     this.group = new THREE.Group()
@@ -40,7 +42,7 @@ export default class PlayerArms {
       fist.position.y = -0.14
       lower.add(fist)
       upper.add(lower)
-      return { upper, lower }
+      return { upper, lower, fist }
     }
 
     const left = makeArm()
@@ -48,8 +50,10 @@ export default class PlayerArms {
 
     this.leftUpper = left.upper
     this.leftLower = left.lower
+    this.leftFist = left.fist
     this.rightUpper = right.upper
     this.rightLower = right.lower
+    this.rightFist = right.fist
 
     this.leftUpper.rotation.x = 2.08
     this.leftUpper.rotation.z = 0.33
@@ -77,6 +81,31 @@ export default class PlayerArms {
       lowerRotX: this.leftLower.rotation.x,
       rotZ: this.leftUpper.rotation.z,
       scale: this.leftUpper.scale.x,
+    }
+  }
+
+  getDebugParams() {
+    const lUpperPos = new THREE.Vector3()
+    const rUpperPos = new THREE.Vector3()
+    const lLowerPos = new THREE.Vector3()
+    const rLowerPos = new THREE.Vector3()
+    const lFistPos = new THREE.Vector3()
+    const rFistPos = new THREE.Vector3()
+    this.leftUpper.getWorldPosition(lUpperPos)
+    this.rightUpper.getWorldPosition(rUpperPos)
+    this.leftLower.getWorldPosition(lLowerPos)
+    this.rightLower.getWorldPosition(rLowerPos)
+    this.leftFist.getWorldPosition(lFistPos)
+    this.rightFist.getWorldPosition(rFistPos)
+    const center = new THREE.Vector3().addVectors(lUpperPos, rUpperPos).multiplyScalar(0.5)
+    return {
+      leftAngle: this.leftLower.rotation.x - this.leftUpper.rotation.x,
+      rightAngle: this.rightLower.rotation.x - this.rightUpper.rotation.x,
+      centerDistance: lUpperPos.distanceTo(rUpperPos),
+      leftUpperLowerDistance: lUpperPos.distanceTo(lLowerPos),
+      rightUpperLowerDistance: rUpperPos.distanceTo(rLowerPos),
+      fistsDistance: lFistPos.distanceTo(rFistPos),
+      distanceFromCenter: lUpperPos.distanceTo(center),
     }
   }
 
