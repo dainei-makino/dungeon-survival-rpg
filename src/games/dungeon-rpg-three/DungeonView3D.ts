@@ -25,7 +25,24 @@ export default class DungeonView3D {
   private biome: Biome
   private player: Player
   private hero: Hero
-  private enemies: { enemy: Enemy; x: number; y: number; mesh?: THREE.Object3D }[] = []
+  private enemies: {
+    enemy: Enemy
+    gridX: number
+    gridY: number
+    x: number
+    y: number
+    dir: Direction
+    rot: number
+    nextMove: number
+    moveStart?: number
+    startX?: number
+    startY?: number
+    targetX?: number
+    targetY?: number
+    rotStart?: number
+    rotTarget?: number
+    mesh?: THREE.Object3D
+  }[] = []
   private keys = new Set<string>()
   private dirVectors: Record<
     Direction,
@@ -197,6 +214,13 @@ export default class DungeonView3D {
           return false
         }
       }
+      if (
+        this.enemies.some(
+          (e) => e.gridX === Math.floor(nx) && e.gridY === Math.floor(ny)
+        )
+      ) {
+        return false
+      }
       this.player.x = nx
       this.player.y = ny
       this.hero.hunger = Math.max(0, this.hero.hunger - 1)
@@ -233,7 +257,9 @@ export default class DungeonView3D {
     const vectors = this.dirVectors[this.player.dir]
     const targetX = Math.floor(this.player.x + vectors.dx)
     const targetY = Math.floor(this.player.y + vectors.dy)
-    const enemy = this.enemies.find((e) => e.x === targetX && e.y === targetY)
+    const enemy = this.enemies.find(
+      (e) => e.gridX === targetX && e.gridY === targetY
+    )
     const hand = left ? 'leftHand' : 'rightHand'
     const current = (this.hero as any)[hand] as string
     const itemIdx = this.items.findIndex((i) => i.x === targetX && i.y === targetY)
@@ -313,8 +339,99 @@ export default class DungeonView3D {
           h,
           e.y * this.cellSize + this.cellSize / 2
         )
+        mesh.rotation.y = e.rot
         e.mesh = mesh
         this.mapGroup.add(mesh)
+      }
+    })
+  }
+
+  private moveEnemies() {
+    const now = performance.now()
+    const dirs: Direction[] = [
+      'north',
+      'northEast',
+      'east',
+      'southEast',
+      'south',
+      'southWest',
+      'west',
+      'northWest',
+    ]
+    this.enemies.forEach((e) => {
+      if (now < e.nextMove || e.moveStart !== undefined) return
+      const dir = dirs[Math.floor(Math.random() * dirs.length)]
+      const vec = this.dirVectors[dir]
+      const nx = e.gridX + vec.dx
+      const ny = e.gridY + vec.dy
+      if (this.map.tileAt(nx, ny) === '#') {
+        e.nextMove = now + 1000
+        return
+      }
+      const isDiag = Math.abs(vec.dx) === 1 && Math.abs(vec.dy) === 1
+      if (
+        isDiag &&
+        (this.map.tileAt(e.gridX + vec.dx, e.gridY) === '#' ||
+          this.map.tileAt(e.gridX, e.gridY + vec.dy) === '#')
+      ) {
+        e.nextMove = now + 1000
+        return
+      }
+      if (
+        Math.floor(this.player.x) === nx &&
+        Math.floor(this.player.y) === ny
+      ) {
+        e.nextMove = now + 1000
+        return
+      }
+      if (
+        this.enemies.some(
+          (other) => other !== e && other.gridX === nx && other.gridY === ny
+        )
+      ) {
+        e.nextMove = now + 1000
+        return
+      }
+      e.startX = e.x
+      e.startY = e.y
+      e.targetX = nx
+      e.targetY = ny
+      e.gridX = nx
+      e.gridY = ny
+      e.dir = dir
+      e.rotStart = e.rot
+      e.rotTarget = this.angleForDir(dir)
+      e.moveStart = now
+      e.nextMove = now + 1000
+    })
+  }
+
+  private updateEnemyAnimations() {
+    const now = performance.now()
+    this.enemies.forEach((e) => {
+      if (e.moveStart === undefined) return
+      const t = Math.min(1, (now - e.moveStart) / this.animDuration)
+      e.x = (1 - t) * (e.startX as number) + t * (e.targetX as number)
+      e.y = (1 - t) * (e.startY as number) + t * (e.targetY as number)
+      if (e.rotStart !== undefined && e.rotTarget !== undefined) {
+        let diff = e.rotTarget - e.rotStart
+        diff = ((diff + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) -
+          Math.PI
+        e.rot = e.rotStart + diff * t
+      }
+      if (e.mesh) {
+        const h = (this.map.getHeight(e.x, e.y) + 1) * this.cellSize
+        e.mesh.position.set(
+          e.x * this.cellSize + this.cellSize / 2,
+          h,
+          e.y * this.cellSize + this.cellSize / 2
+        )
+        e.mesh.rotation.y = e.rot
+      }
+      if (t === 1) {
+        e.moveStart = undefined
+        e.startX = e.startY = e.targetX = e.targetY = undefined
+        e.rotStart = e.rotTarget = undefined
       }
     })
   }
@@ -624,6 +741,10 @@ export default class DungeonView3D {
       }
     }
 
+    this.updateEnemyAnimations()
+
+    // update enemy movement
+    this.moveEnemies()
     // enemies no longer billboard toward the camera
 
     this.renderMiniMap()
@@ -738,7 +859,7 @@ export default class DungeonView3D {
         const x = Math.floor(this.player.x) + dx
         const y = Math.floor(this.player.y) + dy
         const tile = this.map.tileAt(x, y)
-        const enemy = this.enemies.find((e) => e.x === x && e.y === y)
+        const enemy = this.enemies.find((e) => e.gridX === x && e.gridY === y)
         const voxel = this.map.voxelAt(x, y, footH - 1)
         const voxelName = voxel !== null ? voxel : 'null'
         lines.push(
@@ -815,7 +936,28 @@ export default class DungeonView3D {
         }
       }
     }
-    this.enemies.push({ enemy: template, x, y })
+    const dirs: Direction[] = [
+      'north',
+      'northEast',
+      'east',
+      'southEast',
+      'south',
+      'southWest',
+      'west',
+      'northWest',
+    ]
+    const dir = dirs[Math.floor(Math.random() * dirs.length)]
+    const now = performance.now()
+    this.enemies.push({
+      enemy: template,
+      gridX: x,
+      gridY: y,
+      x,
+      y,
+      dir,
+      rot: this.angleForDir(dir),
+      nextMove: now + 1000,
+    })
     if (this.enemyBase) {
       this.addEnemies()
     } else {
