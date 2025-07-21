@@ -7,7 +7,7 @@ export default defineConfig({
     outDir: '../dist',
     emptyOutDir: true,
     rollupOptions: {
-      input: { main: resolve(__dirname, 'src/index.html') }
+      input: { main: resolve(__dirname, 'src/html/index.html') }
     }
   }
 });

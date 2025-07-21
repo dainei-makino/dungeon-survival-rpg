@@ -11,10 +11,10 @@ async function loadTab(tab: Tab) {
     const { default: showTop } = await import('./top');
     showTop(content, loadTab);
   } else if (tab === 'novel') {
-    const { default: showNovel } = await import('./novel');
+    const { default: showNovel } = await import('../novel/novel');
     showNovel(content, loadTab);
   } else if (tab === 'game') {
-    const { default: initGame } = await import('./game');
+    const { default: initGame } = await import('../game/game');
     initGame(content, loadTab);
   }
 }
