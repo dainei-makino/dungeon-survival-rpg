@@ -40,3 +40,20 @@ Keyframes are stored in JSON so that they can be shared or edited outside of the
 4. Call `animator.play()` to start and `animator.update()` each frame.
 
 This design makes it possible to create common animations (walking, attacking, jumping) that work across multiple characters built from simple geometric parts.
+
+## JSON Character Format
+
+Characters made from cubes can be described in external JSON files. Each file lists
+an array of parts with a body part name, box size and offset:
+
+```json
+{
+  "parts": [
+    { "name": "head", "size": [0.3, 0.3, 0.3], "position": [0, 0.9, 0] }
+  ]
+}
+```
+
+`BlockyCharacterLoader` reads this JSON at runtime and creates a group of meshes.
+The `name` attribute must match one of the body part identifiers above so that
+animations can be applied generically.

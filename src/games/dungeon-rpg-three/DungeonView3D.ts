@@ -4,7 +4,7 @@ import Player, { Direction } from '../dungeon-rpg/Player'
 import Hero from '../dungeon-rpg/Hero'
 import Enemy, { skeletonWarrior } from '../dungeon-rpg/Enemy'
 import PlayerArms from './components/PlayerArms'
-import createBlockyDoll from './components/BlockyDoll'
+import BlockyCharacterLoader from './components/BlockyCharacterLoader'
 import skeletonShape from '../../assets/enemies/json/skeleton-warrior.json'
 import { floorTexture, wallTexture, perlinTexture } from './utils/textures'
 
@@ -368,27 +368,31 @@ export default class DungeonView3D {
   }
 
   private spawnBlockyNPC() {
-    const doll = createBlockyDoll()
-    let x = this.player.x + 2
-    let y = this.player.y + 2
-    if (this.map.tileAt(x, y) === '#') {
-      outer: for (let iy = 1; iy < this.map.height - 1; iy++) {
-        for (let ix = 1; ix < this.map.width - 1; ix++) {
-          if (this.map.tileAt(ix, iy) === '.') {
-            x = ix
-            y = iy
-            break outer
+    const loader = new BlockyCharacterLoader(
+      new URL('../../assets/characters/blocky-doll.json', import.meta.url).href
+    )
+    loader.load().then((doll) => {
+      let x = this.player.x + 2
+      let y = this.player.y + 2
+      if (this.map.tileAt(x, y) === '#') {
+        outer: for (let iy = 1; iy < this.map.height - 1; iy++) {
+          for (let ix = 1; ix < this.map.width - 1; ix++) {
+            if (this.map.tileAt(ix, iy) === '.') {
+              x = ix
+              y = iy
+              break outer
+            }
           }
         }
       }
-    }
-    doll.position.set(
-      x * this.cellSize + this.cellSize / 2,
-      0,
-      y * this.cellSize + this.cellSize / 2
-    )
-    this.blockyNPC = doll
-    this.scene.add(doll)
+      doll.position.set(
+        x * this.cellSize + this.cellSize / 2,
+        0,
+        y * this.cellSize + this.cellSize / 2
+      )
+      this.blockyNPC = doll
+      this.scene.add(doll)
+    })
   }
 
   getArmSettings() {
