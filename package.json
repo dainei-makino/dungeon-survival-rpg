@@ -3,10 +3,13 @@
   "version": "1.0.0",
   "scripts": {
     "build": "vite build",
-    "preview": "vite preview --config vite.config.ts --port 4173"
+    "preview": "vite preview --config vite.config.ts --port 4173",
+    "test": "ts-node tests/BasicSynth.test.ts && ts-node tests/MusicGenerator.test.ts"
   },
   "devDependencies": {
     "three": "^0.178.0",
-    "vite": "^5.0.0"
+    "vite": "^5.0.0",
+    "typescript": "^5.0.0",
+    "ts-node": "^10.9.2"
   }
 }
