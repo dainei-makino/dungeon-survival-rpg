@@ -32,12 +32,15 @@ export default class DungeonView3D {
     x: number
     y: number
     dir: Direction
+    rot: number
     nextMove: number
     moveStart?: number
     startX?: number
     startY?: number
     targetX?: number
     targetY?: number
+    rotStart?: number
+    rotTarget?: number
     mesh?: THREE.Object3D
   }[] = []
   private keys = new Set<string>()
@@ -335,6 +338,7 @@ export default class DungeonView3D {
           h,
           e.y * this.cellSize + this.cellSize / 2
         )
+        mesh.rotation.y = e.rot
         e.mesh = mesh
         this.mapGroup.add(mesh)
       }
@@ -394,6 +398,8 @@ export default class DungeonView3D {
       e.gridX = nx
       e.gridY = ny
       e.dir = dir
+      e.rotStart = e.rot
+      e.rotTarget = this.angleForDir(dir)
       e.moveStart = now
       e.nextMove = now + 1000
     })
@@ -406,6 +412,12 @@ export default class DungeonView3D {
       const t = Math.min(1, (now - e.moveStart) / this.animDuration)
       e.x = (1 - t) * (e.startX as number) + t * (e.targetX as number)
       e.y = (1 - t) * (e.startY as number) + t * (e.targetY as number)
+      if (e.rotStart !== undefined && e.rotTarget !== undefined) {
+        let diff = e.rotTarget - e.rotStart
+        diff = ((diff + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) -
+          Math.PI
+        e.rot = e.rotStart + diff * t
+      }
       if (e.mesh) {
         const h = (this.map.getHeight(e.x, e.y) + 1) * this.cellSize
         e.mesh.position.set(
@@ -413,10 +425,12 @@ export default class DungeonView3D {
           h,
           e.y * this.cellSize + this.cellSize / 2
         )
+        e.mesh.rotation.y = e.rot
       }
       if (t === 1) {
         e.moveStart = undefined
         e.startX = e.startY = e.targetX = e.targetY = undefined
+        e.rotStart = e.rotTarget = undefined
       }
     })
   }
@@ -940,6 +954,7 @@ export default class DungeonView3D {
       x,
       y,
       dir,
+      rot: this.angleForDir(dir),
       nextMove: now + 1000,
     })
     if (this.enemyBase) {
