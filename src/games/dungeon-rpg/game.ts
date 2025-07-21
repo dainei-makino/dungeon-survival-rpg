@@ -27,7 +27,7 @@ export default function initGame(
     },
     scene: {
       preload() {
-        this.load.svg('right-arm', rightArmUrl)
+        this.load.image('right-arm', rightArmUrl)
       },
       create() {
         view = new DungeonView(this)
