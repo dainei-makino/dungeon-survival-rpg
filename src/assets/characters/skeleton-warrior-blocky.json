@@ -1,40 +1,40 @@
 {
-  "voxelHeight": 3,
+  "voxelHeight": 3.6,
   "parts": [
     {
       "name": "head",
-      "size": [0.6, 0.6, 0.6],
-      "position": [0, 1.8, 0],
+      "size": [0.6, 0.74, 0.6],
+      "position": [0, 3.22, 0],
       "color": "#eeeeee"
     },
     {
       "name": "body",
-      "size": [0.8, 1.0, 0.4],
-      "position": [0, 0.9, 0],
+      "size": [0.8, 1.24, 0.4],
+      "position": [0, 2.11, 0],
       "color": "#dddddd"
     },
     {
       "name": "leftArm",
-      "size": [0.2, 1.0, 0.2],
-      "position": [-0.55, 0.9, 0],
+      "size": [0.2, 1.24, 0.2],
+      "position": [-0.55, 2.11, 0],
       "color": "#eeeeee"
     },
     {
       "name": "rightArm",
-      "size": [0.2, 1.0, 0.2],
-      "position": [0.55, 0.9, 0],
+      "size": [0.2, 1.24, 0.2],
+      "position": [0.55, 2.11, 0],
       "color": "#eeeeee"
     },
     {
       "name": "leftLeg",
-      "size": [0.2, 1.2, 0.2],
-      "position": [-0.25, -0.2, 0],
+      "size": [0.2, 1.49, 0.2],
+      "position": [-0.25, 0.74, 0],
       "color": "#dddddd"
     },
     {
       "name": "rightLeg",
-      "size": [0.2, 1.2, 0.2],
-      "position": [0.25, -0.2, 0],
+      "size": [0.2, 1.49, 0.2],
+      "position": [0.25, 0.74, 0],
       "color": "#dddddd"
     }
   ]
