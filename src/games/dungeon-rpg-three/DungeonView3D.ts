@@ -198,6 +198,7 @@ export default class DungeonView3D {
     if (!['w', 'a', 's', 'd', 'j', 'k', 'u', 'i'].includes(key)) return
     e.preventDefault()
     const vectors = this.dirVectors[this.player.dir]
+    let changed = false
 
     const tryMove = (dx: number, dy: number) => {
       const nx = this.player.x + dx
@@ -219,23 +220,27 @@ export default class DungeonView3D {
 
     if (key === 'a') {
       this.player.rotateLeft()
+      changed = true
     } else if (key === 'd') {
       this.player.rotateRight()
+      changed = true
     } else if (key === 'w') {
-      tryMove(vectors.dx, vectors.dy)
+      changed = tryMove(vectors.dx, vectors.dy)
     } else if (key === 's') {
-      tryMove(-vectors.dx, -vectors.dy)
+      changed = tryMove(-vectors.dx, -vectors.dy)
     } else if (key === 'j') {
-      tryMove(vectors.left.dx, vectors.left.dy)
+      changed = tryMove(vectors.left.dx, vectors.left.dy)
     } else if (key === 'k') {
-      tryMove(vectors.right.dx, vectors.right.dy)
+      changed = tryMove(vectors.right.dx, vectors.right.dy)
     } else if (key === 'u') {
       this.handleHandAction(true)
     } else if (key === 'i') {
       this.handleHandAction(false)
     }
-    this.updateCamera()
-    this.checkRegion()
+    if (changed) {
+      this.updateCamera()
+      this.checkRegion()
+    }
     this.renderMiniMap()
   }
 
@@ -254,10 +259,10 @@ export default class DungeonView3D {
       this.arms.attachItem(grabbed.mesh, left)
       ;(this.hero as any)[hand] = grabbed.name
     } else if (current === 'unarmed') {
+      this.arms.punch(left)
       if (enemy) {
         const action = new PunchAction()
         action.execute(this.hero, enemy)
-        this.arms.punch(left)
         console.log(`${enemy.enemy.name} に ${this.hero.strength} ダメージ`)
         if (enemy.hp <= 0) {
           if (enemy.mesh) this.mapGroup.remove(enemy.mesh)
