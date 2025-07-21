@@ -15,6 +15,7 @@ export default class DungeonView {
   private keys: Record<string, Phaser.Input.Keyboard.Key>
   private dirVectors: Record<Direction, { dx: number; dy: number; left: { dx: number; dy: number }; right: { dx: number; dy: number } }>
   private debugText: Phaser.GameObjects.Text
+  private heartsText: Phaser.GameObjects.Text
   private miniMap: Phaser.GameObjects.Graphics
   private isMoving = false
   private isRotating = false
@@ -49,8 +50,14 @@ export default class DungeonView {
       fontFamily: 'monospace',
     })
     this.debugText.setOrigin(1, 0)
+    this.heartsText = scene.add.text(10, 10, '', {
+      color: '#ff4444',
+      fontSize: '20px',
+      fontFamily: 'monospace',
+    })
     this.miniMap = scene.add.graphics()
     this.updateDebugText()
+    this.updateHearts()
   }
 
   private updateDebugText() {
@@ -66,6 +73,12 @@ export default class DungeonView {
         `STR: ${this.hero.strength}`
     )
     this.debugText.setPosition(this.scene.scale.width - 10, 10)
+    this.updateHearts()
+  }
+
+  private updateHearts() {
+    this.heartsText.setText('❤'.repeat(this.hero.hp))
+    this.heartsText.setPosition(10, 10)
   }
 
   private tileAt(x: number, y: number): string {
