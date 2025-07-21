@@ -29,27 +29,27 @@ export default function showDebug(
   const zoomIn = container.querySelector('#zoom-in') as HTMLButtonElement
   const zoomOut = container.querySelector('#zoom-out') as HTMLButtonElement
 
-  const characters = [
-    {
-      name: 'Blocky Doll',
-      url: new URL('../assets/characters/blocky-doll.json', import.meta.url).href,
-    },
-    {
-      name: 'Skeleton Warrior',
-      url: new URL('../assets/characters/skeleton-warrior-blocky.json', import.meta.url).href,
-    },
-    {
-      name: 'Quadruped Base',
-      url: new URL('../assets/characters/quadruped-base.json', import.meta.url).href,
-    },
-    {
-      name: 'Slime',
-      url: new URL('../assets/characters/slime.json', import.meta.url).href,
-    },
-  ]
+  const characterModules = import.meta.glob('../assets/characters/*.json', {
+    eager: true,
+  })
+  // Ensure arm meshes are bundled
+  import.meta.glob('../assets/arms/**/*.json', { as: 'url', eager: true })
+  const characters = Object.entries(characterModules)
+    .map(([path, mod]) => {
+      const file = path.split('/').pop() ?? ''
+      const name = file
+        .replace(/\.json$/, '')
+        .replace(/-/g, ' ')
+        .replace(/\b\w/g, (c) => c.toUpperCase())
+      const assetUrl = new URL(path, import.meta.url).href
+      const baseUrl = assetUrl.substring(0, assetUrl.lastIndexOf('/') + 1)
+      const spec = (mod as any).default
+      return { name, spec, baseUrl }
+    })
+    .sort((a, b) => a.name.localeCompare(b.name))
   characters.forEach((c) => {
     const opt = document.createElement('option')
-    opt.value = c.url
+    opt.value = c.name
     opt.textContent = c.name
     select.appendChild(opt)
   })
@@ -65,9 +65,11 @@ export default function showDebug(
   scene.add(light)
   let model: THREE.Group | null = null
 
-  async function load(url: string) {
-    const loader = new BlockyCharacterLoader(url)
-    const obj = await loader.load()
+  async function load(name: string) {
+    const ch = characters.find((c) => c.name === name)
+    if (!ch) return
+    const loader = new BlockyCharacterLoader()
+    const obj = await loader.fromSpec(ch.spec, ch.baseUrl)
     if (model) scene.remove(model)
     model = obj
     scene.add(model)
