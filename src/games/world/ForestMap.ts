@@ -10,7 +10,7 @@ export default class ForestMap extends VoxelMap {
   private _playerStart: { x: number; y: number; dir: Direction }
   private heights: number[][]
 
-  constructor(width = 64, height = 64, depth = 10, private density = 0.3) {
+  constructor(width = 96, height = 96, depth = 20, private density = 0.3) {
     super(width, height, depth)
     this.tiles = Array.from({ length: height }, () => '.'.repeat(width))
     this.heights = Array.from({ length: height }, () => Array(width).fill(1))
@@ -36,13 +36,18 @@ export default class ForestMap extends VoxelMap {
 
   private generate() {
     const noise = new ImprovedNoise()
-    const scale = 20
-    const amp = this.depth - 3
-    const nz = Math.random() * 100
+    const baseScale = 60
+    const detailScale = 15
+    const amp = this.depth - 5
+    const baseSeed = Math.random() * 100
+    const detailSeed = Math.random() * 100
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
-        const h = Math.floor(((noise.noise(x / scale, y / scale, nz) + 1) / 2) * amp) + 1
-        this.heights[y][x] = h
+        const base = noise.noise(x / baseScale, y / baseScale, baseSeed)
+        const detail = noise.noise(x / detailScale, y / detailScale, detailSeed)
+        let h = (base * 0.7 + detail * 0.3 + 1) / 2
+        h = Math.floor(h * amp) + 2
+        this.heights[y][x] = Math.min(h, this.depth - 1)
         if (Math.random() < this.density) {
           this.setTile(x, y, '#')
         }
@@ -75,14 +80,20 @@ export default class ForestMap extends VoxelMap {
   }
 
   private buildVoxels() {
+    const caveNoise = new ImprovedNoise()
+    const caveScale = 20
+    const caveSeed = Math.random() * 100
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
         const h = this.heights[y][x]
         for (let z = 0; z < h && z < this.depth; z++) {
-          this.setVoxel(x, y, z, VoxelType.Swamp)
+          const c = caveNoise.noise(x / caveScale, y / caveScale, z / caveScale + caveSeed)
+          if (c > 0.2) {
+            this.setVoxel(x, y, z, VoxelType.Swamp)
+          }
         }
         if (this.tiles[y][x] === '#') {
-          const treeHeight = this.rand(2, Math.min(this.depth - h, 4))
+          const treeHeight = this.rand(2, Math.min(this.depth - h, 5))
           for (let z = h; z < h + treeHeight && z < this.depth; z++) {
             this.setVoxel(x, y, z, VoxelType.Tree)
           }
