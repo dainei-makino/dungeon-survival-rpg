@@ -25,8 +25,13 @@ export default class DungeonView {
     this.map = new DungeonMap()
     this.player = new Player(this.map.playerStart)
 
-    this.mesh = scene.add.mesh(0, 0, '__DEFAULT')
-    this.mesh.setPerspective(scene.scale.width, scene.scale.height, 60, 0.1, 1000)
+    this.mesh = scene.add.mesh(
+      scene.scale.width / 2,
+      scene.scale.height / 2,
+      '__DEFAULT'
+    )
+    this.mesh.setPerspective(scene.scale.width, scene.scale.height, 45, 1, 1000)
+    this.mesh.hideCCW = false
     this.buildWorld()
 
     this.keys = scene.input.keyboard.addKeys('W,S,A,D,J,K') as Record<string, Phaser.Input.Keyboard.Key>
@@ -109,12 +114,13 @@ export default class DungeonView {
   }
 
   private buildWorld() {
-    this.addCube(0, 0, 0, 1, this.WALL_COLOR)
+    this.mesh.clear()
+    this.addCube(0, 0, 0, 200, this.WALL_COLOR)
   }
 
   private updateView() {
     this.mesh.modelRotation.set(0, 0, 0)
-    this.mesh.viewPosition.set(0, 0, 5)
+    this.mesh.viewPosition.set(0, 0, 300)
   }
 
   private updateDebugText() {
