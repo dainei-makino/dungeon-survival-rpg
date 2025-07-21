@@ -67,4 +67,19 @@ export default class VoxelMap {
     }
     return 0
   }
+
+  /**
+   * Check if the vertical space above the given column is free of solid blocks.
+   * @param x map x coordinate
+   * @param y map y coordinate
+   * @param fromZ starting voxel height (inclusive)
+   * @param height number of voxels to test
+   */
+  isClearAbove(x: number, y: number, fromZ: number, height: number): boolean {
+    for (let z = fromZ; z < fromZ + height; z++) {
+      const v = this.voxelAt(x, y, z)
+      if (v === null || v !== VoxelType.Air) return false
+    }
+    return true
+  }
 }

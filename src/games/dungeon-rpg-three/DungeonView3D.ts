@@ -306,7 +306,7 @@ export default class DungeonView3D {
         const mesh = this.enemyBase.clone(true)
         const scale = 0.3 * this.cellSize
         mesh.scale.set(scale, scale, scale)
-        const h = this.map.getHeight(e.x, e.y) * this.cellSize
+        const h = (this.map.getHeight(e.x, e.y) + 1) * this.cellSize
         mesh.position.set(
           e.x * this.cellSize + this.cellSize / 2,
           h,
@@ -340,7 +340,11 @@ export default class DungeonView3D {
           }
         }
       }
-      const h = this.map.getHeight(x, y) * this.cellSize
+      const baseH = this.map.getHeight(x, y)
+      if (!this.map.isClearAbove(x, y, baseH + 1, (doll.userData.voxelHeight as number) || 1)) {
+        return
+      }
+      const h = (baseH + 1) * this.cellSize
       doll.position.set(
         x * this.cellSize + this.cellSize / 2,
         h,
@@ -390,7 +394,9 @@ export default class DungeonView3D {
     const vh = (mesh.userData.voxelHeight as number) || 1
     const scale = this.cellSize / vh
     mesh.scale.set(scale, scale, scale)
-    const h = this.map.getHeight(x, y) * this.cellSize
+    const baseH = this.map.getHeight(x, y)
+    if (!this.map.isClearAbove(x, y, baseH + 1, vh)) return
+    const h = (baseH + 1) * this.cellSize
     mesh.position.set(x * this.cellSize + this.cellSize / 2, h, y * this.cellSize + this.cellSize / 2)
     this.scene.add(mesh)
     this.environmentInstances.push({ template, x, y })
@@ -412,8 +418,13 @@ export default class DungeonView3D {
           continue
         }
         const template = this.biome.environment[Math.floor(Math.random() * this.biome.environment.length)]
-        this.spawnEnvironmentMesh(template, x, y)
-        placed = true
+        const base = this.environmentBases.get(template)
+        const vh = (base?.userData.voxelHeight as number) || 1
+        const baseH = this.map.getHeight(x, y)
+        if (this.map.isClearAbove(x, y, baseH + 1, vh)) {
+          this.spawnEnvironmentMesh(template, x, y)
+          placed = true
+        }
       }
     }
   }
@@ -797,13 +808,17 @@ export default class DungeonView3D {
     ]
     let x = px
     let y = py
+    const vh = (this.enemyBase?.userData.voxelHeight as number) || 2
     for (const [dx, dy] of offsets) {
       const nx = px + dx
       const ny = py + dy
       if (this.map.tileAt(nx, ny) === '.') {
-        x = nx
-        y = ny
-        break
+        const baseH = this.map.getHeight(nx, ny)
+        if (this.map.isClearAbove(nx, ny, baseH + 1, vh)) {
+          x = nx
+          y = ny
+          break
+        }
       }
     }
     this.enemies.push({ enemy: template, x, y })
@@ -835,13 +850,18 @@ export default class DungeonView3D {
     ]
     let x = px
     let y = py
+    const baseGroup = this.environmentBases.get(template)
+    const vh = (baseGroup?.userData.voxelHeight as number) || 1
     for (const [dx, dy] of offsets) {
       const nx = px + dx
       const ny = py + dy
       if (this.map.tileAt(nx, ny) === '.') {
-        x = nx
-        y = ny
-        break
+        const baseH = this.map.getHeight(nx, ny)
+        if (this.map.isClearAbove(nx, ny, baseH + 1, vh)) {
+          x = nx
+          y = ny
+          break
+        }
       }
     }
     this.spawnEnvironmentMesh(template, x, y)
