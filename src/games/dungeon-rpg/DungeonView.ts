@@ -1,6 +1,7 @@
 import DungeonMap from './DungeonMap'
 import Player, { Direction } from './Player'
 import { animationSpeed, BASE_STEP_TIME_MS } from './config'
+import perlinNoise from './PerlinNoise'
 
 export default class DungeonView {
   private scene: Phaser.Scene
@@ -25,11 +26,6 @@ export default class DungeonView {
   private readonly maxDepth = 20
   private readonly eyeOffset = 0.6
 
-  // Deterministic noise function for simple wall texturing
-  private noise(x: number, y: number) {
-    const n = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453
-    return n - Math.floor(n)
-  }
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene
@@ -190,6 +186,8 @@ export default class DungeonView {
     side: number
     cellX: number
     cellY: number
+    hitX: number
+    hitY: number
   } {
     const pos = this.eyePos()
     const mapX = Math.floor(pos.x)
@@ -246,19 +244,27 @@ export default class DungeonView {
     }
 
     if (!hit) {
-      return { dist: this.maxDepth, side, cellX: hitX, cellY: hitY }
+      const farX = pos.x + rayDirX * this.maxDepth
+      const farY = pos.y + rayDirY * this.maxDepth
+      return { dist: this.maxDepth, side, cellX: hitX, cellY: hitY, hitX: farX, hitY: farY }
     }
 
     let dist
+    let hitPosX
+    let hitPosY
     if (side === 0) {
       dist =
         (currentX - pos.x + (1 - stepX) / 2) / (rayDirX === 0 ? 1e-6 : rayDirX)
+      hitPosX = currentX
+      hitPosY = pos.y + dist * rayDirY
     } else {
       dist =
         (currentY - pos.y + (1 - stepY) / 2) / (rayDirY === 0 ? 1e-6 : rayDirY)
+      hitPosX = pos.x + dist * rayDirX
+      hitPosY = currentY
     }
 
-    return { dist, side, cellX: hitX, cellY: hitY }
+    return { dist, side, cellX: hitX, cellY: hitY, hitX: hitPosX, hitY: hitPosY }
   }
 
   draw() {
@@ -288,13 +294,14 @@ export default class DungeonView {
       const h = Math.min(height, wallScale / Math.max(corrected, 0.0001))
       const baseShade = Math.max(0, 200 - corrected * 40)
       const startY = (height - h) / 2
-      for (let y = 0; y < h; y += 4) {
-        const n = this.noise(hit.cellX * 13 + hit.cellY * 57, Math.floor(y / 4))
-        const noise = (n - 0.5) * 60
+      for (let y = 0; y < h; y += 2) {
+        const vPos = (startY + y) / height
+        const n = perlinNoise(hit.hitX * 1.5, hit.hitY * 1.5 + vPos * 3)
+        const noise = (n - 0.5) * 100
         const shade = Phaser.Math.Clamp(baseShade + noise, 0, 255)
         const color = Phaser.Display.Color.GetColor(shade, shade, shade)
         g.fillStyle(color, 1)
-        g.fillRect(i * sliceW, startY + y, sliceW + 1, Math.min(4, h - y))
+        g.fillRect(i * sliceW, startY + y, sliceW + 1, Math.min(2, h - y))
       }
 
       if (prevSide !== null && prevSide !== hit.side) {
