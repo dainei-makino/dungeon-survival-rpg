@@ -80,13 +80,17 @@
       transform: translateY(-4px);
     }
 
-    footer {
-      color: #fff;
-      margin-bottom: 1rem;
-      font-size: 0.8rem;
-      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    }
-  </style>
+  footer {
+    color: #fff;
+    margin-bottom: 1rem;
+    font-size: 0.8rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+  /* Ensure game pixels remain crisp when scaled */
+  #game-container canvas {
+    image-rendering: pixelated;
+  }
+</style>
 </head>
 <body>
   <div id="content"></div>

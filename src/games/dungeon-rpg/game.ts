@@ -23,6 +23,9 @@ export default function initGame(
       height: window.innerHeight,
       autoCenter: Phaser.Scale.CENTER_BOTH,
     },
+    render: {
+      pixelArt: true,
+    },
     scene: {
       preload() {},
       create() {
