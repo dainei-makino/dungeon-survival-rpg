@@ -9,7 +9,7 @@ export default class DungeonMap extends VoxelMap {
   private _playerStart: { x: number; y: number; dir: Direction }
 
   constructor(width = 31, height = 31) {
-    super(width, height, 3)
+    super(width, height, 5)
     this.tiles = Array.from({ length: height }, () => '#'.repeat(width))
     this._playerStart = { x: 1, y: 1, dir: 'north' }
     this.generate()
@@ -98,15 +98,17 @@ export default class DungeonMap extends VoxelMap {
   }
 
   private buildVoxels() {
+    const top = this.depth - 1
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
         const ch = this.tiles[y][x]
+        const ceil = this.rand(3, top + 1)
         this.setVoxel(x, y, 0, VoxelType.Floor)
-        this.setVoxel(x, y, 2, VoxelType.Ceiling)
-        if (ch === '#') {
-          this.setVoxel(x, y, 1, VoxelType.Wall)
-        } else {
-          this.setVoxel(x, y, 1, VoxelType.Floor)
+        for (let z = 1; z < ceil; z++) {
+          this.setVoxel(x, y, z, ch === '#' ? VoxelType.Wall : VoxelType.Floor)
+        }
+        for (let z = ceil; z <= top; z++) {
+          this.setVoxel(x, y, z, VoxelType.Ceiling)
         }
       }
     }

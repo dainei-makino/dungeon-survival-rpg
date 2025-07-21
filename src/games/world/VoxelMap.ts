@@ -6,7 +6,7 @@ export default class VoxelMap {
   depth: number
   voxels: VoxelType[][][]
 
-  constructor(width: number, height: number, depth = 3) {
+  constructor(width: number, height: number, depth = 5) {
     this.width = width
     this.height = height
     this.depth = depth
