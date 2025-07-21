@@ -406,6 +406,7 @@ export default class DungeonView3D {
       this.arms.sway(t)
       if (t === 1) {
         this.animStart = null
+        this.arms.finishSway()
       }
     }
 
