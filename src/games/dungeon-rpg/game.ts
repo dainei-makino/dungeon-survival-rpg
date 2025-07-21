@@ -1,5 +1,7 @@
 import Phaser from 'phaser'
 import DungeonView from './DungeonView'
+import torchSvg from './assets/torch.svg?url'
+import fistSvg from './assets/fist.svg?url'
 
 export default function initGame(
   container: HTMLElement,
@@ -24,7 +26,10 @@ export default function initGame(
       autoCenter: Phaser.Scale.CENTER_BOTH,
     },
     scene: {
-      preload() {},
+      preload() {
+        this.load.svg('torch', torchSvg)
+        this.load.svg('fist', fistSvg)
+      },
       create() {
         view = new DungeonView(this)
         view.draw()
