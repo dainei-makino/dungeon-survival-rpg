@@ -32,8 +32,10 @@ export default function showDebug(
   const characterModules = import.meta.glob('../assets/characters/*.json', {
     eager: true,
   })
-  // Ensure arm meshes are bundled
-  import.meta.glob('../assets/arms/**/*.json', { as: 'url', eager: true })
+  const assetUrls = import.meta.glob('../assets/**/*.json', {
+    as: 'url',
+    eager: true,
+  })
   const characters = Object.entries(characterModules)
     .map(([path, mod]) => {
       const file = path.split('/').pop() ?? ''
@@ -41,10 +43,26 @@ export default function showDebug(
         .replace(/\.json$/, '')
         .replace(/-/g, ' ')
         .replace(/\b\w/g, (c) => c.toUpperCase())
-      const assetUrl = new URL(path, import.meta.url).href
+      const assetUrl = (assetUrls as Record<string, string>)[path]
       const baseUrl = assetUrl.substring(0, assetUrl.lastIndexOf('/') + 1)
-      const spec = (mod as any).default
-      return { name, spec, baseUrl }
+      const spec: any = JSON.parse(JSON.stringify((mod as any).default))
+      for (const part of spec.parts) {
+        if (part.mesh) {
+          const key = `../assets/${part.mesh.replace(/^\.\//, '').replace(/^\.\.\//, '')}`
+          const hashed = (assetUrls as Record<string, string>)[key]
+          part.mesh = hashed ? hashed : new URL(part.mesh, baseUrl).href
+        }
+        if (part.textures) {
+          for (const dir in part.textures) {
+            const texPath = part.textures[dir]
+            if (!texPath) continue
+            const key = `../assets/${texPath.replace(/^\.\//, '').replace(/^\.\.\//, '')}`
+            const hashed = (assetUrls as Record<string, string>)[key]
+            part.textures[dir] = hashed ? hashed : new URL(texPath, baseUrl).href
+          }
+        }
+      }
+      return { name, spec }
     })
     .sort((a, b) => a.name.localeCompare(b.name))
   characters.forEach((c) => {
@@ -69,7 +87,7 @@ export default function showDebug(
     const ch = characters.find((c) => c.name === name)
     if (!ch) return
     const loader = new BlockyCharacterLoader()
-    const obj = await loader.fromSpec(ch.spec, ch.baseUrl)
+    const obj = await loader.fromSpec(ch.spec)
     if (model) scene.remove(model)
     model = obj
     scene.add(model)
