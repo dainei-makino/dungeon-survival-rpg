@@ -1,6 +1,5 @@
 import * as THREE from 'three'
 import BlockyCharacterLoader from '../games/dungeon-rpg-three/components/BlockyCharacterLoader'
-import sound from '../audio'
 
 export default function showDebug(
   container: HTMLElement,
@@ -15,9 +14,6 @@ export default function showDebug(
       <button id="rot-right">⟳</button>
       <button id="zoom-in">＋</button>
       <button id="zoom-out">－</button>
-      <button id="play-bgm">BGM</button>
-      <button id="stop-bgm">BGM停止</button>
-      <button id="play-se">効果音</button>
     </div>
   `
   container.style.position = 'relative'
@@ -32,9 +28,6 @@ export default function showDebug(
   const rotR = container.querySelector('#rot-right') as HTMLButtonElement
   const zoomIn = container.querySelector('#zoom-in') as HTMLButtonElement
   const zoomOut = container.querySelector('#zoom-out') as HTMLButtonElement
-  const playBgm = container.querySelector('#play-bgm') as HTMLButtonElement
-  const stopBgm = container.querySelector('#stop-bgm') as HTMLButtonElement
-  const playSe = container.querySelector('#play-se') as HTMLButtonElement
 
   const characters = [
     {
@@ -87,9 +80,6 @@ export default function showDebug(
   zoomOut.addEventListener('click', () => {
     camera.position.z += 0.5
   })
-  playBgm.addEventListener('click', () => sound.playBgm('main'))
-  stopBgm.addEventListener('click', () => sound.stopBgm('main'))
-  playSe.addEventListener('click', () => sound.playSe('beep'))
 
   function resize() {
     const w = viewer.clientWidth
