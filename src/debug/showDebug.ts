@@ -56,7 +56,7 @@ export default function showDebug(
   const select = container.querySelector('#char-select') as HTMLSelectElement
   for (const path in characterFiles) {
     const option = document.createElement('option')
-    option.value = characterFiles[path]
+    option.value = new URL(characterFiles[path], import.meta.url).href
     option.textContent = path.split('/').pop()?.replace('.json', '') || path
     select.appendChild(option)
   }
