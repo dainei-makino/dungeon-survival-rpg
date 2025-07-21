@@ -231,13 +231,70 @@ export default class DungeonView3D {
       }
     }
 
-    this.treeTex.wrapS = this.treeTex.wrapT = THREE.RepeatWrapping
-    this.leavesTex = this.biome.leavesTexture
+    const wallTex = wallTexture(this.wallNoiseScale)
+    wallTex.wrapS = wallTex.wrapT = THREE.RepeatWrapping
+    const treeTex = this.biome.treeTexture
+      ? this.biome.treeTexture()
+      : treeTexture(this.wallNoiseScale)
+    treeTex.wrapS = treeTex.wrapT = THREE.RepeatWrapping
+    const leavesTex = this.biome.leavesTexture
       ? this.biome.leavesTexture()
       : leavesTexture(this.wallNoiseScale)
-    this.leavesTex.wrapS = this.leavesTex.wrapT = THREE.RepeatWrapping
-
-    this.updateVisibleWalls()
+    leavesTex.wrapS = leavesTex.wrapT = THREE.RepeatWrapping
+    const wallScale = this.wallNoiseScale
+    for (let y = 0; y < this.map.height; y++) {
+      for (let x = 0; x < this.map.width; x++) {
+        const h = this.map.getHeight(x, y)
+        for (let z = h; z < this.map.depth; z++) {
+          const voxel = this.map.voxelAt(x, y, z)
+          if (voxel !== VoxelType.Tree && voxel !== VoxelType.Leaves) {
+            continue
+          }
+          const geom = new THREE.BoxGeometry(this.cellSize, 2, this.cellSize)
+          const pos = geom.attributes.position as THREE.BufferAttribute
+          const normal = geom.attributes.normal as THREE.BufferAttribute
+          const uv: number[] = []
+          for (let i = 0; i < pos.count; i++) {
+            const vx = pos.getX(i)
+            const vy = pos.getY(i)
+            const vz = pos.getZ(i)
+            const nx = normal.getX(i)
+            const nz = normal.getZ(i)
+            const wx = (x + 0.5) * this.cellSize + vx
+            const wy = vy + 1
+            const wz = (y + 0.5) * this.cellSize + vz
+            let u = 0
+            let v = 0
+            if (Math.abs(nx) === 1) {
+              u = wz / wallScale
+              v = wy / wallScale
+            } else if (Math.abs(nz) === 1) {
+              u = wx / wallScale
+              v = wy / wallScale
+            } else {
+              u = wx / wallScale
+              v = wz / wallScale
+            }
+            uv.push(u, v)
+          }
+          geom.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2))
+          const tex =
+            voxel === VoxelType.Tree
+              ? treeTex
+              : voxel === VoxelType.Leaves
+              ? leavesTex
+              : wallTex
+          const mat = new THREE.MeshBasicMaterial({ map: tex })
+          const wall = new THREE.Mesh(geom, mat)
+          wall.position.set(
+            (x + 0.5) * this.cellSize,
+            z * this.cellSize + 1,
+            (y + 0.5) * this.cellSize
+          )
+          this.scene.add(wall)
+        }
+      }
+    }
 
     if (!this.biome.lighting) {
       this.scene.add(new THREE.AmbientLight(0x666666))
