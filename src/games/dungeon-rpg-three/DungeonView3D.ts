@@ -298,7 +298,7 @@ export default class DungeonView3D {
       return
     }
     const loader = new BlockyCharacterLoader(
-      new URL('../../assets/enemies/json/skeleton-warrior-blocky.json', import.meta.url).href
+      new URL('../../assets/characters/skeleton-warrior-blocky.json', import.meta.url).href
     )
     loader.load().then((base) => {
       this.enemyBase = base

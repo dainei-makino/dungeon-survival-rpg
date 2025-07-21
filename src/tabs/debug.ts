@@ -36,7 +36,15 @@ export default function showDebug(
     },
     {
       name: 'Skeleton Warrior',
-      url: new URL('../assets/enemies/json/skeleton-warrior-blocky.json', import.meta.url).href,
+      url: new URL('../assets/characters/skeleton-warrior-blocky.json', import.meta.url).href,
+    },
+    {
+      name: 'Quadruped Base',
+      url: new URL('../assets/characters/quadruped-base.json', import.meta.url).href,
+    },
+    {
+      name: 'Slime',
+      url: new URL('../assets/characters/slime.json', import.meta.url).href,
     },
   ]
   characters.forEach((c) => {

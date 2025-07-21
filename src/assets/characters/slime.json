@@ -1,0 +1,7 @@
+{
+  "voxelHeight": 1,
+  "parts": [
+    { "name": "body", "size": [1.0, 0.8, 1.0], "position": [0, 0.4, 0], "color": "#44dd44" },
+    { "name": "top", "size": [0.6, 0.3, 0.6], "position": [0, 0.85, 0], "color": "#55ff55" }
+  ]
+}

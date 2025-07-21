@@ -15,9 +15,9 @@ Characters are built from the following joints and parts. Each part is represent
 
 Additional joints can be defined as needed. Parts are connected in a hierarchy to mimic a simple skeleton.
 
-## Vertex JSON / SVG Animation
+## Vertex JSON
 
-Shapes for each part can be designed in SVG and converted to vertex JSON using the existing conversion script (`npm run convert-svgs`). The resulting JSON files contain vertex arrays that can be loaded into `THREE.BufferGeometry` objects. By keeping geometry for each part separate, the same animation data can be reused with different meshes.
+Shapes for each part can be modeled externally and stored as vertex arrays in JSON. These files can be loaded into `THREE.BufferGeometry` objects. By keeping geometry for each part separate, the same animation data can be reused with different meshes.
 
 Animations are expressed as keyframes that specify position, rotation and scale for each joint. Because joints are predetermined, an animation such as _shake shoulders_ or _jump_ can be authored once and applied to any character model that implements the same joint names.
 
