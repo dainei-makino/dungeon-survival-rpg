@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 300">
+  <defs>
+    <linearGradient id="skin-grad" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
+      <stop offset="0%" stop-color="#fbd1b7"/>
+      <stop offset="40%" stop-color="#e8b593"/>
+      <stop offset="100%" stop-color="#d49d7a"/>
+    </linearGradient>
+  </defs>
+  <g id="arm" stroke="#553322" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" fill="url(#skin-grad)">
+    <path d="M68 10
+             C76 28 76 58 70 80
+             C85 110 88 152 82 200
+             C90 220 98 240 98 260
+             C98 274 90 288 75 288
+             C60 288 55 276 52 260
+             C44 210 44 162 50 110
+             C54 80 58 40 68 10Z"/>
+    <path d="M75 288
+             C70 280 64 270 60 256
+             C65 252 72 244 76 238
+             C80 232 84 224 82 210
+             C80 198 72 188 66 178
+             C62 170 60 160 60 150" fill="none"/>
+  </g>
+  <g id="hand" stroke="#553322" stroke-width="2" stroke-linecap="round" fill="url(#skin-grad)">
+    <path d="M60 256
+             C65 256 74 250 79 248
+             C87 245 91 248 94 254
+             C100 264 98 272 94 278
+             C90 284 84 288 75 288
+             C65 288 60 280 58 272
+             C56 266 56 260 60 256Z"/>
+    <line x1="78" y1="264" x2="78" y2="276"/>
+    <line x1="86" y1="262" x2="86" y2="274"/>
+    <line x1="70" y1="266" x2="70" y2="276"/>
+  </g>
+</svg>
