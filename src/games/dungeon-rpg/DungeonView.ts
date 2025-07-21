@@ -283,15 +283,15 @@ export default class DungeonView {
       const corrected = hit.dist * Math.cos(rayAngle - dirAngle)
       const wallScale = width * 0.35
       const h = Math.min(height, wallScale / Math.max(corrected, 0.0001))
-      const shade = Math.max(0, 200 - corrected * 40)
-      const color = Phaser.Display.Color.GetColor(shade, shade, shade)
       const cellHeight = this.map.heightAt(hit.cellX, hit.cellY)
       const offset = this.floorAmplitude * (cellHeight - 0.5)
+      const shade = Math.max(0, 200 - corrected * 40 + offset * 3)
+      const color = Phaser.Display.Color.GetColor(shade, shade, shade)
       const top = (height - h) / 2 - offset
       g.fillStyle(color, 1)
       g.fillRect(i * sliceW, top, sliceW + 1, h)
 
-      const floorShade = 51 + offset
+      const floorShade = Phaser.Math.Clamp(50 + offset * 8, 0, 255)
       const floorColor = Phaser.Display.Color.GetColor(
         floorShade,
         floorShade,
