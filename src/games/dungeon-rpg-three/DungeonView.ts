@@ -34,6 +34,7 @@ export default class DungeonView3D {
   private targetRot = 0
   private readonly animDuration = 200 // ms
   private readonly cellSize = 2
+  private readonly wallNoiseScale = 25
 
   constructor(container: HTMLElement, miniMap?: HTMLCanvasElement) {
     this.map = new DungeonMap()
@@ -117,7 +118,32 @@ export default class DungeonView3D {
     this.targetRot = this.startRot
   }
 
-  private perlinTexture(size = 256, base = 30, range = 50) {
+  private tileablePerlin(
+    noise: ImprovedNoise,
+    x: number,
+    y: number,
+    size: number,
+    scale: number,
+    z: number
+  ): number {
+    const u = x / size
+    const v = y / size
+    const w = size / scale
+    const nx = x / scale
+    const ny = y / scale
+    const n00 = noise.noise(nx, ny, z)
+    const n10 = noise.noise(nx - w, ny, z)
+    const n01 = noise.noise(nx, ny - w, z)
+    const n11 = noise.noise(nx - w, ny - w, z)
+    return n00 * (1 - u) * (1 - v) + n10 * u * (1 - v) + n01 * (1 - u) * v + n11 * u * v
+  }
+
+  private perlinTexture(
+    size = 256,
+    base = 30,
+    range = 50,
+    scale = 50
+  ) {
     const canvas = document.createElement('canvas')
     canvas.width = canvas.height = size
     const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
@@ -127,7 +153,7 @@ export default class DungeonView3D {
     let i = 0
     for (let y = 0; y < size; y++) {
       for (let x = 0; x < size; x++) {
-        const v = noise.noise(x / 50, y / 50, z)
+        const v = this.tileablePerlin(noise, x, y, size, scale, z)
         const c = Math.floor(base + (v + 1) * range)
         imgData.data[i++] = c
         imgData.data[i++] = c
@@ -144,7 +170,8 @@ export default class DungeonView3D {
   private perlinTextureColor(
     size = 256,
     base: { r: number; g: number; b: number },
-    range: { r: number; g: number; b: number }
+    range: { r: number; g: number; b: number },
+    scale = 50
   ) {
     const canvas = document.createElement('canvas')
     canvas.width = canvas.height = size
@@ -155,7 +182,7 @@ export default class DungeonView3D {
     let i = 0
     for (let y = 0; y < size; y++) {
       for (let x = 0; x < size; x++) {
-        const v = noise.noise(x / 50, y / 50, z)
+        const v = this.tileablePerlin(noise, x, y, size, scale, z)
         imgData.data[i++] = Math.floor(base.r + (v + 1) * range.r)
         imgData.data[i++] = Math.floor(base.g + (v + 1) * range.g)
         imgData.data[i++] = Math.floor(base.b + (v + 1) * range.b)
@@ -172,7 +199,8 @@ export default class DungeonView3D {
     return this.perlinTextureColor(
       256,
       { r: 80, g: 60, b: 40 },
-      { r: 30, g: 20, b: 15 }
+      { r: 30, g: 20, b: 15 },
+      40
     )
   }
 
@@ -180,7 +208,8 @@ export default class DungeonView3D {
     return this.perlinTextureColor(
       256,
       { r: 70, g: 70, b: 70 },
-      { r: 40, g: 40, b: 40 }
+      { r: 50, g: 50, b: 50 },
+      this.wallNoiseScale
     )
   }
 
@@ -247,19 +276,42 @@ export default class DungeonView3D {
     )
     this.scene.add(ceiling)
 
-    const wallMaterials = Array.from({ length: 4 }, () =>
-      new THREE.MeshBasicMaterial({ map: this.wallTexture() })
-    )
-
-    const wallGeometry = new THREE.BoxGeometry(this.cellSize, 2, this.cellSize)
+    const wallTex = this.wallTexture()
+    wallTex.wrapS = wallTex.wrapT = THREE.RepeatWrapping
+    const wallScale = this.wallNoiseScale
     for (let y = 0; y < this.map.height; y++) {
       for (let x = 0; x < this.map.width; x++) {
         if (this.map.tileAt(x, y) === '#') {
-          const mat = wallMaterials[
-            Math.floor(Math.random() * wallMaterials.length)
-          ]
-          const wall = new THREE.Mesh(wallGeometry, mat)
-
+          const geom = new THREE.BoxGeometry(this.cellSize, 2, this.cellSize)
+          const pos = geom.attributes.position as THREE.BufferAttribute
+          const normal = geom.attributes.normal as THREE.BufferAttribute
+          const uv: number[] = []
+          for (let i = 0; i < pos.count; i++) {
+            const vx = pos.getX(i)
+            const vy = pos.getY(i)
+            const vz = pos.getZ(i)
+            const nx = normal.getX(i)
+            const nz = normal.getZ(i)
+            const wx = (x + 0.5) * this.cellSize + vx
+            const wy = vy + 1
+            const wz = (y + 0.5) * this.cellSize + vz
+            let u = 0
+            let v = 0
+            if (Math.abs(nx) === 1) {
+              u = wz / wallScale
+              v = wy / wallScale
+            } else if (Math.abs(nz) === 1) {
+              u = wx / wallScale
+              v = wy / wallScale
+            } else {
+              u = wx / wallScale
+              v = wz / wallScale
+            }
+            uv.push(u, v)
+          }
+          geom.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2))
+          const mat = new THREE.MeshBasicMaterial({ map: wallTex })
+          const wall = new THREE.Mesh(geom, mat)
           wall.position.set(
             (x + 0.5) * this.cellSize,
             1,
