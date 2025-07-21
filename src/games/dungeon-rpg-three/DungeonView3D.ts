@@ -4,6 +4,7 @@ import Player, { Direction } from '../dungeon-rpg/Player'
 import Hero from '../dungeon-rpg/Hero'
 import Enemy, { skeletonWarrior } from '../dungeon-rpg/Enemy'
 import PlayerArms from './components/PlayerArms'
+import createBlockyDoll from './components/BlockyDoll'
 import skeletonShape from '../../assets/enemies/json/skeleton-warrior.json'
 import { floorTexture, wallTexture, perlinTexture } from './utils/textures'
 
@@ -28,6 +29,7 @@ export default class DungeonView3D {
   private miniMap?: HTMLCanvasElement
   private miniCtx?: CanvasRenderingContext2D
   private torch?: THREE.Mesh
+  private blockyNPC?: THREE.Group
   private animStart: number | null = null
   private startPos = new THREE.Vector3()
   private startRot = 0
@@ -229,6 +231,7 @@ export default class DungeonView3D {
     this.scene.add(this.torch)
 
     this.spawnEnemies()
+    this.spawnBlockyNPC()
   }
 
   private handleKeyDown = (e: KeyboardEvent) => {
@@ -362,6 +365,30 @@ export default class DungeonView3D {
       e.mesh = mesh
       this.scene.add(mesh)
     })
+  }
+
+  private spawnBlockyNPC() {
+    const doll = createBlockyDoll()
+    let x = this.player.x + 2
+    let y = this.player.y + 2
+    if (this.map.tileAt(x, y) === '#') {
+      outer: for (let iy = 1; iy < this.map.height - 1; iy++) {
+        for (let ix = 1; ix < this.map.width - 1; ix++) {
+          if (this.map.tileAt(ix, iy) === '.') {
+            x = ix
+            y = iy
+            break outer
+          }
+        }
+      }
+    }
+    doll.position.set(
+      x * this.cellSize + this.cellSize / 2,
+      0,
+      y * this.cellSize + this.cellSize / 2
+    )
+    this.blockyNPC = doll
+    this.scene.add(doll)
   }
 
   getArmSettings() {
