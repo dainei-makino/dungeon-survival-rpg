@@ -1,4 +1,4 @@
-import AmbientPadSynth, { AmbientPatch } from './AmbientPadSynth'
+import AmbientPadSynth, { AmbientPatch, ADSR } from './AmbientPadSynth'
 import AmbientMusicGenerator from './AmbientMusicGenerator'
 
 const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
@@ -6,20 +6,24 @@ const synth = new AmbientPadSynth(ctx, 'triangle')
 const generator = new AmbientMusicGenerator(ctx, synth)
 
 const biomeConfigs: Record<string, {
-  patch: AmbientPatch
+  patch: AmbientPatch | AmbientPatch[]
   scales: number[][]
   root: number
   noise: number
   decay: number
   intensity: number
+  envelope?: Partial<ADSR>
+  noteLength?: number
 }> = {
   forest: {
-    patch: 'triangle',
+    patch: ['triangle', 'saw'],
     scales: [[0, 2, 5, 7, 9], [0, 4, 5, 7, 11]],
     root: 220,
     noise: 0.05,
-    decay: 10,
-    intensity: 0.3
+    decay: 12,
+    intensity: 0.3,
+    envelope: { attack: 0.5, decay: 0.2, sustain: 0.8, release: 12 },
+    noteLength: 0.5
   },
   cave: {
     patch: 'noise',
@@ -46,10 +50,12 @@ export async function setAmbientBiome(name: string, bridge = true) {
     await generator.playBridge()
   }
   synth.setPatch(cfg.patch)
+  if (cfg.envelope) synth.setEnvelope(cfg.envelope)
   generator.setScales(cfg.scales)
   generator.setRoot(cfg.root)
   synth.setNoiseLevel(cfg.noise)
   synth.setDecay(cfg.decay)
+  if (cfg.noteLength !== undefined) generator.setNoteDuration(cfg.noteLength)
   generator.setIntensity(cfg.intensity)
   synth.setMasterGain(0.03, 15)
   generator.start()

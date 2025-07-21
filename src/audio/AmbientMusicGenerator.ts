@@ -43,6 +43,10 @@ export default class AmbientMusicGenerator {
     this.chordIntervalMs = intervalMs
   }
 
+  setNoteDuration(time: number) {
+    this.noteDuration = Math.max(0, time)
+  }
+
   setIntensity(level: number) {
     this.intensity = Math.max(0, Math.min(1, level))
     this.chordIntervalMs = Math.max(800, 4000 - 3200 * this.intensity)
