@@ -40,6 +40,7 @@ export default class DungeonView3D {
   private miniCtx?: CanvasRenderingContext2D
   private torch?: THREE.Mesh
   private blockyNPC?: THREE.Group
+  private blockyNPCPos?: { x: number; y: number }
   private animStart: number | null = null
   private startPos = new THREE.Vector3()
   private startRot = 0
@@ -59,6 +60,10 @@ export default class DungeonView3D {
   private items: { name: string; x: number; y: number; mesh: THREE.Object3D }[] = []
   private floatMode = false
   private floatOffset = 0
+  private environmentBases = new Map<EnvironmentCharacter, THREE.Group>()
+  private environmentInstances: { template: EnvironmentCharacter; x: number; y: number }[] = []
+  private nextEnvSpawn = 0
+  private readonly envSpawnInterval = 10000
 
   constructor(
     container: HTMLElement,
@@ -69,22 +74,6 @@ export default class DungeonView3D {
     this.map = biome.generateMap() as DungeonMap
     this.player = new Player(this.map.playerStart)
     this.hero = new Hero()
-    // place a sample enemy for debugging purposes
-    let ex = this.map.playerStart.x + 3
-    let ey = this.map.playerStart.y
-    if (this.map.tileAt(ex, ey) === '#') {
-      // find first open tile
-      outer: for (let y = 1; y < this.map.height - 1; y++) {
-        for (let x = 1; x < this.map.width - 1; x++) {
-          if (this.map.tileAt(x, y) !== '#') {
-            ex = x
-            ey = y
-            break outer
-          }
-        }
-      }
-    }
-    this.enemies.push({ enemy: skeletonWarrior, x: ex, y: ey })
 
     this.mapCenterX = Math.floor(this.player.x)
     this.mapCenterY = Math.floor(this.player.y)
@@ -184,7 +173,6 @@ export default class DungeonView3D {
     const light = new THREE.PointLight(0xffaa00, 1, 5)
     this.torch.add(light)
     this.scene.add(this.torch)
-    this.spawnEnemies()
     this.spawnEnvironment()
   }
 
@@ -300,20 +288,6 @@ export default class DungeonView3D {
     })
   }
 
-  private spawnEnemies() {
-    if (this.enemyBase) {
-      this.addEnemies()
-      return
-    }
-    const loader = new BlockyCharacterLoader(
-      new URL('../../assets/characters/skeleton-warrior-blocky.json', import.meta.url).href
-    )
-    loader.load().then((base) => {
-      this.enemyBase = base
-      this.addEnemies()
-    })
-  }
-
   private addEnemies() {
     if (!this.enemyBase) return
     const minX = this.mapCenterX - this.drawDistance
@@ -332,9 +306,10 @@ export default class DungeonView3D {
         const mesh = this.enemyBase.clone(true)
         const scale = 0.3 * this.cellSize
         mesh.scale.set(scale, scale, scale)
+        const h = (this.map.getHeight(e.x, e.y) + 1) * this.cellSize
         mesh.position.set(
           e.x * this.cellSize + this.cellSize / 2,
-          0,
+          h,
           e.y * this.cellSize + this.cellSize / 2
         )
         e.mesh = mesh
@@ -365,26 +340,32 @@ export default class DungeonView3D {
           }
         }
       }
+      const baseH = this.map.getHeight(x, y)
+      if (!this.map.isClearAbove(x, y, baseH + 1, (doll.userData.voxelHeight as number) || 1)) {
+        return
+      }
+      const h = (baseH + 1) * this.cellSize
       doll.position.set(
         x * this.cellSize + this.cellSize / 2,
-        0,
+        h,
         y * this.cellSize + this.cellSize / 2
       )
       this.blockyNPC = doll
+      this.blockyNPCPos = { x, y }
       this.mapGroup.add(doll)
     })
   }
 
   private spawnEnvironment() {
     const map: any = this.map as any
-    if (!map.environmentItems || map.environmentItems.length === 0) return
-
-    const templates = Array.from(
-      new Set(map.environmentItems.map((i: any) => i.template))
-    ) as EnvironmentCharacter[]
+    const templates = new Set<EnvironmentCharacter>()
+    this.biome.environment.forEach((t) => templates.add(t))
+    if (map.environmentItems) {
+      map.environmentItems.forEach((i: any) => templates.add(i.template))
+    }
 
     Promise.all(
-      templates.map((t) => {
+      Array.from(templates).map((t) => {
         const url = new URL(
           `../../assets/environment/json/${t.mesh}`,
           import.meta.url
@@ -393,44 +374,61 @@ export default class DungeonView3D {
         return loader.load().then((group) => [t, group] as const)
       })
     ).then((pairs) => {
-      const baseMap = new Map<EnvironmentCharacter, THREE.Group>()
-      pairs.forEach(([t, g]) => baseMap.set(t, g))
-      map.environmentItems.forEach((item: any) => {
-        const base = baseMap.get(item.template)
-        if (!base) return
-        const mesh = base.clone(true)
-        const vh = (mesh.userData.voxelHeight as number) || 1
-        const scale = this.cellSize / vh
-        mesh.scale.set(scale, scale, scale)
-        const h = this.map.getHeight(item.x, item.y) * this.cellSize
-        mesh.position.set(
-          item.x * this.cellSize + this.cellSize / 2,
-          h,
-          item.y * this.cellSize + this.cellSize / 2
-        )
-        this.scene.add(mesh)
-      })
+      pairs.forEach(([t, g]) => this.environmentBases.set(t, g))
+      if (map.environmentItems) {
+        map.environmentItems.forEach((item: any) => {
+          this.spawnEnvironmentMesh(item.template, item.x, item.y)
+        })
+      }
+      const area = this.map.width * this.map.height
+      const count = Math.floor(area * 0.01)
+      this.spawnRandomEnvironmentItems(count)
+      this.nextEnvSpawn = performance.now() + this.envSpawnInterval
     })
   }
 
-  private spawnItems() {
-    const loader = new BlockyCharacterLoader(
-      new URL('../../assets/environment/json/seaweed-blocky.json', import.meta.url).href
-    )
-    loader.load().then((obj) => {
-      const x = this.player.x + 1
-      const y = this.player.y
-      const scale = 0.3 * this.cellSize
-      obj.scale.set(scale, scale, scale)
-      obj.position.set(
-        x * this.cellSize + this.cellSize / 2,
-        0,
-        y * this.cellSize + this.cellSize / 2
-      )
-      this.items.push({ name: 'seaweed', x, y, mesh: obj })
-      this.mapGroup.add(obj)
-    })
+  private spawnEnvironmentMesh(template: EnvironmentCharacter, x: number, y: number) {
+    const base = this.environmentBases.get(template)
+    if (!base) return
+    const mesh = base.clone(true)
+    const vh = (mesh.userData.voxelHeight as number) || 1
+    const scale = this.cellSize / vh
+    mesh.scale.set(scale, scale, scale)
+    const baseH = this.map.getHeight(x, y)
+    if (!this.map.isClearAbove(x, y, baseH + 1, vh)) return
+    const h = (baseH + 1) * this.cellSize
+    mesh.position.set(x * this.cellSize + this.cellSize / 2, h, y * this.cellSize + this.cellSize / 2)
+    this.scene.add(mesh)
+    this.environmentInstances.push({ template, x, y })
   }
+
+  private spawnRandomEnvironmentItems(count: number, outsideView = false) {
+    if (this.biome.environment.length === 0) return
+    for (let i = 0; i < count; i++) {
+      let placed = false
+      for (let t = 0; t < 50 && !placed; t++) {
+        const x = Math.floor(Math.random() * this.map.width)
+        const y = Math.floor(Math.random() * this.map.height)
+        if (this.map.tileAt(x, y) === '#') continue
+        if (
+          outsideView &&
+          Math.abs(x - this.mapCenterX) <= this.drawDistance &&
+          Math.abs(y - this.mapCenterY) <= this.drawDistance
+        ) {
+          continue
+        }
+        const template = this.biome.environment[Math.floor(Math.random() * this.biome.environment.length)]
+        const base = this.environmentBases.get(template)
+        const vh = (base?.userData.voxelHeight as number) || 1
+        const baseH = this.map.getHeight(x, y)
+        if (this.map.isClearAbove(x, y, baseH + 1, vh)) {
+          this.spawnEnvironmentMesh(template, x, y)
+          placed = true
+        }
+      }
+    }
+  }
+
 
   private buildMapGeometry(cx: number, cy: number) {
     this.mapCenterX = cx
@@ -560,9 +558,7 @@ export default class DungeonView3D {
       }
     }
 
-    this.addEnemies()
     this.spawnBlockyNPC()
-    this.spawnItems()
   }
 
   private checkRegion() {
@@ -638,6 +634,13 @@ export default class DungeonView3D {
 
     this.renderMiniMap()
     this.checkRegion()
+    if (
+      this.environmentBases.size > 0 &&
+      performance.now() >= this.nextEnvSpawn
+    ) {
+      this.spawnRandomEnvironmentItems(1, true)
+      this.nextEnvSpawn = performance.now() + this.envSpawnInterval
+    }
   }
 
   private angleForDir(dir: Direction): number {
@@ -751,5 +754,116 @@ export default class DungeonView3D {
     }
     lines.push(`Map ${this.map.width}x${this.map.height}`)
     return lines.join('\n')
+  }
+
+  getCharacterList(): string {
+    const lines: string[] = []
+    lines.push(
+      `Player @ (${this.player.x.toFixed(1)}, ${this.player.y.toFixed(1)})`
+    )
+    if (this.blockyNPCPos) {
+      lines.push(`NPC @ (${this.blockyNPCPos.x}, ${this.blockyNPCPos.y})`)
+    }
+    this.enemies.forEach((e) =>
+      lines.push(`${e.enemy.name} @ (${e.x}, ${e.y})`)
+    )
+    this.environmentInstances.forEach((e) =>
+      lines.push(`${e.template.name} @ (${e.x}, ${e.y})`)
+    )
+    return lines.join('\n')
+  }
+
+  getSpawnOptions(): { id: string; label: string }[] {
+    const opts: { id: string; label: string }[] = [
+      { id: 'enemy:skeleton', label: skeletonWarrior.name },
+    ]
+    this.biome.environment.forEach((env) =>
+      opts.push({ id: `env:${env.name}`, label: env.name })
+    )
+    return opts
+  }
+
+  spawnCharacter(id: string) {
+    if (id === 'enemy:skeleton') {
+      this.spawnEnemyNearPlayer(skeletonWarrior)
+    } else if (id.startsWith('env:')) {
+      const name = id.slice(4)
+      const env = this.biome.environment.find((e) => e.name === name)
+      if (env) this.spawnEnvironmentNearPlayer(env)
+    }
+  }
+
+  private spawnEnemyNearPlayer(template: Enemy) {
+    const px = Math.floor(this.player.x)
+    const py = Math.floor(this.player.y)
+    const offsets = [
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1],
+      [1, 1],
+      [-1, -1],
+      [1, -1],
+      [-1, 1],
+    ]
+    let x = px
+    let y = py
+    const vh = (this.enemyBase?.userData.voxelHeight as number) || 2
+    for (const [dx, dy] of offsets) {
+      const nx = px + dx
+      const ny = py + dy
+      if (this.map.tileAt(nx, ny) === '.') {
+        const baseH = this.map.getHeight(nx, ny)
+        if (this.map.isClearAbove(nx, ny, baseH + 1, vh)) {
+          x = nx
+          y = ny
+          break
+        }
+      }
+    }
+    this.enemies.push({ enemy: template, x, y })
+    if (this.enemyBase) {
+      this.addEnemies()
+    } else {
+      const loader = new BlockyCharacterLoader(
+        new URL('../../assets/characters/skeleton-warrior-blocky.json', import.meta.url).href
+      )
+      loader.load().then((base) => {
+        this.enemyBase = base
+        this.addEnemies()
+      })
+    }
+  }
+
+  private spawnEnvironmentNearPlayer(template: EnvironmentCharacter) {
+    const px = Math.floor(this.player.x)
+    const py = Math.floor(this.player.y)
+    const offsets = [
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1],
+      [1, 1],
+      [-1, -1],
+      [1, -1],
+      [-1, 1],
+    ]
+    let x = px
+    let y = py
+    const baseGroup = this.environmentBases.get(template)
+    const vh = (baseGroup?.userData.voxelHeight as number) || 1
+    for (const [dx, dy] of offsets) {
+      const nx = px + dx
+      const ny = py + dy
+      if (this.map.tileAt(nx, ny) === '.') {
+        const baseH = this.map.getHeight(nx, ny)
+        if (this.map.isClearAbove(nx, ny, baseH + 1, vh)) {
+          x = nx
+          y = ny
+          break
+        }
+      }
+    }
+    this.spawnEnvironmentMesh(template, x, y)
   }
 }

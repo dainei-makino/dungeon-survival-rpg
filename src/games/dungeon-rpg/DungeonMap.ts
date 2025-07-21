@@ -1,5 +1,5 @@
 import type { Direction } from './Player'
-import { MapEnemy, skeletonWarrior } from './Enemy'
+import { MapEnemy } from './Enemy'
 import VoxelMap from '../world/VoxelMap'
 import { VoxelType } from '../world/voxels'
 
@@ -14,7 +14,6 @@ export default class DungeonMap extends VoxelMap {
     this._playerStart = { x: 1, y: 1, dir: 'north' }
     this.generate()
     this.buildVoxels()
-    this.placeEnemies()
   }
 
   get playerStart() {
@@ -83,18 +82,7 @@ export default class DungeonMap extends VoxelMap {
   }
 
   private placeEnemies() {
-    const enemyCount = 5
-    for (let i = 0; i < enemyCount; i++) {
-      let placed = false
-      while (!placed) {
-        const x = this.rand(1, this.width - 1)
-        const y = this.rand(1, this.height - 1)
-        if (this.tileAt(x, y) === '.') {
-          this.enemies.push(new MapEnemy(skeletonWarrior, x, y))
-          placed = true
-        }
-      }
-    }
+    // intentionally left blank – enemies will spawn dynamically elsewhere
   }
 
   private buildVoxels() {

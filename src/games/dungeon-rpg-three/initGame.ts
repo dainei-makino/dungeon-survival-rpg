@@ -9,8 +9,9 @@ export default function initThreeGame(
     <button id="back-to-top" style="position:absolute;z-index:1000;top:10px;left:10px;">トップへ戻る</button>
     <div id="three-game" style="width:100%;height:100%"></div>
     <div id="debug-overlay" style="display:none;position:absolute;z-index:900;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);">
-      <div id="debug-window" style="position:absolute;top:20px;left:20px;background:rgba(0,0,0,0.8);padding:0;color:#fff;">
+      <div id="debug-window" style="position:absolute;top:20px;left:20px;background:rgba(0,0,0,0.8);padding:0;color:#fff;display:flex;flex-direction:column;">
         <div id="debug-header" style="background:#555;padding:4px;cursor:move;">Debug</div>
+        <div style="display:flex;">
         <div style="padding:10px;">
           <div id="status-display" style="font-size:24px;text-shadow:0 0 2px #000"></div>
           <pre id="debug-info" style="font:12px monospace;white-space:pre;"></pre>
@@ -33,6 +34,16 @@ export default function initThreeGame(
           <button id="float-btn">Float: OFF</button>
         </div>
         </div>
+        <div id="character-panel" style="padding:10px;border-left:1px solid #888;min-width:200px;">
+          <div style="font-weight:bold;margin-bottom:4px;">Characters</div>
+          <pre id="character-list" style="font:12px monospace;white-space:pre;"></pre>
+        </div>
+        <div id="spawn-panel" style="padding:10px;border-left:1px solid #888;min-width:200px;">
+          <div style="font-weight:bold;margin-bottom:4px;">Spawn</div>
+          <select id="spawn-select" style="width:100%;margin-bottom:4px;"></select>
+          <button id="spawn-btn">Spawn</button>
+        </div>
+        </div>
       </div>
     </div>
   `
@@ -46,6 +57,9 @@ export default function initThreeGame(
   const miniMap = container.querySelector('#mini-map') as HTMLCanvasElement
   const statusDiv = container.querySelector('#status-display') as HTMLDivElement
   const debugDiv = container.querySelector('#debug-info') as HTMLPreElement
+  const charList = container.querySelector('#character-list') as HTMLPreElement
+  const spawnSelect = container.querySelector('#spawn-select') as HTMLSelectElement
+  const spawnBtn = container.querySelector('#spawn-btn') as HTMLButtonElement
   const heroControls = container.querySelector('#hero-controls') as HTMLDivElement
   const heroHp = heroControls.querySelector('#hero-hp') as HTMLInputElement
   const heroHunger = heroControls.querySelector('#hero-hunger') as HTMLInputElement
@@ -57,6 +71,17 @@ export default function initThreeGame(
   heroHp.value = view.getHero().hp.toString()
   heroHunger.value = view.getHero().hunger.toString()
   heroStamina.value = view.getHero().stamina.toString()
+
+  view.getSpawnOptions().forEach((opt) => {
+    const option = document.createElement('option')
+    option.value = opt.id
+    option.textContent = opt.label
+    spawnSelect.appendChild(option)
+  })
+
+  spawnBtn.addEventListener('click', () => {
+    view.spawnCharacter(spawnSelect.value)
+  })
 
   function updateHero() {
     const hero = view.getHero()
@@ -145,6 +170,9 @@ export default function initThreeGame(
     view.render()
     if (debugDiv) {
       debugDiv.textContent = view.getDetailedDebug()
+    }
+    if (charList) {
+      charList.textContent = view.getCharacterList()
     }
     if (statusDiv) {
       statusDiv.innerHTML = view.getStatusHTML()
