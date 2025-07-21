@@ -30,6 +30,7 @@ export default function initThreeGame(
           <div>HP <input id="hero-hp" type="number" style="width:60px;"></div>
           <div>Hunger <input id="hero-hunger" type="number" style="width:60px;"></div>
           <div>Stamina <input id="hero-stamina" type="number" style="width:60px;"></div>
+          <button id="float-btn">Float: OFF</button>
         </div>
         </div>
       </div>
@@ -49,6 +50,7 @@ export default function initThreeGame(
   const heroHp = heroControls.querySelector('#hero-hp') as HTMLInputElement
   const heroHunger = heroControls.querySelector('#hero-hunger') as HTMLInputElement
   const heroStamina = heroControls.querySelector('#hero-stamina') as HTMLInputElement
+  const floatBtn = heroControls.querySelector('#float-btn') as HTMLButtonElement
   container.style.position = 'relative'
   const view = new DungeonView3D(wrapper, miniMap, forestBiome)
 
@@ -63,6 +65,10 @@ export default function initThreeGame(
     hero.stamina = parseInt(heroStamina.value)
   }
   ;[heroHp, heroHunger, heroStamina].forEach((i) => i.addEventListener('input', updateHero))
+  floatBtn.addEventListener('click', () => {
+    const on = view.toggleFloatMode()
+    floatBtn.textContent = on ? 'Float: ON' : 'Float: OFF'
+  })
 
   let dragging = false
   let offsetX = 0
