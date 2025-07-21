@@ -20,6 +20,12 @@ export default function showDebug(
         <select id="char-select"></select>
       </div>
       <canvas id="char-view" width="300" height="300" style="border:1px solid #000"></canvas>
+      <div style="margin-top:0.5rem;display:flex;gap:0.5rem;">
+        <button id="rot-left">左回転</button>
+        <button id="rot-right">右回転</button>
+        <button id="zoom-in">拡大</button>
+        <button id="zoom-out">縮小</button>
+      </div>
       <div>
         BGM:
         <select id="bgm-select">
@@ -52,13 +58,19 @@ export default function showDebug(
   const canvas = container.querySelector('#char-view') as HTMLCanvasElement
   const renderer = new THREE.WebGLRenderer({ canvas })
   renderer.setSize(300, 300)
+  renderer.setClearColor(0x222222)
   const scene = new THREE.Scene()
   const light = new THREE.DirectionalLight(0xffffff, 1)
   light.position.set(1, 1, 1)
   scene.add(light)
+  scene.add(new THREE.AmbientLight(0x666666))
   const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100)
-  camera.position.set(3, 3, 3)
-  camera.lookAt(0, 1, 0)
+  let distance = 3
+  function updateCamera() {
+    camera.position.set(distance, distance, distance)
+    camera.lookAt(0, 1, 0)
+  }
+  updateCamera()
   let current: THREE.Group | undefined
 
   async function loadCharacter(url: string) {
@@ -77,6 +89,26 @@ export default function showDebug(
   if (select.options.length > 0) {
     loadCharacter(select.options[0].value)
   }
+
+  const rotLeft = container.querySelector('#rot-left') as HTMLButtonElement
+  const rotRight = container.querySelector('#rot-right') as HTMLButtonElement
+  const zoomIn = container.querySelector('#zoom-in') as HTMLButtonElement
+  const zoomOut = container.querySelector('#zoom-out') as HTMLButtonElement
+
+  rotLeft.addEventListener('click', () => {
+    if (current) current.rotation.y -= 0.3
+  })
+  rotRight.addEventListener('click', () => {
+    if (current) current.rotation.y += 0.3
+  })
+  zoomIn.addEventListener('click', () => {
+    distance = Math.max(1, distance - 0.5)
+    updateCamera()
+  })
+  zoomOut.addEventListener('click', () => {
+    distance = Math.min(10, distance + 0.5)
+    updateCamera()
+  })
 
   function animate() {
     requestAnimationFrame(animate)
