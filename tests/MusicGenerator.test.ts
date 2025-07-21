@@ -30,6 +30,16 @@ async function run() {
   generator2.playSequence([{ frequency: 330, duration: 1 }])
   assert.strictEqual(padSynth.type, 'sine')
   assert.strictEqual(padSynth.played[0].frequency, 330)
+
+  const padSynth2 = new MockSynth()
+  const pianoSynth2 = new MockSynth()
+  const pad2 = new Pad(padSynth2 as any)
+  const piano2 = new Piano(pianoSynth2 as any)
+  const tracks = MusicGenerator.generateFixedTracks([pad2, piano2])
+  assert.strictEqual(tracks.length, 2)
+  MusicGenerator.playTracks(tracks)
+  assert.ok(padSynth2.played.length > 0, 'pad track should play notes')
+  assert.ok(pianoSynth2.played.length > 0, 'piano track should play notes')
   console.log('MusicGenerator test passed')
 }
 
