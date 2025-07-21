@@ -196,9 +196,12 @@ export default class DungeonView3D {
       this.musicLoop = null
     }
     if (!this.biome.music) return
-    const instruments = this.biome.music()
-    this.musicTracks = MusicGenerator.generateFixedTracks(instruments)
-    this.musicLoop = MusicGenerator.startLoop(this.musicTracks)
+    const config = this.biome.music()
+    this.musicTracks = MusicGenerator.generateAmbientTracks(config)
+    this.musicLoop = MusicGenerator.startLoop(
+      this.musicTracks,
+      config.tempo
+    )
   }
 
   private handleKeyDown = (e: KeyboardEvent) => {

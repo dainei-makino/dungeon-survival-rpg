@@ -14,6 +14,14 @@ export interface MusicLoop {
   stop(): void
 }
 
+export interface AmbientMusicConfig {
+  instruments: Instrument[]
+  root: number
+  scale: number[]
+  length?: number
+  tempo?: number
+}
+
 export default class MusicGenerator {
   private instrument: Instrument
 
@@ -53,6 +61,26 @@ export default class MusicGenerator {
         }
       }
       tracks.push({ instrument: instruments[1], sequence: seq })
+    }
+
+    return tracks
+  }
+
+  static generateAmbientTracks(config: AmbientMusicConfig): Track[] {
+    const length = config.length ?? 8
+    const tracks: Track[] = []
+    const toFreq = (step: number) => config.root * Math.pow(2, step / 12)
+
+    for (const inst of config.instruments) {
+      const sequence: NoteEvent[] = []
+      for (let i = 0; i < length; i++) {
+        const step = config.scale[Math.floor(Math.random() * config.scale.length)]
+        const freq = toFreq(step)
+        const durationChoices = [0.5, 1, 2]
+        const duration = durationChoices[Math.floor(Math.random() * durationChoices.length)]
+        sequence.push({ frequency: freq, duration })
+      }
+      tracks.push({ instrument: inst, sequence })
     }
 
     return tracks

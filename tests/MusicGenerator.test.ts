@@ -40,6 +40,19 @@ async function run() {
   MusicGenerator.playTracks(tracks)
   assert.ok(padSynth2.played.length > 0, 'pad track should play notes')
   assert.ok(pianoSynth2.played.length > 0, 'piano track should play notes')
+
+  const config = {
+    instruments: [pad2],
+    root: 440,
+    scale: [0, 3, 5],
+    length: 4,
+    tempo: 90,
+  }
+  const ambientTracks = MusicGenerator.generateAmbientTracks(config)
+  assert.strictEqual(ambientTracks.length, 1)
+  assert.strictEqual(ambientTracks[0].sequence.length, 4)
+  const loop = MusicGenerator.startLoop(ambientTracks, config.tempo)
+  loop.stop()
   console.log('MusicGenerator test passed')
 }
 
