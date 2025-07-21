@@ -34,3 +34,8 @@ following biomes are defined:
 
 Additional systems like weather effects are planned but not yet implemented.
 
+## Documentation
+
+- [Character Animation Design](docs/character-animation.md)
+- [Player Arm Animation Guide](docs/arm-animation.md)
+

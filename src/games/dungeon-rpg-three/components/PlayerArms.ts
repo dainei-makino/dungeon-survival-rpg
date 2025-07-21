@@ -121,6 +121,21 @@ export default class PlayerArms {
     }
   }
 
+  /**
+   * Expose the internal arm meshes so they can be animated using
+   * the generic {@link Animator} class.
+   */
+  getJoints() {
+    return {
+      leftUpperArm: this.leftUpper,
+      leftLowerArm: this.leftLower,
+      leftHand: this.leftFist,
+      rightUpperArm: this.rightUpper,
+      rightLowerArm: this.rightLower,
+      rightHand: this.rightFist,
+    }
+  }
+
   update(settings: {
     posY?: number
     upperRotX?: number
