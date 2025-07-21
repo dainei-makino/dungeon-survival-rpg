@@ -365,7 +365,9 @@ export default class DungeonView3D {
       const t = Math.min(1, elapsed / this.animDuration)
       this.camera.position.lerpVectors(this.startPos, this.targetPos, t)
       let rotDiff = this.targetRot - this.startRot
-      rotDiff = ((rotDiff + Math.PI) % (Math.PI * 2)) - Math.PI
+      rotDiff =
+        ((rotDiff + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) -
+        Math.PI
       this.camera.rotation.y = this.startRot + rotDiff * t
       if (this.torch) {
         this.torch.position.set(
