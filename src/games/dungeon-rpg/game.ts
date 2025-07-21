@@ -1,7 +1,7 @@
 import Phaser from 'phaser'
 import DungeonView from './DungeonView'
 
-const rightArmUrl = new URL('./assets/right-arm.svg', import.meta.url).href
+const rightArmUrl = new URL('./assets/detailed-arm.svg', import.meta.url).href
 
 export default function initGame(
   container: HTMLElement,
