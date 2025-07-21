@@ -12,7 +12,7 @@ export default class VoxelMap {
     this.depth = depth
     this.voxels = Array.from({ length: depth }, () =>
       Array.from({ length: height }, () =>
-        Array.from({ length: width }, () => VoxelType.Floor)
+        Array.from({ length: width }, () => VoxelType.Air)
       )
     )
   }
