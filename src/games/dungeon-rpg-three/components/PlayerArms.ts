@@ -87,7 +87,7 @@ export default class PlayerArms {
 
   sway(t: number) {
     const swing = Math.sin(t * Math.PI)
-    const ampY = 0.1
+    const ampY = 0.03
     this.leftUpper.position.y = this.baseLeftY + swing * ampY
     this.rightUpper.position.y = this.baseRightY - swing * ampY
   }
