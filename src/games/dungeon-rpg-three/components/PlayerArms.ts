@@ -168,4 +168,18 @@ export default class PlayerArms {
       this.rightFist.position.y = this.fistDist
     }
   }
+
+  attachItem(item: THREE.Object3D, left: boolean) {
+    const fist = left ? this.leftFist : this.rightFist
+    fist.add(item)
+    item.position.set(0, 0.1, 0)
+  }
+
+  detachItem(left: boolean): THREE.Object3D | null {
+    const fist = left ? this.leftFist : this.rightFist
+    if (fist.children.length === 0) return null
+    const obj = fist.children[fist.children.length - 1] as THREE.Object3D
+    fist.remove(obj)
+    return obj
+  }
 }
