@@ -9,12 +9,14 @@ export default function initThreeGame(
     <button id="back-to-top" style="position:absolute;z-index:1000;top:10px;left:10px;">トップへ戻る</button>
     <div id="three-game" style="width:100%;height:100%"></div>
     <div id="debug-overlay" style="display:none;position:absolute;z-index:900;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);">
-      <div id="debug-window" style="position:absolute;top:20px;left:20px;background:rgba(0,0,0,0.8);padding:10px;color:#fff;cursor:move;">
-        <div id="status-display" style="font-size:24px;text-shadow:0 0 2px #000"></div>
-        <pre id="debug-info" style="font:12px monospace;white-space:pre;"></pre>
-        <canvas id="mini-map" width="150" height="150" style="margin-top:10px;border:1px solid #000"></canvas>
-        <div id="arm-controls" style="margin-top:10px;background:rgba(0,0,0,0.5);padding:4px;font:12px monospace;">
-          <div>PosY <input id="arm-pos-y" type="range" min="-1.2" max="0" step="0.01"></div>
+      <div id="debug-window" style="position:absolute;top:20px;left:20px;background:rgba(0,0,0,0.8);padding:0;color:#fff;">
+        <div id="debug-header" style="background:#555;padding:4px;cursor:move;">Debug</div>
+        <div style="padding:10px;">
+          <div id="status-display" style="font-size:24px;text-shadow:0 0 2px #000"></div>
+          <pre id="debug-info" style="font:12px monospace;white-space:pre;"></pre>
+          <canvas id="mini-map" width="150" height="150" style="margin-top:10px;border:1px solid #000"></canvas>
+          <div id="arm-controls" style="margin-top:10px;background:rgba(0,0,0,0.5);padding:4px;font:12px monospace;">
+            <div>PosY <input id="arm-pos-y" type="range" min="-1.2" max="0" step="0.01"></div>
           <div>Upper X <input id="arm-upper-x" type="range" min="-3.14" max="3.14" step="0.01"></div>
           <div>Lower X <input id="arm-lower-x" type="range" min="-3.14" max="3.14" step="0.01"></div>
           <div>Rot Z <input id="arm-rot-z" type="range" min="-1.57" max="1.57" step="0.01"></div>
@@ -29,6 +31,7 @@ export default function initThreeGame(
           <div>Hunger <input id="hero-hunger" type="number" style="width:60px;"></div>
           <div>Stamina <input id="hero-stamina" type="number" style="width:60px;"></div>
         </div>
+        </div>
       </div>
     </div>
   `
@@ -38,6 +41,7 @@ export default function initThreeGame(
   const wrapper = container.querySelector('#three-game') as HTMLElement
   const overlay = container.querySelector('#debug-overlay') as HTMLDivElement
   const debugWin = container.querySelector('#debug-window') as HTMLDivElement
+  const debugHeader = container.querySelector('#debug-header') as HTMLDivElement
   const miniMap = container.querySelector('#mini-map') as HTMLCanvasElement
   const statusDiv = container.querySelector('#status-display') as HTMLDivElement
   const debugDiv = container.querySelector('#debug-info') as HTMLPreElement
@@ -63,10 +67,10 @@ export default function initThreeGame(
   let dragging = false
   let offsetX = 0
   let offsetY = 0
-  debugWin.addEventListener('mousedown', (e) => {
+  debugHeader.addEventListener('mousedown', (e) => {
     dragging = true
-    offsetX = e.offsetX
-    offsetY = e.offsetY
+    offsetX = e.clientX - debugWin.offsetLeft
+    offsetY = e.clientY - debugWin.offsetTop
   })
   window.addEventListener('mousemove', (e) => {
     if (!dragging) return
