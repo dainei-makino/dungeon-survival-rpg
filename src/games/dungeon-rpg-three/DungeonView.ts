@@ -22,6 +22,7 @@ export default class DungeonView3D {
   >
   private miniMap?: HTMLCanvasElement
   private miniCtx?: CanvasRenderingContext2D
+  private torch?: THREE.Mesh
 
   constructor(container: HTMLElement, miniMap?: HTMLCanvasElement) {
     this.map = new DungeonMap()
@@ -55,8 +56,28 @@ export default class DungeonView3D {
     this.updateCamera()
   }
 
+  private checkerTexture(color1: string, color2: string, squares = 8) {
+    const size = 64
+    const canvas = document.createElement('canvas')
+    canvas.width = size
+    canvas.height = size
+    const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
+    const s = size / squares
+    for (let y = 0; y < squares; y++) {
+      for (let x = 0; x < squares; x++) {
+        ctx.fillStyle = (x + y) % 2 === 0 ? color1 : color2
+        ctx.fillRect(x * s, y * s, s, s)
+      }
+    }
+    const tex = new THREE.CanvasTexture(canvas)
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping
+    return tex
+  }
+
   private buildScene() {
-    const floorMaterial = new THREE.MeshBasicMaterial({ color: 0x444444 })
+    const floorTex = this.checkerTexture('#555', '#444', 4)
+    floorTex.repeat.set(this.map.width, this.map.height)
+    const floorMaterial = new THREE.MeshBasicMaterial({ map: floorTex })
     const floor = new THREE.Mesh(
       new THREE.PlaneGeometry(this.map.width, this.map.height),
       floorMaterial
@@ -65,7 +86,9 @@ export default class DungeonView3D {
     floor.position.set(this.map.width / 2, 0, this.map.height / 2)
     this.scene.add(floor)
 
-    const ceilingMaterial = new THREE.MeshBasicMaterial({ color: 0x222222 })
+    const ceilTex = this.checkerTexture('#333', '#222', 4)
+    ceilTex.repeat.set(this.map.width, this.map.height)
+    const ceilingMaterial = new THREE.MeshBasicMaterial({ map: ceilTex })
     const ceiling = new THREE.Mesh(
       new THREE.PlaneGeometry(this.map.width, this.map.height),
       ceilingMaterial
@@ -74,7 +97,8 @@ export default class DungeonView3D {
     ceiling.position.set(this.map.width / 2, 2, this.map.height / 2)
     this.scene.add(ceiling)
 
-    const wallMaterial = new THREE.MeshBasicMaterial({ color: 0x888888 })
+    const wallTex = this.checkerTexture('#999', '#666', 2)
+    const wallMaterial = new THREE.MeshBasicMaterial({ map: wallTex })
     const wallGeometry = new THREE.BoxGeometry(1, 2, 1)
     for (let y = 0; y < this.map.height; y++) {
       for (let x = 0; x < this.map.width; x++) {
@@ -85,6 +109,20 @@ export default class DungeonView3D {
         }
       }
     }
+
+    this.scene.add(new THREE.AmbientLight(0xcccccc))
+
+    const torchGeo = new THREE.SphereGeometry(0.1, 8, 8)
+    const torchMat = new THREE.MeshBasicMaterial({ color: 0xffaa00 })
+    this.torch = new THREE.Mesh(torchGeo, torchMat)
+    this.torch.position.set(
+      this.player.x + 0.5,
+      1.6,
+      this.player.y + 0.5
+    )
+    const light = new THREE.PointLight(0xffaa00, 1, 5)
+    this.torch.add(light)
+    this.scene.add(this.torch)
   }
 
   private handleKeyDown = (e: KeyboardEvent) => {
@@ -156,6 +194,9 @@ export default class DungeonView3D {
   }
 
   update() {
+    if (this.torch) {
+      this.torch.rotation.y += 0.01
+    }
     this.renderMiniMap()
   }
 
