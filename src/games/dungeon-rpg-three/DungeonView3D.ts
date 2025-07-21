@@ -697,4 +697,27 @@ export default class DungeonView3D {
       `Enemies: ${enemyInfo}`
     )
   }
+
+  getHero() {
+    return this.hero
+  }
+
+  getDetailedDebug(): string {
+    const lines: string[] = []
+    lines.push(`Player: (${this.player.x.toFixed(2)}, ${this.player.y.toFixed(2)}) Dir:${this.player.dir}`)
+    lines.push(`HP:${this.hero.hp} Hunger:${this.hero.hunger} Stamina:${this.hero.stamina}`)
+    lines.push('Around:')
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        if (dx === 0 && dy === 0) continue
+        const x = Math.floor(this.player.x) + dx
+        const y = Math.floor(this.player.y) + dy
+        const tile = this.map.tileAt(x, y)
+        const enemy = this.enemies.find((e) => e.x === x && e.y === y)
+        lines.push(`(${x},${y}) ${tile} ${enemy ? enemy.enemy.name : ''}`)
+      }
+    }
+    lines.push(`Map ${this.map.width}x${this.map.height}`)
+    return lines.join('\n')
+  }
 }
