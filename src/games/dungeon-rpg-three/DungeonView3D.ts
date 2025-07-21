@@ -403,6 +403,7 @@ export default class DungeonView3D {
           this.camera.position.z
         )
       }
+      this.arms.sway(t)
       if (t === 1) {
         this.animStart = null
       }
@@ -451,6 +452,7 @@ export default class DungeonView3D {
     )
     this.targetRot = this.angleForDir(this.player.dir)
     this.animStart = performance.now()
+    this.arms.startSway()
   }
 
   render() {
