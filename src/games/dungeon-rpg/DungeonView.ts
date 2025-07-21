@@ -24,6 +24,7 @@ export default class DungeonView {
   private readonly numRays = 120
   private readonly maxDepth = 20
   private readonly eyeOffset = 0.6
+  private dust: { x: number; y: number; vy: number; r: number }[] = []
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene
@@ -48,6 +49,18 @@ export default class DungeonView {
     this.debugText.setOrigin(1, 0)
     this.miniMap = scene.add.graphics()
     this.updateDebugText()
+
+    const width = scene.scale.width
+    const height = scene.scale.height
+    const count = 60
+    for (let i = 0; i < count; i++) {
+      this.dust.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        vy: Phaser.Math.FloatBetween(-0.15, 0.15),
+        r: Phaser.Math.Between(1, 2),
+      })
+    }
   }
 
   private updateDebugText() {
@@ -255,6 +268,22 @@ export default class DungeonView {
     return { dist, side, cellX: hitX, cellY: hitY }
   }
 
+  private updateDust(width: number, height: number) {
+    for (const d of this.dust) {
+      d.y += d.vy
+      if (d.y < 0) {
+        d.y = height
+        d.x = Math.random() * width
+      } else if (d.y > height) {
+        d.y = 0
+        d.x = Math.random() * width
+      }
+      d.x += Phaser.Math.FloatBetween(-0.2, 0.2)
+      if (d.x < 0) d.x = width
+      if (d.x > width) d.x = 0
+    }
+  }
+
   draw() {
     const width = this.scene.scale.width
     const height = this.scene.scale.height
@@ -293,6 +322,12 @@ export default class DungeonView {
         g.strokePath()
       }
       prevSide = hit.side
+    }
+
+    this.updateDust(width, height)
+    g.fillStyle(0xffffff, 0.2)
+    for (const d of this.dust) {
+      g.fillCircle(d.x, d.y, d.r)
     }
 
     this.drawMiniMap()
