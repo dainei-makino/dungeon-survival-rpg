@@ -9,7 +9,8 @@ export default class AmbientMusicGenerator {
   ]
   private midTermProgression = [0, 5, -3, 7]
   private chordIntervalMs = 4000
-  private noteDuration = 8
+  // note value (sustain length) in seconds
+  private noteValue = 8
   private intensity = 0
 
   private chordCount = 0
@@ -43,10 +44,17 @@ export default class AmbientMusicGenerator {
     this.chordIntervalMs = intervalMs
   }
 
+  /**
+   * Adjust note value (sustain length).
+   */
+  setNoteValue(time: number) {
+    this.noteValue = Math.max(0, time)
+  }
+
   setIntensity(level: number) {
     this.intensity = Math.max(0, Math.min(1, level))
     this.chordIntervalMs = Math.max(800, 4000 - 3200 * this.intensity)
-    this.noteDuration = Math.max(4, 8 - 4 * this.intensity)
+    this.noteValue = Math.max(4, 8 - 4 * this.intensity)
   }
 
   start() {
@@ -67,7 +75,7 @@ export default class AmbientMusicGenerator {
     const steps = [0, 2, 4, 2]
     for (const s of steps) {
       const freq = this.root * Math.pow(2, s / 12)
-      this.synth.playNote(freq, this.noteDuration)
+      this.synth.playNote(freq, this.noteValue)
       await this.wait(this.chordIntervalMs)
     }
     this.synth.setMasterGain(this.defaultGain, fadeSec)
@@ -94,7 +102,7 @@ export default class AmbientMusicGenerator {
     for (const d of degrees) {
       const semitone = scale[(rootIndex + d) % scale.length]
       const freq = base * Math.pow(2, semitone / 12)
-      this.synth.playNote(freq, this.noteDuration)
+      this.synth.playNote(freq, this.noteValue)
     }
 
     this.chordCount++
