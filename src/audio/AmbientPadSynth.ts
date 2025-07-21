@@ -11,8 +11,8 @@ export default class AmbientPadSynth {
     this.filter.type = 'lowpass'
     this.filter.frequency.value = 800
     this.output = ctx.createGain()
-    // master gain lowered an additional ~20%
-    this.output.gain.value = 0.16
+    // master gain lowered
+    this.output.gain.value = 0.3
     this.filter.connect(this.output)
     this.output.connect(ctx.destination)
 
