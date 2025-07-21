@@ -22,6 +22,9 @@ import EnvironmentCharacter, {
   stump,
   fallenLeaves,
 } from '../dungeon-rpg/Environment'
+import { caveMusic, forestMusic, plainMusic } from '../../audio/biomeMusic'
+
+import { MusicSettings } from '../../audio/biomeMusic'
 
 export interface Biome {
   name: string
@@ -37,6 +40,7 @@ export interface Biome {
   floorTexture?: () => THREE.Texture
   treeTexture?: () => THREE.Texture
   leavesTexture?: () => THREE.Texture
+  music?: MusicSettings
 }
 
 export const forestBiome: Biome = {
@@ -53,6 +57,7 @@ export const forestBiome: Biome = {
   floorTexture: swampTexture,
   treeTexture: () => treeTexture(40),
   leavesTexture: () => createLeavesTexture(20),
+  music: forestMusic,
 }
 
 export const caveBiome: Biome = {
@@ -63,6 +68,7 @@ export const caveBiome: Biome = {
   fog: '#555555',
   weather: 'damp',
   lighting: { color: 0x888888, intensity: 0.5 },
+  music: caveMusic,
 }
 
 export const plainBiome: Biome = {
@@ -73,6 +79,7 @@ export const plainBiome: Biome = {
   fog: '#ccffcc',
   weather: 'windy',
   lighting: { color: 0xffffff, intensity: 1 },
+  music: plainMusic,
 }
 
 export const biomes = {
