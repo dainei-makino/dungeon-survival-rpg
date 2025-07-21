@@ -56,6 +56,7 @@ export default class DungeonView3D {
   private mapCenterX = 0
   private mapCenterY = 0
   private enemyBase?: THREE.Group
+  private items: { name: string; x: number; y: number; mesh: THREE.Object3D }[] = []
 
   constructor(
     container: HTMLElement,
@@ -235,8 +236,16 @@ export default class DungeonView3D {
     const targetY = Math.floor(this.player.y + vectors.dy)
     const enemy = this.enemies.find((e) => e.x === targetX && e.y === targetY)
     const hand = left ? 'leftHand' : 'rightHand'
-    const item = (this.hero as any)[hand] as string
-    if (item === 'unarmed') {
+    const current = (this.hero as any)[hand] as string
+    const itemIdx = this.items.findIndex((i) => i.x === targetX && i.y === targetY)
+
+    if (current === 'unarmed' && itemIdx !== -1) {
+      const grabbed = this.items.splice(itemIdx, 1)[0]
+      this.mapGroup.remove(grabbed.mesh)
+      this.arms.attachItem(grabbed.mesh, left)
+      ;(this.hero as any)[hand] = grabbed.name
+      sound.playSe('beep')
+    } else if (current === 'unarmed') {
       if (enemy) {
         console.log(`${left ? 'Left' : 'Right'} hand interacts with ${enemy.enemy.name}`)
       } else {
@@ -244,7 +253,7 @@ export default class DungeonView3D {
       }
       sound.playSe('beep')
     } else {
-      console.log(`${left ? 'Left' : 'Right'} hand uses ${item}`)
+      console.log(`${left ? 'Left' : 'Right'} hand uses ${current}`)
       sound.playSe('beep')
     }
   }
@@ -356,6 +365,26 @@ export default class DungeonView3D {
       )
       this.blockyNPC = doll
       this.mapGroup.add(doll)
+    })
+  }
+
+  private spawnItems() {
+    const loader = new BlockyCharacterLoader(
+      new URL('../../assets/environment/json/seaweed-blocky.json', import.meta.url)
+        .href
+    )
+    loader.load().then((obj) => {
+      const x = this.player.x + 1
+      const y = this.player.y
+      const scale = 0.3 * this.cellSize
+      obj.scale.set(scale, scale, scale)
+      obj.position.set(
+        x * this.cellSize + this.cellSize / 2,
+        0,
+        y * this.cellSize + this.cellSize / 2
+      )
+      this.items.push({ name: 'seaweed', x, y, mesh: obj })
+      this.mapGroup.add(obj)
     })
   }
 
@@ -489,6 +518,7 @@ export default class DungeonView3D {
 
     this.addEnemies()
     this.spawnBlockyNPC()
+    this.spawnItems()
   }
 
   private checkRegion() {
