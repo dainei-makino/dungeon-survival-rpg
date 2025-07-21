@@ -14,7 +14,6 @@ import {
   treeTexture,
   leavesTexture,
 } from './utils/textures'
-import sound from '../../audio'
 
 
 export default class DungeonView3D {
@@ -244,17 +243,14 @@ export default class DungeonView3D {
       this.mapGroup.remove(grabbed.mesh)
       this.arms.attachItem(grabbed.mesh, left)
       ;(this.hero as any)[hand] = grabbed.name
-      sound.playSe('beep')
     } else if (current === 'unarmed') {
       if (enemy) {
         console.log(`${left ? 'Left' : 'Right'} hand interacts with ${enemy.enemy.name}`)
       } else {
         console.log(`${left ? 'Left' : 'Right'} hand finds nothing`)
       }
-      sound.playSe('beep')
     } else {
       console.log(`${left ? 'Left' : 'Right'} hand uses ${current}`)
-      sound.playSe('beep')
     }
   }
 
