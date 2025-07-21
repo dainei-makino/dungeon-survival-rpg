@@ -60,6 +60,7 @@ export default function showDebug(
       const baseUrl = absUrl.substring(0, absUrl.lastIndexOf('/') + 1)
       const relDir = path.slice('../assets/'.length, path.lastIndexOf('/') + 1)
       const spec: any = JSON.parse(JSON.stringify((mod as any).default))
+      if (!Array.isArray(spec.parts)) return null
       for (const part of spec.parts) {
         if (part.mesh) {
           const joined = normalizePath(relDir, part.mesh)
@@ -80,6 +81,7 @@ export default function showDebug(
       }
       return { name, spec, baseUrl }
     })
+    .filter(Boolean)
     .sort((a, b) => a.name.localeCompare(b.name))
   characters.forEach((c) => {
     const opt = document.createElement('option')
