@@ -1,7 +1,7 @@
 import Phaser from 'phaser'
 import DungeonView from './DungeonView'
-import torchSvg from './assets/torch.svg?url'
-import fistSvg from './assets/fist.svg?url'
+import torchSvg from './assets/torch.svg?raw'
+import fistSvg from './assets/fist.svg?raw'
 
 export default function initGame(
   container: HTMLElement,
@@ -27,8 +27,10 @@ export default function initGame(
     },
     scene: {
       preload() {
-        this.load.svg('torch', torchSvg)
-        this.load.svg('fist', fistSvg)
+        const torchData = 'data:image/svg+xml;base64,' + btoa(torchSvg)
+        const fistData = 'data:image/svg+xml;base64,' + btoa(fistSvg)
+        this.load.svg('torch', torchData)
+        this.load.svg('fist', fistData)
       },
       create() {
         view = new DungeonView(this)
