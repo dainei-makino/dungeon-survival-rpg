@@ -6,6 +6,7 @@ import ForestMap from './ForestMap'
 import {
   swampTexture,
   treeTexture,
+  leavesTexture as createLeavesTexture,
   darkSkyTexture,
 } from '../dungeon-rpg-three/utils/textures'
 import EnvironmentCharacter, {
@@ -32,6 +33,7 @@ export interface Biome {
   skyTexture?: () => THREE.Texture
   floorTexture?: () => THREE.Texture
   treeTexture?: () => THREE.Texture
+  leavesTexture?: () => THREE.Texture
 }
 
 export const forestBiome: Biome = {
@@ -47,6 +49,7 @@ export const forestBiome: Biome = {
   skyTexture: darkSkyTexture,
   floorTexture: swampTexture,
   treeTexture: () => treeTexture(40),
+  leavesTexture: () => createLeavesTexture(20),
 }
 
 export const caveBiome: Biome = {

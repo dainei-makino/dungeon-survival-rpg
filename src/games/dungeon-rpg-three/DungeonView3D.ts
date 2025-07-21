@@ -13,6 +13,7 @@ import {
   wallTexture,
   perlinTexture,
   treeTexture,
+  leavesTexture,
 } from './utils/textures'
 import sound from '../../audio'
 
@@ -232,6 +233,10 @@ export default class DungeonView3D {
       ? this.biome.treeTexture()
       : treeTexture(this.wallNoiseScale)
     treeTex.wrapS = treeTex.wrapT = THREE.RepeatWrapping
+    const leavesTex = this.biome.leavesTexture
+      ? this.biome.leavesTexture()
+      : leavesTexture(this.wallNoiseScale)
+    leavesTex.wrapS = leavesTex.wrapT = THREE.RepeatWrapping
     const wallScale = this.wallNoiseScale
     for (let y = 0; y < this.map.height; y++) {
       for (let x = 0; x < this.map.width; x++) {
@@ -269,7 +274,12 @@ export default class DungeonView3D {
             uv.push(u, v)
           }
           geom.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2))
-          const tex = voxel === VoxelType.Tree || voxel === VoxelType.Leaves ? treeTex : wallTex
+          const tex =
+            voxel === VoxelType.Tree
+              ? treeTex
+              : voxel === VoxelType.Leaves
+              ? leavesTex
+              : wallTex
           const mat = new THREE.MeshBasicMaterial({ map: tex })
           const wall = new THREE.Mesh(geom, mat)
           wall.position.set(

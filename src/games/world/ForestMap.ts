@@ -60,7 +60,7 @@ export default class ForestMap extends VoxelMap {
     }
   }
 
-  private canPlaceTree(x: number, y: number, radius = 4): boolean {
+  private canPlaceTree(x: number, y: number, radius = 3): boolean {
     for (let dy = -radius; dy <= radius; dy++) {
       for (let dx = -radius; dx <= radius; dx++) {
         const nx = x + dx
@@ -89,8 +89,8 @@ export default class ForestMap extends VoxelMap {
         }
         if (Math.random() < this.density && this.canPlaceTree(x, y)) {
           const available = this.depth - h
-          if (available >= 9) {
-            this.placeObject(x, y, h, createTreeObject(9))
+          if (available >= 6) {
+            this.placeObject(x, y, h, createTreeObject())
           }
         }
       }
