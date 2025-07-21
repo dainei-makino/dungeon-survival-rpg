@@ -30,15 +30,15 @@ export default function showDebug(
   const zoomOut = container.querySelector('#zoom-out') as HTMLButtonElement
 
   const characterModules = import.meta.glob('../assets/characters/*.json', {
-    as: 'url',
     eager: true,
-  }) as Record<string, string>
-  const characters = Object.entries(characterModules).map(([path, url]) => {
+  })
+  const characters = Object.keys(characterModules).map((path) => {
     const file = path.split('/').pop() ?? ''
     const name = file
       .replace(/\.json$/, '')
       .replace(/-/g, ' ')
       .replace(/\b\w/g, (c) => c.toUpperCase())
+    const url = new URL(path, import.meta.url).href
     return { name, url }
   })
   characters.forEach((c) => {
