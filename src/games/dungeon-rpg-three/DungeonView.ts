@@ -256,8 +256,8 @@ export default class DungeonView3D {
       const isDiag = Math.abs(dx) === 1 && Math.abs(dy) === 1
       if (
         isDiag &&
-        this.map.tileAt(this.player.x + dx, this.player.y) === '#' &&
-        this.map.tileAt(this.player.x, this.player.y + dy) === '#'
+        (this.map.tileAt(this.player.x + dx, this.player.y) === '#' ||
+          this.map.tileAt(this.player.x, this.player.y + dy) === '#')
       ) {
         return
       }
