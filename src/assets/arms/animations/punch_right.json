@@ -1,6 +1,6 @@
 [
   { "time": 0, "joints": { "rightLowerArm": { "rotation": [0, 0, 0] } } },
-  { "time": 100, "joints": { "rightLowerArm": { "rotation": [-1.0, 0, 0] } } },
-  { "time": 200, "joints": { "rightLowerArm": { "rotation": [-2.0, 0, 0] } } },
-  { "time": 300, "joints": { "rightLowerArm": { "rotation": [0, 0, 0] } } }
+  { "time": 150, "joints": { "rightLowerArm": { "rotation": [-0.8, 0, 0] } } },
+  { "time": 300, "joints": { "rightLowerArm": { "rotation": [-1.5, 0, 0] } } },
+  { "time": 600, "joints": { "rightLowerArm": { "rotation": [0, 0, 0] } } }
 ]

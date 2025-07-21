@@ -245,6 +245,11 @@ export default class DungeonView3D {
   }
 
   private handleHandAction(left: boolean) {
+    // stop the walking sway animation so the punch isn't overridden
+    if (this.animStart !== null) {
+      this.animStart = null
+      this.arms.finishSway()
+    }
     const vectors = this.dirVectors[this.player.dir]
     const targetX = Math.floor(this.player.x + vectors.dx)
     const targetY = Math.floor(this.player.y + vectors.dy)
