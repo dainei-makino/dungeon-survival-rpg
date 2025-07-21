@@ -174,6 +174,7 @@ export default class DungeonView3D {
     this.torch.add(light)
     this.scene.add(this.torch)
     this.spawnEnvironment()
+    this.spawnMapEnemies()
   }
 
   private handleKeyDown = (e: KeyboardEvent) => {
@@ -824,6 +825,28 @@ export default class DungeonView3D {
       loader.load().then((base) => {
         this.enemyBase = base
         this.addEnemies()
+      })
+    }
+  }
+
+  private spawnMapEnemies() {
+    const map: any = this.map as any
+    if (!map.enemies || map.enemies.length === 0) return
+    const add = () => {
+      map.enemies.forEach((e: any) => {
+        this.enemies.push({ enemy: e.template, x: e.x, y: e.y })
+      })
+      this.addEnemies()
+    }
+    if (this.enemyBase) {
+      add()
+    } else {
+      const loader = new BlockyCharacterLoader(
+        new URL('../../assets/characters/skeleton-warrior-blocky.json', import.meta.url).href
+      )
+      loader.load().then((base) => {
+        this.enemyBase = base
+        add()
       })
     }
   }
