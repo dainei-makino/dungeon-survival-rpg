@@ -1,5 +1,8 @@
 import * as THREE from 'three'
 import armBox from '../../../assets/arms/arm-box.json'
+import Animator, { Keyframe } from '../../animation/Animator'
+import leftPunchData from '../../../assets/arms/animations/punch_left.json'
+import rightPunchData from '../../../assets/arms/animations/punch_right.json'
 
 export default class PlayerArms {
   private group: THREE.Group
@@ -16,6 +19,9 @@ export default class PlayerArms {
   private baseRightY = 0
   private readonly defaultLeftY: number
   private readonly defaultRightY: number
+  private animator: Animator | null = null
+  private leftPunch: Keyframe[] = leftPunchData as Keyframe[]
+  private rightPunch: Keyframe[] = rightPunchData as Keyframe[]
 
   constructor(camera: THREE.Camera) {
     this.group = new THREE.Group()
@@ -134,6 +140,18 @@ export default class PlayerArms {
       rightLowerArm: this.rightLower,
       rightHand: this.rightFist,
     }
+  }
+
+  punch(left: boolean) {
+    const frames = left ? this.leftPunch : this.rightPunch
+    this.animator = new Animator(this.getJoints(), frames, false)
+    this.animator.play()
+  }
+
+  updateAnimations() {
+    if (!this.animator) return
+    this.animator.update()
+    if (this.animator.isFinished()) this.animator = null
   }
 
   update(settings: {

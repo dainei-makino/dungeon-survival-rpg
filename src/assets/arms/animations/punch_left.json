@@ -1,0 +1,6 @@
+[
+  { "time": 0, "joints": { "leftLowerArm": { "rotation": [0, 0, 0] } } },
+  { "time": 100, "joints": { "leftLowerArm": { "rotation": [-1.0, 0, 0] } } },
+  { "time": 200, "joints": { "leftLowerArm": { "rotation": [-2.0, 0, 0] } } },
+  { "time": 300, "joints": { "leftLowerArm": { "rotation": [0, 0, 0] } } }
+]

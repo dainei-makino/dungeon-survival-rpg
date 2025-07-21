@@ -17,10 +17,17 @@ export default class Animator {
   private keyframes: Keyframe[]
   private startTime: number | null = null
   private duration = 0
+  private loop = true
+  private finished = false
 
-  constructor(joints: Record<string, THREE.Object3D>, keyframes: Keyframe[]) {
+  constructor(
+    joints: Record<string, THREE.Object3D>,
+    keyframes: Keyframe[],
+    loop = true,
+  ) {
     this.joints = joints
     this.keyframes = keyframes.sort((a, b) => a.time - b.time)
+    this.loop = loop
     if (this.keyframes.length > 0) {
       this.duration = this.keyframes[this.keyframes.length - 1].time
     }
@@ -28,19 +35,26 @@ export default class Animator {
 
   play() {
     this.startTime = performance.now()
+    this.finished = false
   }
 
   update() {
     if (this.startTime === null || this.keyframes.length === 0) return
-    const elapsed = (performance.now() - this.startTime) % this.duration
+    const elapsed = performance.now() - this.startTime
+    if (!this.loop && elapsed >= this.duration) {
+      this.startTime = null
+      this.finished = true
+      return
+    }
+    const progress = this.loop ? elapsed % this.duration : Math.min(elapsed, this.duration)
 
     let i = 0
-    while (i < this.keyframes.length - 1 && elapsed >= this.keyframes[i + 1].time) {
+    while (i < this.keyframes.length - 1 && progress >= this.keyframes[i + 1].time) {
       i++
     }
     const kf1 = this.keyframes[i]
-    const kf2 = this.keyframes[(i + 1) % this.keyframes.length]
-    const blend = (elapsed - kf1.time) / (kf2.time - kf1.time)
+    const kf2 = this.keyframes[Math.min(i + 1, this.keyframes.length - 1)]
+    const blend = (progress - kf1.time) / (kf2.time - kf1.time)
 
     Object.keys(this.joints).forEach((name) => {
       const obj = this.joints[name]
@@ -61,5 +75,9 @@ export default class Animator {
         obj.scale.copy(t1.scale.clone().lerp(t2.scale, blend))
       }
     })
+  }
+
+  isFinished() {
+    return this.finished
   }
 }

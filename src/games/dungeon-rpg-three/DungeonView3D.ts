@@ -6,6 +6,7 @@ import Player, { Direction } from '../dungeon-rpg/Player'
 import Hero from '../dungeon-rpg/Hero'
 import Enemy, { skeletonWarrior } from '../dungeon-rpg/Enemy'
 import EnvironmentCharacter from '../dungeon-rpg/Environment'
+import PunchAction from '../dungeon-rpg/actions/PunchAction'
 import PlayerArms from './components/PlayerArms'
 import BlockyCharacterLoader from './components/BlockyCharacterLoader'
 import {
@@ -25,7 +26,13 @@ export default class DungeonView3D {
   private biome: Biome
   private player: Player
   private hero: Hero
-  private enemies: { enemy: Enemy; x: number; y: number; mesh?: THREE.Object3D }[] = []
+  private enemies: {
+    enemy: Enemy
+    x: number
+    y: number
+    hp: number
+    mesh?: THREE.Object3D
+  }[] = []
   private keys = new Set<string>()
   private dirVectors: Record<
     Direction,
@@ -82,7 +89,7 @@ export default class DungeonView3D {
         }
       }
     }
-    this.enemies.push({ enemy: skeletonWarrior, x: ex, y: ey })
+    this.enemies.push({ enemy: skeletonWarrior, x: ex, y: ey, hp: skeletonWarrior.hp })
 
     this.mapCenterX = Math.floor(this.player.x)
     this.mapCenterY = Math.floor(this.player.y)
@@ -248,7 +255,15 @@ export default class DungeonView3D {
       ;(this.hero as any)[hand] = grabbed.name
     } else if (current === 'unarmed') {
       if (enemy) {
-        console.log(`${left ? 'Left' : 'Right'} hand interacts with ${enemy.enemy.name}`)
+        const action = new PunchAction()
+        action.execute(this.hero, enemy)
+        this.arms.punch(left)
+        console.log(`${enemy.enemy.name} に ${this.hero.strength} ダメージ`)
+        if (enemy.hp <= 0) {
+          if (enemy.mesh) this.mapGroup.remove(enemy.mesh)
+          this.enemies = this.enemies.filter((e) => e !== enemy)
+          console.log(`${enemy.enemy.name} を倒した`)
+        }
       } else {
         console.log(`${left ? 'Left' : 'Right'} hand finds nothing`)
       }
@@ -618,6 +633,8 @@ export default class DungeonView3D {
         this.arms.finishSway()
       }
     }
+
+    this.arms.updateAnimations()
 
     // orient billboard enemies toward the camera
     this.enemies.forEach((e) => {
