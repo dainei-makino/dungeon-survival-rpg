@@ -1,0 +1,23 @@
+{
+  "voxelHeight": 1,
+  "parts": [
+    {
+      "name": "body",
+      "size": [0.5, 0.5, 0.5],
+      "position": [0, 0.25, 0],
+      "color": "#d00000"
+    },
+    {
+      "name": "stem",
+      "size": [0.1, 0.2, 0.1],
+      "position": [0, 0.55, 0],
+      "color": "#664400"
+    },
+    {
+      "name": "leaf",
+      "size": [0.2, 0.05, 0.2],
+      "position": [0.1, 0.65, 0],
+      "color": "#228833"
+    }
+  ]
+}

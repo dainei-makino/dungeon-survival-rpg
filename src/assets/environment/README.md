@@ -7,10 +7,13 @@ The files are loaded directly by the game.
 
 - `seaweed-blocky.json`
 - `woodPiece.json`
-- `tree.json` (not yet implemented)
-- `bush.json` (not yet implemented)
-- `stalactite.json` (not yet implemented)
-- `mushroom.json` (not yet implemented)
-- `grass.json` (not yet implemented)
-- `stone.json` (not yet implemented)
+- `apple.json`
+- `stump.json`
+- `fallenLeaves.json`
+- `tree.json`
+- `bush.json`
+- `stalactite.json`
+- `mushroom.json`
+- `grass.json`
+- `stone.json`
 

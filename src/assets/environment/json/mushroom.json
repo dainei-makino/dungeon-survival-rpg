@@ -1,0 +1,7 @@
+{
+  "voxelHeight": 1.5,
+  "parts": [
+    { "name": "stem", "size": [0.3, 0.7, 0.3], "position": [0, 0.35, 0], "color": "#ffffff" },
+    { "name": "cap", "size": [0.8, 0.3, 0.8], "position": [0, 0.95, 0], "color": "#ff3333" }
+  ]
+}

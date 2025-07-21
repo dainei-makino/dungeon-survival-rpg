@@ -1,0 +1,17 @@
+{
+  "voxelHeight": 1,
+  "parts": [
+    {
+      "name": "trunk",
+      "size": [0.6, 0.6, 0.6],
+      "position": [0, 0.3, 0],
+      "color": "#8b5a2b"
+    },
+    {
+      "name": "top",
+      "size": [0.6, 0.1, 0.6],
+      "position": [0, 0.6, 0],
+      "color": "#a67744"
+    }
+  ]
+}

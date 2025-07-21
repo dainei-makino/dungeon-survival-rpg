@@ -5,6 +5,7 @@ import { VoxelType } from '../world/voxels'
 import Player, { Direction } from '../dungeon-rpg/Player'
 import Hero from '../dungeon-rpg/Hero'
 import Enemy, { skeletonWarrior } from '../dungeon-rpg/Enemy'
+import EnvironmentCharacter from '../dungeon-rpg/Environment'
 import PlayerArms from './components/PlayerArms'
 import BlockyCharacterLoader from './components/BlockyCharacterLoader'
 import {
@@ -181,6 +182,8 @@ export default class DungeonView3D {
     const light = new THREE.PointLight(0xffaa00, 1, 5)
     this.torch.add(light)
     this.scene.add(this.torch)
+    this.spawnEnemies()
+    this.spawnEnvironment()
   }
 
   private handleKeyDown = (e: KeyboardEvent) => {
@@ -364,10 +367,47 @@ export default class DungeonView3D {
     })
   }
 
+  private spawnEnvironment() {
+    const map: any = this.map as any
+    if (!map.environmentItems || map.environmentItems.length === 0) return
+
+    const templates = Array.from(
+      new Set(map.environmentItems.map((i: any) => i.template))
+    ) as EnvironmentCharacter[]
+
+    Promise.all(
+      templates.map((t) => {
+        const url = new URL(
+          `../../assets/environment/json/${t.mesh}`,
+          import.meta.url
+        ).href
+        const loader = new BlockyCharacterLoader(url)
+        return loader.load().then((group) => [t, group] as const)
+      })
+    ).then((pairs) => {
+      const baseMap = new Map<EnvironmentCharacter, THREE.Group>()
+      pairs.forEach(([t, g]) => baseMap.set(t, g))
+      map.environmentItems.forEach((item: any) => {
+        const base = baseMap.get(item.template)
+        if (!base) return
+        const mesh = base.clone(true)
+        const vh = (mesh.userData.voxelHeight as number) || 1
+        const scale = this.cellSize / vh
+        mesh.scale.set(scale, scale, scale)
+        const h = this.map.getHeight(item.x, item.y) * this.cellSize
+        mesh.position.set(
+          item.x * this.cellSize + this.cellSize / 2,
+          h,
+          item.y * this.cellSize + this.cellSize / 2
+        )
+        this.scene.add(mesh)
+      })
+    })
+  }
+
   private spawnItems() {
     const loader = new BlockyCharacterLoader(
-      new URL('../../assets/environment/json/seaweed-blocky.json', import.meta.url)
-        .href
+      new URL('../../assets/environment/json/seaweed-blocky.json', import.meta.url).href
     )
     loader.load().then((obj) => {
       const x = this.player.x + 1
