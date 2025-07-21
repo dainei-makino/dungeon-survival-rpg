@@ -12,6 +12,10 @@ export default class PlayerArms {
   private spacing = 0.4
   private lowerDist = -0.06
   private fistDist = 0
+  private baseLeftY = 0
+  private baseRightY = 0
+  private readonly defaultLeftY: number
+  private readonly defaultRightY: number
 
   constructor(camera: THREE.Camera) {
     this.group = new THREE.Group()
@@ -72,10 +76,36 @@ export default class PlayerArms {
     this.leftUpper.position.set(-this.spacing, 0, -0.6)
     this.rightUpper.position.set(this.spacing, 0, -0.6)
 
+    // record default vertical positions for animation reset
+    this.defaultLeftY = this.leftUpper.position.y
+    this.defaultRightY = this.rightUpper.position.y
+    this.baseLeftY = this.defaultLeftY
+    this.baseRightY = this.defaultRightY
+
     this.group.add(this.leftUpper)
     this.group.add(this.rightUpper)
     this.group.position.y = -0.6
     camera.add(this.group)
+  }
+
+  startSway() {
+    // reset arms to the default baseline before starting a new animation
+    this.leftUpper.position.y = this.defaultLeftY
+    this.rightUpper.position.y = this.defaultRightY
+    this.baseLeftY = this.defaultLeftY
+    this.baseRightY = this.defaultRightY
+  }
+
+  finishSway() {
+    this.leftUpper.position.y = this.defaultLeftY
+    this.rightUpper.position.y = this.defaultRightY
+  }
+
+  sway(t: number) {
+    const swing = Math.sin(t * Math.PI)
+    const ampY = 0.03
+    this.leftUpper.position.y = this.baseLeftY + swing * ampY
+    this.rightUpper.position.y = this.baseRightY - swing * ampY
   }
 
   getSettings() {
