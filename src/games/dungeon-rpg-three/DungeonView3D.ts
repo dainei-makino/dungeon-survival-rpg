@@ -7,7 +7,6 @@ import Hero from '../dungeon-rpg/Hero'
 import Enemy, { skeletonWarrior } from '../dungeon-rpg/Enemy'
 import PlayerArms from './components/PlayerArms'
 import BlockyCharacterLoader from './components/BlockyCharacterLoader'
-import skeletonShape from '../../assets/enemies/json/skeleton-warrior.json'
 import {
   floorTexture,
   wallTexture,
@@ -25,7 +24,7 @@ export default class DungeonView3D {
   private biome: Biome
   private player: Player
   private hero: Hero
-  private enemies: { enemy: Enemy; x: number; y: number; mesh?: THREE.Mesh }[] = []
+  private enemies: { enemy: Enemy; x: number; y: number; mesh?: THREE.Object3D }[] = []
   private keys = new Set<string>()
   private dirVectors: Record<
     Direction,
@@ -401,37 +400,22 @@ export default class DungeonView3D {
   }
 
   private spawnEnemies() {
-    const shapes = (skeletonShape.paths as number[][][]).map((pts) => {
-      const sh = new THREE.Shape()
-      pts.forEach(([x, y], idx) => {
-        if (idx === 0) sh.moveTo(x, -y)
-        else sh.lineTo(x, -y)
+    const loader = new BlockyCharacterLoader(
+      new URL('../../assets/enemies/json/skeleton-warrior-blocky.json', import.meta.url).href
+    )
+    loader.load().then((base) => {
+      this.enemies.forEach((e) => {
+        const mesh = base.clone(true)
+        const scale = 0.3 * this.cellSize
+        mesh.scale.set(scale, scale, scale)
+        mesh.position.set(
+          e.x * this.cellSize + this.cellSize / 2,
+          0,
+          e.y * this.cellSize + this.cellSize / 2
+        )
+        e.mesh = mesh
+        this.scene.add(mesh)
       })
-      return sh
-    })
-    const enemyGeo = new THREE.ShapeGeometry(shapes)
-    enemyGeo.computeBoundingBox()
-    if (enemyGeo.boundingBox) {
-      const bb = enemyGeo.boundingBox
-      const offX = -(bb.min.x + bb.max.x) / 2
-      const offY = -bb.min.y
-      enemyGeo.translate(offX, offY, 0)
-    }
-    const enemyMat = new THREE.MeshBasicMaterial({
-      color: 0xffffff,
-      side: THREE.DoubleSide,
-    })
-    this.enemies.forEach((e) => {
-      const mesh = new THREE.Mesh(enemyGeo, enemyMat)
-      const scale = 0.08 * this.cellSize
-      mesh.scale.set(scale, scale, scale)
-      mesh.position.set(
-        e.x * this.cellSize + this.cellSize / 2,
-        0,
-        e.y * this.cellSize + this.cellSize / 2
-      )
-      e.mesh = mesh
-      this.scene.add(mesh)
     })
   }
 
