@@ -25,6 +25,7 @@ export default class DungeonView {
   private readonly numRays = 120
   private readonly maxDepth = 20
   private readonly eyeOffset = 0.6
+  private readonly edgeAmplitude = 4
 
 
   constructor(scene: Phaser.Scene) {
@@ -293,15 +294,31 @@ export default class DungeonView {
       const wallScale = width * 0.35
       const h = Math.min(height, wallScale / Math.max(corrected, 0.0001))
       const baseShade = Math.max(0, 200 - corrected * 40)
-      const startY = (height - h) / 2
-      for (let y = 0; y < h; y += 2) {
+
+      const edgeTop =
+        (perlinNoise(hit.hitX * 0.8, hit.hitY * 0.8) - 0.5) * this.edgeAmplitude
+      const edgeBottom =
+        (perlinNoise(hit.hitX * 0.8 + 10, hit.hitY * 0.8 + 10) - 0.5) *
+        this.edgeAmplitude
+
+      const startY = (height - h) / 2 + edgeTop
+      const bottomY = (height + h) / 2 + edgeBottom
+      const sliceH = bottomY - startY
+
+      for (let y = 0; y < sliceH; y += 2) {
         const vPos = (startY + y) / height
         const n = perlinNoise(hit.hitX * 1.5, hit.hitY * 1.5 + vPos * 3)
         const noise = (n - 0.5) * 100
         const shade = Phaser.Math.Clamp(baseShade + noise, 0, 255)
         const color = Phaser.Display.Color.GetColor(shade, shade, shade)
         g.fillStyle(color, 1)
-        g.fillRect(i * sliceW, startY + y, sliceW + 1, Math.min(2, h - y))
+        g.fillRect(i * sliceW, startY + y, sliceW + 1, Math.min(2, sliceH - y))
+
+        const outline = perlinNoise(hit.hitX * 3, vPos * 6)
+        if (outline > 0.82 && y + 2 < sliceH) {
+          g.fillStyle(0x000000, 0.4)
+          g.fillRect(i * sliceW, startY + y, sliceW + 1, 1)
+        }
       }
 
       if (prevSide !== null && prevSide !== hit.side) {
