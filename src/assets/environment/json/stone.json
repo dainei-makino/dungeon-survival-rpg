@@ -1,0 +1,6 @@
+{
+  "voxelHeight": 0.6,
+  "parts": [
+    { "name": "boulder", "size": [0.6, 0.6, 0.6], "position": [0, 0.3, 0], "color": "#777777" }
+  ]
+}

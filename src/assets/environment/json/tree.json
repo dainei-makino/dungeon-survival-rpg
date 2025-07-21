@@ -1,0 +1,7 @@
+{
+  "voxelHeight": 3,
+  "parts": [
+    { "name": "trunk", "size": [0.5, 1.5, 0.5], "position": [0, 0.75, 0], "color": "#8b5a2b" },
+    { "name": "crown", "size": [1.5, 1.5, 1.5], "position": [0, 2.25, 0], "color": "#228833" }
+  ]
+}

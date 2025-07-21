@@ -10,10 +10,10 @@ The files are loaded directly by the game.
 - `apple.json`
 - `stump.json`
 - `fallenLeaves.json`
-- `tree.json` (not yet implemented)
-- `bush.json` (not yet implemented)
-- `stalactite.json` (not yet implemented)
-- `mushroom.json` (not yet implemented)
-- `grass.json` (not yet implemented)
-- `stone.json` (not yet implemented)
+- `tree.json`
+- `bush.json`
+- `stalactite.json`
+- `mushroom.json`
+- `grass.json`
+- `stone.json`
 
