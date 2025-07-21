@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import BlockyCharacterLoader from '../games/dungeon-rpg-three/components/BlockyCharacterLoader'
+import { checkerTexture } from '../games/dungeon-rpg-three/utils/textures'
 import sound from '../audio'
 
 const characterFiles = import.meta.glob('../assets/characters/*.json', {
@@ -13,20 +14,19 @@ export default function showDebug(
   loadTab: (tab: 'top') => void
 ) {
   container.innerHTML = `
-    <button id="back-to-top">トップへ戻る</button>
-    <div style="display:flex;flex-direction:column;align-items:center;gap:1rem;padding-top:1rem;">
+    <button id="back-to-top" style="position:absolute;z-index:1000;top:10px;left:10px;">トップへ戻る</button>
+    <div id="debug-controls" style="position:absolute;z-index:800;top:10px;right:10px;padding:4px;background:rgba(0,0,0,0.5);color:#fff;font:12px monospace;">
       <div>
         キャラクター:
         <select id="char-select"></select>
       </div>
-      <canvas id="char-view" width="300" height="300" style="border:1px solid #000"></canvas>
       <div style="margin-top:0.5rem;display:flex;gap:0.5rem;">
         <button id="rot-left">左回転</button>
         <button id="rot-right">右回転</button>
         <button id="zoom-in">拡大</button>
         <button id="zoom-out">縮小</button>
       </div>
-      <div>
+      <div style="margin-top:0.5rem;">
         BGM:
         <select id="bgm-select">
           <option value="main">main</option>
@@ -34,7 +34,7 @@ export default function showDebug(
         <button id="bgm-play">再生</button>
         <button id="bgm-stop">停止</button>
       </div>
-      <div>
+      <div style="margin-top:0.5rem;">
         SE:
         <select id="se-select">
           <option value="beep">beep</option>
@@ -42,7 +42,13 @@ export default function showDebug(
         <button id="se-play">再生</button>
       </div>
     </div>
+    <canvas id="char-view" style="width:100%;height:100%;display:block;"></canvas>
   `
+
+  container.style.position = 'relative'
+  container.style.backgroundImage =
+    'repeating-conic-gradient(#eee 0% 25%, #ccc 0% 50%) 0 0 / 40px 40px'
+  container.style.backgroundColor = '#eee'
 
   const back = container.querySelector('#back-to-top') as HTMLButtonElement
   back.addEventListener('click', () => loadTab('top'))
@@ -57,9 +63,19 @@ export default function showDebug(
 
   const canvas = container.querySelector('#char-view') as HTMLCanvasElement
   const renderer = new THREE.WebGLRenderer({ canvas })
-  renderer.setSize(300, 300)
-  renderer.setClearColor(0x222222)
+  renderer.setPixelRatio(window.devicePixelRatio)
+  function resize() {
+    const width = canvas.clientWidth
+    const height = canvas.clientHeight
+    renderer.setSize(width, height)
+    camera.aspect = width / height
+    camera.updateProjectionMatrix()
+  }
+  window.addEventListener('resize', resize)
   const scene = new THREE.Scene()
+  const bgTex = checkerTexture('#ccc', '#eee', 8)
+  bgTex.repeat.set(20, 20)
+  scene.background = bgTex
   const light = new THREE.DirectionalLight(0xffffff, 1)
   light.position.set(1, 1, 1)
   scene.add(light)
@@ -71,6 +87,7 @@ export default function showDebug(
     camera.lookAt(0, 1, 0)
   }
   updateCamera()
+  resize()
   let current: THREE.Group | undefined
 
   async function loadCharacter(url: string) {
