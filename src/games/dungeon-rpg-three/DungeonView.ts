@@ -32,6 +32,7 @@ export default class DungeonView3D {
   private targetPos = new THREE.Vector3()
   private targetRot = 0
   private readonly animDuration = 200 // ms
+  private armsGroup?: THREE.Group
 
   constructor(container: HTMLElement, miniMap?: HTMLCanvasElement) {
     this.map = new DungeonMap()
@@ -78,6 +79,7 @@ export default class DungeonView3D {
     window.addEventListener('keydown', this.handleKeyDown)
 
     this.buildScene()
+    this.createArms()
     // set initial camera state without animation
     this.camera.position.set(this.player.x + 0.5, 1.6, this.player.y + 0.5)
     this.camera.rotation.set(0, this.angleForDir(this.player.dir), 0)
@@ -276,6 +278,26 @@ export default class DungeonView3D {
       e.mesh = mesh
       this.scene.add(mesh)
     })
+  }
+
+  private createArms() {
+    this.armsGroup = new THREE.Group()
+    const armGeo = new THREE.CylinderGeometry(0.1, 0.12, 0.5, 6)
+    const armMat = new THREE.MeshBasicMaterial({ color: 0xdfcbbd })
+
+    const leftArm = new THREE.Mesh(armGeo, armMat)
+    leftArm.rotation.z = Math.PI / 8
+    leftArm.rotation.x = Math.PI / 2
+    leftArm.position.set(-0.25, -0.3, -0.6)
+
+    const rightArm = new THREE.Mesh(armGeo, armMat)
+    rightArm.rotation.z = -Math.PI / 8
+    rightArm.rotation.x = Math.PI / 2
+    rightArm.position.set(0.25, -0.3, -0.6)
+
+    this.armsGroup.add(leftArm)
+    this.armsGroup.add(rightArm)
+    this.camera.add(this.armsGroup)
   }
 
   update() {
