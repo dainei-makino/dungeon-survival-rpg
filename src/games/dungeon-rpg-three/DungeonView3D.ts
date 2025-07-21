@@ -51,7 +51,7 @@ export default class DungeonView3D {
   private readonly playerHeight = this.cellSize * 2
   private readonly eyeLevel = this.playerHeight - 0.4
   private readonly wallNoiseScale = 25
-  private readonly renderRadius = 12
+  private readonly renderRadius = 24
   private wallMeshes = new Map<string, THREE.Mesh>()
   private wallTex!: THREE.Texture
   private treeTex!: THREE.Texture
