@@ -12,8 +12,8 @@ export default class PlayerArms {
   private spacing = 0.4
   private lowerDist = -0.06
   private fistDist = 0
-  private baseLeftRotX = 0
-  private baseRightRotX = 0
+  private baseLeftY = 0
+  private baseRightY = 0
 
   constructor(camera: THREE.Camera) {
     this.group = new THREE.Group()
@@ -81,15 +81,15 @@ export default class PlayerArms {
   }
 
   startSway() {
-    this.baseLeftRotX = this.leftUpper.rotation.x
-    this.baseRightRotX = this.rightUpper.rotation.x
+    this.baseLeftY = this.leftUpper.position.y
+    this.baseRightY = this.rightUpper.position.y
   }
 
   sway(t: number) {
     const swing = Math.sin(t * Math.PI)
-    const ampX = 0.1
-    this.leftUpper.rotation.x = this.baseLeftRotX + swing * ampX
-    this.rightUpper.rotation.x = this.baseRightRotX - swing * ampX
+    const ampY = 0.1
+    this.leftUpper.position.y = this.baseLeftY + swing * ampY
+    this.rightUpper.position.y = this.baseRightY - swing * ampY
   }
 
   getSettings() {
