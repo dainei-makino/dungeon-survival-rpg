@@ -15,8 +15,7 @@ import {
   treeTexture,
   leavesTexture,
 } from './utils/textures'
-import MusicGenerator, { Track } from '../../audio/MusicGenerator'
-import Instrument from '../../audio/instruments/Instrument'
+import MusicGenerator, { Track, MusicLoop } from '../../audio/MusicGenerator'
 
 
 export default class DungeonView3D {
@@ -60,6 +59,7 @@ export default class DungeonView3D {
   private enemyBase?: THREE.Group
   private items: { name: string; x: number; y: number; mesh: THREE.Object3D }[] = []
   private musicTracks: Track[] | null = null
+  private musicLoop: MusicLoop | null = null
 
   constructor(
     container: HTMLElement,
@@ -191,10 +191,14 @@ export default class DungeonView3D {
   }
 
   private setupMusic() {
+    if (this.musicLoop) {
+      this.musicLoop.stop()
+      this.musicLoop = null
+    }
     if (!this.biome.music) return
     const instruments = this.biome.music()
     this.musicTracks = MusicGenerator.generateFixedTracks(instruments)
-    MusicGenerator.playTracks(this.musicTracks)
+    this.musicLoop = MusicGenerator.startLoop(this.musicTracks)
   }
 
   private handleKeyDown = (e: KeyboardEvent) => {
@@ -716,6 +720,13 @@ export default class DungeonView3D {
   setBiome(biome: Biome) {
     this.biome = biome
     this.setupMusic()
+  }
+
+  stopMusic() {
+    if (this.musicLoop) {
+      this.musicLoop.stop()
+      this.musicLoop = null
+    }
   }
 
   getDetailedDebug(): string {

@@ -10,6 +10,10 @@ export interface Track {
   sequence: NoteEvent[]
 }
 
+export interface MusicLoop {
+  stop(): void
+}
+
 export default class MusicGenerator {
   private instrument: Instrument
 
@@ -59,6 +63,36 @@ export default class MusicGenerator {
       for (const note of track.sequence) {
         track.instrument.play(note.frequency, note.duration)
       }
+    }
+  }
+
+  static startLoop(tracks: Track[], bpm = 120): MusicLoop {
+    const timers: NodeJS.Timeout[] = []
+    let stopped = false
+    const beat = 60 / bpm
+
+    const scheduleTrack = (track: Track) => {
+      let index = 0
+      const playNext = () => {
+        if (stopped) return
+        const note = track.sequence[index]
+        track.instrument.play(note.frequency, note.duration * beat)
+        index = (index + 1) % track.sequence.length
+        timers.push(
+          setTimeout(() => {
+            playNext()
+          }, note.duration * beat * 1000),
+        )
+      }
+      playNext()
+    }
+
+    tracks.forEach(scheduleTrack)
+    return {
+      stop() {
+        stopped = true
+        for (const t of timers) clearTimeout(t)
+      },
     }
   }
 }
