@@ -34,7 +34,7 @@ export default class DungeonView3D {
   private targetRot = 0
   private readonly animDuration = 200 // ms
   private readonly cellSize = 2
-  private readonly wallNoiseScale = 50
+  private readonly wallNoiseScale = 25
 
   constructor(container: HTMLElement, miniMap?: HTMLCanvasElement) {
     this.map = new DungeonMap()
@@ -138,14 +138,18 @@ export default class DungeonView3D {
     return n00 * (1 - u) * (1 - v) + n10 * u * (1 - v) + n01 * (1 - u) * v + n11 * u * v
   }
 
-  private perlinTexture(size = 256, base = 30, range = 50) {
+  private perlinTexture(
+    size = 256,
+    base = 30,
+    range = 50,
+    scale = 50
+  ) {
     const canvas = document.createElement('canvas')
     canvas.width = canvas.height = size
     const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
     const imgData = ctx.createImageData(size, size)
     const noise = new ImprovedNoise()
     const z = Math.random() * 100
-    const scale = 50
     let i = 0
     for (let y = 0; y < size; y++) {
       for (let x = 0; x < size; x++) {
@@ -166,7 +170,8 @@ export default class DungeonView3D {
   private perlinTextureColor(
     size = 256,
     base: { r: number; g: number; b: number },
-    range: { r: number; g: number; b: number }
+    range: { r: number; g: number; b: number },
+    scale = 50
   ) {
     const canvas = document.createElement('canvas')
     canvas.width = canvas.height = size
@@ -174,7 +179,6 @@ export default class DungeonView3D {
     const imgData = ctx.createImageData(size, size)
     const noise = new ImprovedNoise()
     const z = Math.random() * 100
-    const scale = 50
     let i = 0
     for (let y = 0; y < size; y++) {
       for (let x = 0; x < size; x++) {
@@ -195,7 +199,8 @@ export default class DungeonView3D {
     return this.perlinTextureColor(
       256,
       { r: 80, g: 60, b: 40 },
-      { r: 30, g: 20, b: 15 }
+      { r: 30, g: 20, b: 15 },
+      40
     )
   }
 
@@ -203,7 +208,8 @@ export default class DungeonView3D {
     return this.perlinTextureColor(
       256,
       { r: 70, g: 70, b: 70 },
-      { r: 40, g: 40, b: 40 }
+      { r: 50, g: 50, b: 50 },
+      this.wallNoiseScale
     )
   }
 
