@@ -23,7 +23,7 @@ const biomeConfigs: Record<string, {
     decay: 12,
     intensity: 0.3,
     envelope: { attack: 0.5, decay: 0.2, sustain: 0.8, release: 12 },
-    noteLength: 0.3
+    noteLength: 0.2
   },
   cave: {
     patch: 'noise',
@@ -55,8 +55,8 @@ export async function setAmbientBiome(name: string, bridge = true) {
   generator.setRoot(cfg.root)
   synth.setNoiseLevel(cfg.noise)
   synth.setDecay(cfg.decay)
-  if (cfg.noteLength !== undefined) generator.setNoteValue(cfg.noteLength)
   generator.setIntensity(cfg.intensity)
+  if (cfg.noteLength !== undefined) generator.setNoteValue(cfg.noteLength)
   synth.setMasterGain(0.03, 15)
   generator.start()
 }
