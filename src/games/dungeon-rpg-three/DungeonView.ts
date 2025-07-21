@@ -5,6 +5,7 @@ import Player, { Direction } from '../dungeon-rpg/Player'
 import Hero from '../dungeon-rpg/Hero'
 import Enemy, { skeletonWarrior } from '../dungeon-rpg/Enemy'
 import armBox from '../../assets/arms/arm-box.json'
+import skeletonShape from '../../assets/enemies/json/skeleton-warrior.json'
 
 export default class DungeonView3D {
   private scene: THREE.Scene
@@ -38,6 +39,8 @@ export default class DungeonView3D {
   private leftLower?: THREE.Mesh
   private rightUpper?: THREE.Mesh
   private rightLower?: THREE.Mesh
+  private readonly cellSize = 2
+  private readonly wallNoiseScale = 25
 
   constructor(container: HTMLElement, miniMap?: HTMLCanvasElement) {
     this.map = new DungeonMap()
@@ -77,9 +80,33 @@ export default class DungeonView3D {
 
     this.dirVectors = {
       north: { dx: 0, dy: -1, left: { dx: -1, dy: 0 }, right: { dx: 1, dy: 0 } },
+      northEast: {
+        dx: 1,
+        dy: -1,
+        left: { dx: 0, dy: -1 },
+        right: { dx: 1, dy: 0 },
+      },
       east: { dx: 1, dy: 0, left: { dx: 0, dy: -1 }, right: { dx: 0, dy: 1 } },
+      southEast: {
+        dx: 1,
+        dy: 1,
+        left: { dx: 1, dy: 0 },
+        right: { dx: 0, dy: 1 },
+      },
       south: { dx: 0, dy: 1, left: { dx: 1, dy: 0 }, right: { dx: -1, dy: 0 } },
+      southWest: {
+        dx: -1,
+        dy: 1,
+        left: { dx: 0, dy: 1 },
+        right: { dx: -1, dy: 0 },
+      },
       west: { dx: -1, dy: 0, left: { dx: 0, dy: 1 }, right: { dx: 0, dy: -1 } },
+      northWest: {
+        dx: -1,
+        dy: -1,
+        left: { dx: -1, dy: 0 },
+        right: { dx: 0, dy: -1 },
+      },
     }
 
     window.addEventListener('keydown', this.handleKeyDown)
@@ -87,7 +114,11 @@ export default class DungeonView3D {
     this.buildScene()
     this.createArms()
     // set initial camera state without animation
-    this.camera.position.set(this.player.x + 0.5, 1.6, this.player.y + 0.5)
+    this.camera.position.set(
+      this.player.x * this.cellSize + this.cellSize / 2,
+      1.6,
+      this.player.y * this.cellSize + this.cellSize / 2
+    )
     this.camera.rotation.set(0, this.angleForDir(this.player.dir), 0)
     this.startPos.copy(this.camera.position)
     this.startRot = this.camera.rotation.y
@@ -95,7 +126,32 @@ export default class DungeonView3D {
     this.targetRot = this.startRot
   }
 
-  private perlinTexture(size = 256, base = 30, range = 50) {
+  private tileablePerlin(
+    noise: ImprovedNoise,
+    x: number,
+    y: number,
+    size: number,
+    scale: number,
+    z: number
+  ): number {
+    const u = x / size
+    const v = y / size
+    const w = size / scale
+    const nx = x / scale
+    const ny = y / scale
+    const n00 = noise.noise(nx, ny, z)
+    const n10 = noise.noise(nx - w, ny, z)
+    const n01 = noise.noise(nx, ny - w, z)
+    const n11 = noise.noise(nx - w, ny - w, z)
+    return n00 * (1 - u) * (1 - v) + n10 * u * (1 - v) + n01 * (1 - u) * v + n11 * u * v
+  }
+
+  private perlinTexture(
+    size = 256,
+    base = 30,
+    range = 50,
+    scale = 50
+  ) {
     const canvas = document.createElement('canvas')
     canvas.width = canvas.height = size
     const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
@@ -105,7 +161,7 @@ export default class DungeonView3D {
     let i = 0
     for (let y = 0; y < size; y++) {
       for (let x = 0; x < size; x++) {
-        const v = noise.noise(x / 50, y / 50, z)
+        const v = this.tileablePerlin(noise, x, y, size, scale, z)
         const c = Math.floor(base + (v + 1) * range)
         imgData.data[i++] = c
         imgData.data[i++] = c
@@ -119,12 +175,50 @@ export default class DungeonView3D {
     return tex
   }
 
+  private perlinTextureColor(
+    size = 256,
+    base: { r: number; g: number; b: number },
+    range: { r: number; g: number; b: number },
+    scale = 50
+  ) {
+    const canvas = document.createElement('canvas')
+    canvas.width = canvas.height = size
+    const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
+    const imgData = ctx.createImageData(size, size)
+    const noise = new ImprovedNoise()
+    const z = Math.random() * 100
+    let i = 0
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        const v = this.tileablePerlin(noise, x, y, size, scale, z)
+        imgData.data[i++] = Math.floor(base.r + (v + 1) * range.r)
+        imgData.data[i++] = Math.floor(base.g + (v + 1) * range.g)
+        imgData.data[i++] = Math.floor(base.b + (v + 1) * range.b)
+        imgData.data[i++] = 255
+      }
+    }
+    ctx.putImageData(imgData, 0, 0)
+    const tex = new THREE.CanvasTexture(canvas)
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping
+    return tex
+  }
+
   private floorTexture() {
-    return this.perlinTexture(256, 60, 20)
+    return this.perlinTextureColor(
+      256,
+      { r: 80, g: 60, b: 40 },
+      { r: 30, g: 20, b: 15 },
+      40
+    )
   }
 
   private wallTexture() {
-    return this.perlinTexture(256, 70, 30)
+    return this.perlinTextureColor(
+      256,
+      { r: 70, g: 70, b: 70 },
+      { r: 50, g: 50, b: 50 },
+      this.wallNoiseScale
+    )
   }
 
   private checkerTexture(color1: string, color2: string, squares = 8) {
@@ -147,49 +241,104 @@ export default class DungeonView3D {
 
   private buildScene() {
     const floorTex = this.floorTexture()
-    floorTex.repeat.set(this.map.width, this.map.height)
+    floorTex.repeat.set(
+      this.map.width * this.cellSize,
+      this.map.height * this.cellSize
+    )
     const floorMaterial = new THREE.MeshBasicMaterial({ map: floorTex })
     const floor = new THREE.Mesh(
-      new THREE.PlaneGeometry(this.map.width, this.map.height),
+      new THREE.PlaneGeometry(
+        this.map.width * this.cellSize,
+        this.map.height * this.cellSize
+      ),
       floorMaterial
     )
     floor.rotation.x = -Math.PI / 2
-    floor.position.set(this.map.width / 2, 0, this.map.height / 2)
+    floor.position.set(
+      (this.map.width * this.cellSize) / 2,
+      0,
+      (this.map.height * this.cellSize) / 2
+    )
     this.scene.add(floor)
 
-    const ceilTex = this.perlinTexture()
-    ceilTex.repeat.set(this.map.width, this.map.height)
+
+    const ceilTex = this.perlinTexture(256, 10, 20)
+
+    ceilTex.repeat.set(
+      this.map.width * this.cellSize,
+      this.map.height * this.cellSize
+    )
     const ceilingMaterial = new THREE.MeshBasicMaterial({ map: ceilTex })
     const ceiling = new THREE.Mesh(
-      new THREE.PlaneGeometry(this.map.width, this.map.height),
+      new THREE.PlaneGeometry(
+        this.map.width * this.cellSize,
+        this.map.height * this.cellSize
+      ),
       ceilingMaterial
     )
     ceiling.rotation.x = Math.PI / 2
-    ceiling.position.set(this.map.width / 2, 2, this.map.height / 2)
+    ceiling.position.set(
+      (this.map.width * this.cellSize) / 2,
+      2,
+      (this.map.height * this.cellSize) / 2
+    )
     this.scene.add(ceiling)
 
     const wallTex = this.wallTexture()
-    const wallMaterial = new THREE.MeshBasicMaterial({ map: wallTex })
-    const wallGeometry = new THREE.BoxGeometry(1, 2, 1)
+    wallTex.wrapS = wallTex.wrapT = THREE.RepeatWrapping
+    const wallScale = this.wallNoiseScale
     for (let y = 0; y < this.map.height; y++) {
       for (let x = 0; x < this.map.width; x++) {
         if (this.map.tileAt(x, y) === '#') {
-          const wall = new THREE.Mesh(wallGeometry, wallMaterial)
-          wall.position.set(x + 0.5, 1, y + 0.5)
+          const geom = new THREE.BoxGeometry(this.cellSize, 2, this.cellSize)
+          const pos = geom.attributes.position as THREE.BufferAttribute
+          const normal = geom.attributes.normal as THREE.BufferAttribute
+          const uv: number[] = []
+          for (let i = 0; i < pos.count; i++) {
+            const vx = pos.getX(i)
+            const vy = pos.getY(i)
+            const vz = pos.getZ(i)
+            const nx = normal.getX(i)
+            const nz = normal.getZ(i)
+            const wx = (x + 0.5) * this.cellSize + vx
+            const wy = vy + 1
+            const wz = (y + 0.5) * this.cellSize + vz
+            let u = 0
+            let v = 0
+            if (Math.abs(nx) === 1) {
+              u = wz / wallScale
+              v = wy / wallScale
+            } else if (Math.abs(nz) === 1) {
+              u = wx / wallScale
+              v = wy / wallScale
+            } else {
+              u = wx / wallScale
+              v = wz / wallScale
+            }
+            uv.push(u, v)
+          }
+          geom.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2))
+          const mat = new THREE.MeshBasicMaterial({ map: wallTex })
+          const wall = new THREE.Mesh(geom, mat)
+          wall.position.set(
+            (x + 0.5) * this.cellSize,
+            1,
+            (y + 0.5) * this.cellSize
+          )
           this.scene.add(wall)
         }
       }
     }
 
-    this.scene.add(new THREE.AmbientLight(0xcccccc))
+    this.scene.add(new THREE.AmbientLight(0x666666))
 
     const torchGeo = new THREE.SphereGeometry(0.1, 8, 8)
     const torchMat = new THREE.MeshBasicMaterial({ color: 0xffaa00 })
     this.torch = new THREE.Mesh(torchGeo, torchMat)
     this.torch.position.set(
-      this.player.x + 0.5,
+      this.player.x * this.cellSize + this.cellSize / 2,
       1.6,
-      this.player.y + 0.5
+      this.player.y * this.cellSize + this.cellSize / 2
     )
     const light = new THREE.PointLight(0xffaa00, 1, 5)
     this.torch.add(light)
@@ -203,38 +352,35 @@ export default class DungeonView3D {
     if (!['w', 'a', 's', 'd', 'j', 'k'].includes(key)) return
     e.preventDefault()
     const vectors = this.dirVectors[this.player.dir]
+
+    const tryMove = (dx: number, dy: number) => {
+      const nx = this.player.x + dx
+      const ny = this.player.y + dy
+      if (this.map.tileAt(nx, ny) === '#') return
+      const isDiag = Math.abs(dx) === 1 && Math.abs(dy) === 1
+      if (
+        isDiag &&
+        (this.map.tileAt(this.player.x + dx, this.player.y) === '#' ||
+          this.map.tileAt(this.player.x, this.player.y + dy) === '#')
+      ) {
+        return
+      }
+      this.player.x = nx
+      this.player.y = ny
+    }
+
     if (key === 'a') {
       this.player.rotateLeft()
     } else if (key === 'd') {
       this.player.rotateRight()
     } else if (key === 'w') {
-      const nx = this.player.x + vectors.dx
-      const ny = this.player.y + vectors.dy
-      if (this.map.tileAt(nx, ny) !== '#') {
-        this.player.x = nx
-        this.player.y = ny
-      }
+      tryMove(vectors.dx, vectors.dy)
     } else if (key === 's') {
-      const nx = this.player.x - vectors.dx
-      const ny = this.player.y - vectors.dy
-      if (this.map.tileAt(nx, ny) !== '#') {
-        this.player.x = nx
-        this.player.y = ny
-      }
+      tryMove(-vectors.dx, -vectors.dy)
     } else if (key === 'j') {
-      const nx = this.player.x + vectors.left.dx
-      const ny = this.player.y + vectors.left.dy
-      if (this.map.tileAt(nx, ny) !== '#') {
-        this.player.x = nx
-        this.player.y = ny
-      }
+      tryMove(vectors.left.dx, vectors.left.dy)
     } else if (key === 'k') {
-      const nx = this.player.x + vectors.right.dx
-      const ny = this.player.y + vectors.right.dy
-      if (this.map.tileAt(nx, ny) !== '#') {
-        this.player.x = nx
-        this.player.y = ny
-      }
+      tryMove(vectors.right.dx, vectors.right.dy)
     }
     this.updateCamera()
     this.renderMiniMap()
@@ -276,11 +422,35 @@ export default class DungeonView3D {
   }
 
   private spawnEnemies() {
-    const enemyGeo = new THREE.BoxGeometry(0.8, 1.6, 0.8)
-    const enemyMat = new THREE.MeshBasicMaterial({ color: 0xaa0000 })
+    const shapes = (skeletonShape.paths as number[][][]).map((pts) => {
+      const sh = new THREE.Shape()
+      pts.forEach(([x, y], idx) => {
+        if (idx === 0) sh.moveTo(x, -y)
+        else sh.lineTo(x, -y)
+      })
+      return sh
+    })
+    const enemyGeo = new THREE.ShapeGeometry(shapes)
+    enemyGeo.computeBoundingBox()
+    if (enemyGeo.boundingBox) {
+      const bb = enemyGeo.boundingBox
+      const offX = -(bb.min.x + bb.max.x) / 2
+      const offY = -bb.min.y
+      enemyGeo.translate(offX, offY, 0)
+    }
+    const enemyMat = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      side: THREE.DoubleSide,
+    })
     this.enemies.forEach((e) => {
       const mesh = new THREE.Mesh(enemyGeo, enemyMat)
-      mesh.position.set(e.x + 0.5, 0.8, e.y + 0.5)
+      const scale = 0.08 * this.cellSize
+      mesh.scale.set(scale, scale, scale)
+      mesh.position.set(
+        e.x * this.cellSize + this.cellSize / 2,
+        0,
+        e.y * this.cellSize + this.cellSize / 2
+      )
       e.mesh = mesh
       this.scene.add(mesh)
     })
@@ -412,6 +582,15 @@ export default class DungeonView3D {
       }
     }
 
+    // orient billboard enemies toward the camera
+    this.enemies.forEach((e) => {
+      if (e.mesh) {
+        const camPos = this.camera.position.clone()
+        camPos.y = e.mesh.position.y
+        e.mesh.lookAt(camPos)
+      }
+    })
+
     this.renderMiniMap()
   }
 
@@ -419,19 +598,31 @@ export default class DungeonView3D {
     switch (dir) {
       case 'north':
         return 0
+      case 'northEast':
+        return -Math.PI / 4
       case 'east':
         return -Math.PI / 2
+      case 'southEast':
+        return -Math.PI * 3/4
       case 'south':
         return Math.PI
+      case 'southWest':
+        return Math.PI * 3/4
       case 'west':
         return Math.PI / 2
+      case 'northWest':
+        return Math.PI / 4
     }
   }
 
   updateCamera() {
     this.startPos.copy(this.camera.position)
     this.startRot = this.camera.rotation.y
-    this.targetPos.set(this.player.x + 0.5, 1.6, this.player.y + 0.5)
+    this.targetPos.set(
+      this.player.x * this.cellSize + this.cellSize / 2,
+      1.6,
+      this.player.y * this.cellSize + this.cellSize / 2
+    )
     this.targetRot = this.angleForDir(this.player.dir)
     this.animStart = performance.now()
   }

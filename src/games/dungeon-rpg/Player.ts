@@ -1,4 +1,12 @@
-export type Direction = 'north' | 'east' | 'south' | 'west'
+export type Direction =
+  | 'north'
+  | 'northEast'
+  | 'east'
+  | 'southEast'
+  | 'south'
+  | 'southWest'
+  | 'west'
+  | 'northWest'
 
 export default class Player {
   x: number
@@ -12,14 +20,32 @@ export default class Player {
   }
 
   rotateLeft() {
-    const order: Direction[] = ['north', 'east', 'south', 'west']
+    const order: Direction[] = [
+      'north',
+      'northEast',
+      'east',
+      'southEast',
+      'south',
+      'southWest',
+      'west',
+      'northWest',
+    ]
     const idx = order.indexOf(this.dir)
-    this.dir = order[(idx + 3) % 4]
+    this.dir = order[(idx + order.length - 1) % order.length]
   }
 
   rotateRight() {
-    const order: Direction[] = ['north', 'east', 'south', 'west']
+    const order: Direction[] = [
+      'north',
+      'northEast',
+      'east',
+      'southEast',
+      'south',
+      'southWest',
+      'west',
+      'northWest',
+    ]
     const idx = order.indexOf(this.dir)
-    this.dir = order[(idx + 1) % 4]
+    this.dir = order[(idx + 1) % order.length]
   }
 }
