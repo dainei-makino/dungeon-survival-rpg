@@ -223,7 +223,9 @@ export default class DungeonView3D {
     )
     this.scene.add(floor)
 
+
     const ceilTex = this.perlinTexture(256, 10, 20)
+
     ceilTex.repeat.set(
       this.map.width * this.cellSize,
       this.map.height * this.cellSize
@@ -247,6 +249,7 @@ export default class DungeonView3D {
     const wallMaterials = Array.from({ length: 4 }, () =>
       new THREE.MeshBasicMaterial({ map: this.wallTexture() })
     )
+
     const wallGeometry = new THREE.BoxGeometry(this.cellSize, 2, this.cellSize)
     for (let y = 0; y < this.map.height; y++) {
       for (let x = 0; x < this.map.width; x++) {
@@ -255,6 +258,7 @@ export default class DungeonView3D {
             Math.floor(Math.random() * wallMaterials.length)
           ]
           const wall = new THREE.Mesh(wallGeometry, mat)
+
           wall.position.set(
             (x + 0.5) * this.cellSize,
             1,
