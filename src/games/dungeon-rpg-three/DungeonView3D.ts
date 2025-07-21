@@ -66,6 +66,20 @@ export default class DungeonView3D {
   private items: { name: string; x: number; y: number; mesh: THREE.Object3D }[] = []
   private spawnCooldown = 0
 
+  private isValidSpawn(x: number, y: number): boolean {
+    if (this.map.tileAt(x, y) === '#') return false
+    const h = this.map.getHeight(x, y)
+    const below = this.map.voxelAt(x, y, h - 1)
+    const space1 = this.map.voxelAt(x, y, h)
+    const space2 = this.map.voxelAt(x, y, h + 1)
+    return (
+      below !== null &&
+      below !== VoxelType.Air &&
+      space1 === VoxelType.Air &&
+      space2 === VoxelType.Air
+    )
+  }
+
   constructor(
     container: HTMLElement,
     miniMap?: HTMLCanvasElement,
@@ -439,7 +453,7 @@ export default class DungeonView3D {
     for (let i = 0; i < 20; i++) {
       const x = Math.floor(Math.random() * this.map.width)
       const y = Math.floor(Math.random() * this.map.height)
-      if (this.map.tileAt(x, y) !== '#') {
+      if (this.isValidSpawn(x, y)) {
         const dx = x - this.player.x
         const dy = y - this.player.y
         if (dx * dx + dy * dy > this.drawDistance * this.drawDistance) {
@@ -483,7 +497,7 @@ export default class DungeonView3D {
     for (const [dx, dy] of offsets) {
       const x = Math.floor(this.player.x) + dx
       const y = Math.floor(this.player.y) + dy
-      if (this.map.tileAt(x, y) !== '#') {
+      if (this.isValidSpawn(x, y)) {
         this.enemies.push({
           enemy,
           x,
@@ -506,7 +520,7 @@ export default class DungeonView3D {
         const vec = this.dirVectors[dir]
         const nx = e.x + vec.dx
         const ny = e.y + vec.dy
-        if (this.map.tileAt(nx, ny) !== '#') {
+        if (this.isValidSpawn(nx, ny)) {
           e.x = nx
           e.y = ny
           if (e.mesh) {
@@ -826,10 +840,12 @@ export default class DungeonView3D {
         const y = Math.floor(this.player.y) + dy
         const tile = this.map.tileAt(x, y)
         const enemy = this.enemies.find((e) => e.x === x && e.y === y)
-        const voxel = this.map.voxelAt(x, y, footH - 1)
-        const voxelName = voxel !== null ? voxel : 'null'
+        const v1 = this.map.voxelAt(x, y, footH)
+        const v2 = this.map.voxelAt(x, y, footH + 1)
+        const n1 = v1 !== null ? v1 : 'null'
+        const n2 = v2 !== null ? v2 : 'null'
         lines.push(
-          `(${x},${y}) ${tile} ${voxelName} ${enemy ? enemy.enemy.name : ''}`,
+          `(${x},${y}) ${tile} [${n1}/${n2}] ${enemy ? enemy.enemy.name : ''}`,
         )
       }
     }
