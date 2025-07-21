@@ -30,12 +30,12 @@ export default class BasicSynth {
       throw new Error('No AudioContext available')
     }
     this.master = this.context.createGain()
-    this.master.gain.value = options.masterGain ?? 0.05
+    this.master.gain.value = options.masterGain ?? 0.01
     this.master.connect(this.context.destination)
     this.type = options.type ?? 'sine'
     this.gain = options.gain ?? 0.2
-    this.attack = options.attack ?? 0
-    this.release = options.release ?? 0
+    this.attack = options.attack ?? 0.02
+    this.release = options.release ?? 0.1
     this.reverb = options.reverb ?? 0
     if (this.reverb > 0) {
       const delay = this.context.createDelay()
