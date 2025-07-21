@@ -22,6 +22,9 @@ export default class DungeonView {
   private readonly numRays = 120
   private readonly maxDepth = 20
   private readonly eyeOffset = 0.3
+  private ceilingPattern: { x: number; y: number; radius: number; color: number }[] = []
+  private patternW = 0
+  private patternH = 0
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene
@@ -236,9 +239,18 @@ export default class DungeonView {
     const g = this.graphics
 
     g.clear()
-    // ceiling with eerie random pattern
-    g.fillStyle(0x222222, 1)
-    g.fillRect(0, 0, width, height / 2)
+
+    this.drawCeiling(width, height)
+    this.drawFloor(width, height)
+    this.drawWalls(width, height)
+
+    this.drawMiniMap()
+  }
+
+  private generateCeilingPattern(width: number, height: number) {
+    this.patternW = width
+    this.patternH = height
+    this.ceilingPattern = []
     for (let i = 0; i < 40; i++) {
       const cx = Math.random() * width
       const cy = Math.random() * (height / 2)
@@ -248,19 +260,84 @@ export default class DungeonView {
         0,
         50 + Math.random() * 80
       )
-      g.fillStyle(col, 0.4)
-      g.fillCircle(cx, cy, radius)
+      this.ceilingPattern.push({ x: cx, y: cy, radius, color: col })
     }
+  }
 
-    // floor with carpet and border
-    g.fillStyle(0x8b4513, 1)
-    g.fillRect(0, height / 2, width, height / 2)
-    const carpetMargin = width * 0.25
-    g.fillStyle(0xff0000, 1)
-    g.fillRect(carpetMargin, height / 2, width - carpetMargin * 2, height / 2)
-    g.lineStyle(4, 0xffff00, 1)
-    g.strokeRect(carpetMargin, height / 2, width - carpetMargin * 2, height / 2)
+  private drawCeiling(width: number, height: number) {
+    if (
+      this.ceilingPattern.length === 0 ||
+      this.patternW !== width ||
+      this.patternH !== height
+    ) {
+      this.generateCeilingPattern(width, height)
+    }
+    const g = this.graphics
+    g.fillStyle(0x222222, 1)
+    g.fillRect(0, 0, width, height / 2)
+    for (const p of this.ceilingPattern) {
+      g.fillStyle(p.color, 0.4)
+      g.fillCircle(p.x, p.y, p.radius)
+    }
+  }
 
+  private drawFloor(width: number, height: number) {
+    const g = this.graphics
+    const pos = this.eyePos()
+    const dirAngle = this.viewAngle
+    const dirX = Math.cos(dirAngle)
+    const dirY = Math.sin(dirAngle)
+    const planeLength = Math.tan(this.FOV / 2)
+    const planeX = -Math.sin(dirAngle) * planeLength
+    const planeY = Math.cos(dirAngle) * planeLength
+    const rayDirX0 = dirX - planeX
+    const rayDirY0 = dirY - planeY
+    const rayDirX1 = dirX + planeX
+    const rayDirY1 = dirY + planeY
+    const center = height / 2
+    const posZ = height / 2
+    const carpetHalf = 0.4
+    const border = 0.05
+
+    for (let y = center; y < height; y++) {
+      const p = y - center
+      const rowDist = posZ / p
+      const stepX = rowDist * (rayDirX1 - rayDirX0) / width
+      const stepY = rowDist * (rayDirY1 - rayDirY0) / width
+      let floorX = pos.x + rowDist * rayDirX0
+      let floorY = pos.y + rowDist * rayDirY0
+      for (let x = 0; x < width; x++) {
+        const worldX = floorX + x * stepX
+        const worldY = floorY + x * stepY
+        const dx = worldX - pos.x
+        const dy = worldY - pos.y
+        const lateral = -dx * Math.sin(dirAngle) + dy * Math.cos(dirAngle)
+        let r = 139
+        let gCol = 69
+        let b = 19
+        if (Math.abs(lateral) < carpetHalf - border) {
+          r = 255
+          gCol = 0
+          b = 0
+        } else if (Math.abs(lateral) < carpetHalf) {
+          r = 255
+          gCol = 255
+          b = 0
+        }
+        const shade = Math.min(1, 2 / rowDist)
+        const color = Phaser.Display.Color.GetColor(
+          r * shade,
+          gCol * shade,
+          b * shade
+        )
+        g.fillStyle(color, 1)
+        g.fillRect(x, y, 1, 1)
+      }
+    }
+  }
+
+  private drawWalls(width: number, height: number) {
+    const g = this.graphics
     const fov = this.FOV
     const rayCount = this.numRays
 
@@ -271,7 +348,6 @@ export default class DungeonView {
       const rayAngle = dirAngle - fov / 2 + (i / rayCount) * fov
       const dist = this.castRay(rayAngle)
       const corrected = dist * Math.cos(rayAngle - dirAngle)
-      // higher walls than before
       const wallScale = width * 0.5
       const h = Math.min(height, wallScale / Math.max(corrected, 0.0001))
       const baseR = 255
@@ -287,7 +363,7 @@ export default class DungeonView {
       g.fillRect(i * sliceW, (height - h) / 2, sliceW + 1, h)
     }
 
-    this.drawMiniMap()
+    g.fillStyle(0xffffff, 1)
   }
 
   update() {
