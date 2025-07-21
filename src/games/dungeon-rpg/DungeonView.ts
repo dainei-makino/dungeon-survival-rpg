@@ -168,7 +168,12 @@ export default class DungeonView {
     }
   }
 
-  private castRay(angle: number): number {
+  private castRay(angle: number): {
+    dist: number
+    side: number
+    cellX: number
+    cellY: number
+  } {
     const pos = this.eyePos()
     const mapX = Math.floor(pos.x)
     const mapY = Math.floor(pos.y)
@@ -202,6 +207,8 @@ export default class DungeonView {
     let currentX = mapX
     let currentY = mapY
     let side = 0
+    let hitX = currentX
+    let hitY = currentY
     let hit = false
 
     while (!hit && Math.hypot(currentX - mapX, currentY - mapY) < this.maxDepth) {
@@ -215,19 +222,26 @@ export default class DungeonView {
         side = 1
       }
       if (this.tileAt(currentX, currentY) === '#') {
+        hitX = currentX
+        hitY = currentY
         hit = true
       }
     }
 
     if (!hit) {
-      return this.maxDepth
+      return { dist: this.maxDepth, side, cellX: hitX, cellY: hitY }
     }
 
+    let dist
     if (side === 0) {
-      return (currentX - pos.x + (1 - stepX) / 2) / (rayDirX === 0 ? 1e-6 : rayDirX)
+      dist =
+        (currentX - pos.x + (1 - stepX) / 2) / (rayDirX === 0 ? 1e-6 : rayDirX)
     } else {
-      return (currentY - pos.y + (1 - stepY) / 2) / (rayDirY === 0 ? 1e-6 : rayDirY)
+      dist =
+        (currentY - pos.y + (1 - stepY) / 2) / (rayDirY === 0 ? 1e-6 : rayDirY)
     }
+
+    return { dist, side, cellX: hitX, cellY: hitY }
   }
 
   draw() {
@@ -247,16 +261,26 @@ export default class DungeonView {
     const dirAngle = this.viewAngle
     const sliceW = width / rayCount
 
+    let prevSide: number | null = null
     for (let i = 0; i < rayCount; i++) {
       const rayAngle = dirAngle - fov / 2 + (i / rayCount) * fov
-      const dist = this.castRay(rayAngle)
-      const corrected = dist * Math.cos(rayAngle - dirAngle)
-      const wallScale = width * 0.3
+      const hit = this.castRay(rayAngle)
+      const corrected = hit.dist * Math.cos(rayAngle - dirAngle)
+      const wallScale = width * 0.35
       const h = Math.min(height, wallScale / Math.max(corrected, 0.0001))
       const shade = Math.max(0, 200 - corrected * 40)
       const color = Phaser.Display.Color.GetColor(shade, shade, shade)
       g.fillStyle(color, 1)
       g.fillRect(i * sliceW, (height - h) / 2, sliceW + 1, h)
+
+      if (prevSide !== null && prevSide !== hit.side) {
+        g.lineStyle(1, 0xffffff, 0.3)
+        g.beginPath()
+        g.moveTo(i * sliceW, (height - h) / 2)
+        g.lineTo(i * sliceW, (height + h) / 2)
+        g.strokePath()
+      }
+      prevSide = hit.side
     }
 
     this.drawMiniMap()
