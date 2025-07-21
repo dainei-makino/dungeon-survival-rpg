@@ -7,9 +7,9 @@ The files are loaded directly by the game.
 
 - `seaweed-blocky.json`
 - `woodPiece.json`
-- `apple.json` (not yet implemented)
-- `stump.json` (not yet implemented)
-- `fallenLeaves.json` (not yet implemented)
+- `apple.json`
+- `stump.json`
+- `fallenLeaves.json`
 - `tree.json` (not yet implemented)
 - `bush.json` (not yet implemented)
 - `stalactite.json` (not yet implemented)
