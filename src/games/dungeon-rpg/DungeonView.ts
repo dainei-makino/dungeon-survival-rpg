@@ -267,6 +267,40 @@ export default class DungeonView {
     return { dist, side, cellX: hitX, cellY: hitY }
   }
 
+  private drawFloor(width: number, height: number) {
+    const g = this.graphics
+    const pos = this.eyePos()
+    const dirAngle = this.viewAngle
+
+    const dirX = Math.cos(dirAngle)
+    const dirY = Math.sin(dirAngle)
+    const planeX = Math.cos(dirAngle + Math.PI / 2) * Math.tan(this.FOV / 2)
+    const planeY = Math.sin(dirAngle + Math.PI / 2) * Math.tan(this.FOV / 2)
+
+    const horizon = Math.floor(height / 2)
+
+    for (let y = horizon; y < height; y++) {
+      const p = y - horizon + 0.5
+      const rowDist = 0.5 / p
+      const stepX = rowDist * (planeX * 2) / width
+      const stepY = rowDist * (planeY * 2) / width
+
+      let floorX = pos.x + rowDist * (dirX - planeX)
+      let floorY = pos.y + rowDist * (dirY - planeY)
+
+      for (let x = 0; x < width; x += 2) {
+        const shadeBase = (Math.floor(floorX) + Math.floor(floorY)) % 2 === 0 ? 170 : 140
+        const shade = Math.max(0, shadeBase - rowDist * 20)
+        const color = Phaser.Display.Color.GetColor(shade, shade, shade)
+        g.fillStyle(color, 1)
+        g.fillRect(x, y, 2, 1)
+
+        floorX += stepX * 2
+        floorY += stepY * 2
+      }
+    }
+  }
+
   draw() {
     const width = this.scene.scale.width
     const height = this.scene.scale.height
@@ -276,8 +310,7 @@ export default class DungeonView {
     g.clear()
     g.fillStyle(0x666666, 1)
     g.fillRect(0, 0, width, height / 2)
-    g.fillStyle(0x333333, 1)
-    g.fillRect(0, height / 2, width, height / 2)
+    this.drawFloor(width, height)
 
     const fov = this.FOV
     const rayCount = this.numRays
