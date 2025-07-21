@@ -4,6 +4,7 @@ import DungeonMap from '../dungeon-rpg/DungeonMap'
 import Player, { Direction } from '../dungeon-rpg/Player'
 import Hero from '../dungeon-rpg/Hero'
 import Enemy, { skeletonWarrior } from '../dungeon-rpg/Enemy'
+import armBox from '../../assets/arms/arm-box.json'
 
 export default class DungeonView3D {
   private scene: THREE.Scene
@@ -60,6 +61,7 @@ export default class DungeonView3D {
 
     this.scene = new THREE.Scene()
     this.camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000)
+    this.scene.add(this.camera)
     this.renderer = new THREE.WebGLRenderer()
     this.renderer.setSize(width, height)
     container.appendChild(this.renderer.domElement)
@@ -282,15 +284,23 @@ export default class DungeonView3D {
 
   private createArms() {
     this.armsGroup = new THREE.Group()
-    const armGeo = new THREE.CylinderGeometry(0.1, 0.12, 0.5, 6)
+
+    const geo = new THREE.BufferGeometry()
+    geo.setAttribute(
+      'position',
+      new THREE.Float32BufferAttribute(armBox.vertices, 3)
+    )
+    geo.setIndex(armBox.indices)
+    geo.computeVertexNormals()
+
     const armMat = new THREE.MeshBasicMaterial({ color: 0xdfcbbd })
 
-    const leftArm = new THREE.Mesh(armGeo, armMat)
+    const leftArm = new THREE.Mesh(geo, armMat)
     leftArm.rotation.z = Math.PI / 8
     leftArm.rotation.x = Math.PI / 2
     leftArm.position.set(-0.25, -0.3, -0.6)
 
-    const rightArm = new THREE.Mesh(armGeo, armMat)
+    const rightArm = new THREE.Mesh(geo, armMat)
     rightArm.rotation.z = -Math.PI / 8
     rightArm.rotation.x = Math.PI / 2
     rightArm.position.set(0.25, -0.3, -0.6)
