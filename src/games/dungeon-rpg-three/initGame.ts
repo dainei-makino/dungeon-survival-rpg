@@ -7,6 +7,7 @@ export default function initThreeGame(
   container.innerHTML = `
     <button id="back-to-top" style="position:absolute;z-index:1000;top:10px;left:10px;">トップへ戻る</button>
     <canvas id="mini-map" width="150" height="150" style="position:absolute;z-index:500;top:10px;right:10px;border:1px solid #000"></canvas>
+    <div id="status-display" style="position:absolute;z-index:700;top:10px;left:50%;transform:translateX(-50%);font-size:24px;color:#fff;text-shadow:0 0 2px #000"></div>
     <div id="debug-info" style="position:absolute;z-index:800;bottom:10px;left:10px;padding:4px;background:rgba(0,0,0,0.5);color:#fff;font:12px monospace;white-space:pre;"></div>
     <div id="arm-controls" style="position:absolute;z-index:600;top:10px;right:170px;padding:4px;background:rgba(0,0,0,0.5);color:#fff;font:12px monospace;">
       <div>PosY <input id="arm-pos-y" type="range" min="-1.2" max="0" step="0.01"></div>
@@ -26,6 +27,7 @@ export default function initThreeGame(
 
   const wrapper = container.querySelector('#three-game') as HTMLElement
   const miniMap = container.querySelector('#mini-map') as HTMLCanvasElement
+  const statusDiv = container.querySelector('#status-display') as HTMLDivElement
   const debugDiv = container.querySelector('#debug-info') as HTMLDivElement
   container.style.position = 'relative'
   const view = new DungeonView3D(wrapper, miniMap)
@@ -75,6 +77,9 @@ export default function initThreeGame(
     view.render()
     if (debugDiv) {
       debugDiv.textContent = view.getDebugText()
+    }
+    if (statusDiv) {
+      statusDiv.innerHTML = view.getStatusHTML()
     }
     requestAnimationFrame(animate)
   }
