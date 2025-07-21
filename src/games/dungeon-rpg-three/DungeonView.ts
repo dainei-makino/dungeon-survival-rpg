@@ -117,6 +117,26 @@ export default class DungeonView3D {
     this.targetRot = this.startRot
   }
 
+  private tileablePerlin(
+    noise: ImprovedNoise,
+    x: number,
+    y: number,
+    size: number,
+    scale: number,
+    z: number
+  ): number {
+    const u = x / size
+    const v = y / size
+    const w = size / scale
+    const nx = x / scale
+    const ny = y / scale
+    const n00 = noise.noise(nx, ny, z)
+    const n10 = noise.noise(nx - w, ny, z)
+    const n01 = noise.noise(nx, ny - w, z)
+    const n11 = noise.noise(nx - w, ny - w, z)
+    return n00 * (1 - u) * (1 - v) + n10 * u * (1 - v) + n01 * (1 - u) * v + n11 * u * v
+  }
+
   private perlinTexture(size = 256, base = 30, range = 50) {
     const canvas = document.createElement('canvas')
     canvas.width = canvas.height = size
@@ -124,10 +144,11 @@ export default class DungeonView3D {
     const imgData = ctx.createImageData(size, size)
     const noise = new ImprovedNoise()
     const z = Math.random() * 100
+    const scale = 50
     let i = 0
     for (let y = 0; y < size; y++) {
       for (let x = 0; x < size; x++) {
-        const v = noise.noise(x / 50, y / 50, z)
+        const v = this.tileablePerlin(noise, x, y, size, scale, z)
         const c = Math.floor(base + (v + 1) * range)
         imgData.data[i++] = c
         imgData.data[i++] = c
@@ -152,10 +173,11 @@ export default class DungeonView3D {
     const imgData = ctx.createImageData(size, size)
     const noise = new ImprovedNoise()
     const z = Math.random() * 100
+    const scale = 50
     let i = 0
     for (let y = 0; y < size; y++) {
       for (let x = 0; x < size; x++) {
-        const v = noise.noise(x / 50, y / 50, z)
+        const v = this.tileablePerlin(noise, x, y, size, scale, z)
         imgData.data[i++] = Math.floor(base.r + (v + 1) * range.r)
         imgData.data[i++] = Math.floor(base.g + (v + 1) * range.g)
         imgData.data[i++] = Math.floor(base.b + (v + 1) * range.b)
