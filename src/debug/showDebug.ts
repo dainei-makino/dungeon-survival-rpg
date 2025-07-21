@@ -2,7 +2,11 @@ import * as THREE from 'three'
 import BlockyCharacterLoader from '../games/dungeon-rpg-three/components/BlockyCharacterLoader'
 import sound from '../audio'
 
-const characterFiles = import.meta.glob('../assets/characters/*.json', { as: 'url' })
+const characterFiles = import.meta.glob('../assets/characters/*.json', {
+  query: '?url',
+  import: 'default',
+  eager: true,
+}) as Record<string, string>
 
 export default function showDebug(
   container: HTMLElement,
@@ -40,7 +44,7 @@ export default function showDebug(
   const select = container.querySelector('#char-select') as HTMLSelectElement
   for (const path in characterFiles) {
     const option = document.createElement('option')
-    option.value = characterFiles[path]() as unknown as string
+    option.value = characterFiles[path]
     option.textContent = path.split('/').pop()?.replace('.json', '') || path
     select.appendChild(option)
   }
