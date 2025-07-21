@@ -4,7 +4,6 @@
   "scripts": {
     "build": "vite build",
     "preview": "vite preview --config vite.config.ts --port 4173",
-    "convert-svgs": "node tools/svg-to-json.mjs",
     "test": "ts-node tests/BasicSynth.test.ts && ts-node tests/MusicGenerator.test.ts"
   },
   "devDependencies": {
