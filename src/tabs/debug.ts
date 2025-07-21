@@ -46,6 +46,10 @@ export default function showDebug(
       name: 'Slime',
       url: new URL('../assets/characters/slime.json', import.meta.url).href,
     },
+    {
+      name: 'Hero',
+      url: new URL('../assets/characters/hero.json', import.meta.url).href,
+    },
   ]
   characters.forEach((c) => {
     const opt = document.createElement('option')
