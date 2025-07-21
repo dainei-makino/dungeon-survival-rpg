@@ -455,6 +455,14 @@ export default class DungeonView3D {
     this.renderer.render(this.scene, this.camera)
   }
 
+  getStatusHTML(): string {
+    const hungerIcon = '🍖'
+    const staminaIcon = '⚡'
+    const hunger = hungerIcon.repeat(this.hero.hunger)
+    const stamina = staminaIcon.repeat(this.hero.stamina)
+    return `${hunger} ${stamina}`
+  }
+
   getDebugText(): string {
     const pos = `(${this.player.x.toFixed(1)}, ${this.player.y.toFixed(1)})`
     const enemyInfo =
@@ -466,6 +474,7 @@ export default class DungeonView3D {
     return (
       `Pos: ${pos} Dir: ${this.player.dir}\n` +
       `HP: ${this.hero.hp} STR: ${this.hero.strength}\n` +
+      `Hunger: ${this.hero.hunger} Stamina: ${this.hero.stamina}\n` +
       `L: ${this.hero.leftHand} R: ${this.hero.rightHand}\n` +
       `Enemies: ${enemyInfo}`
     )
