@@ -4,5 +4,6 @@ export enum VoxelType {
   Wall = 'wall',
   Ceiling = 'ceiling',
   Tree = 'tree',
+  Leaves = 'leaves',
   Swamp = 'swamp',
 }

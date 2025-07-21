@@ -12,6 +12,7 @@ import {
   wallTexture,
   perlinTexture,
   treeTexture,
+  leavesTexture,
 } from './utils/textures'
 import sound from '../../audio'
 
@@ -231,12 +232,19 @@ export default class DungeonView3D {
       ? this.biome.treeTexture()
       : treeTexture(this.wallNoiseScale)
     treeTex.wrapS = treeTex.wrapT = THREE.RepeatWrapping
+    const leavesTex = this.biome.leavesTexture
+      ? this.biome.leavesTexture()
+      : leavesTexture(this.wallNoiseScale)
+    leavesTex.wrapS = leavesTex.wrapT = THREE.RepeatWrapping
     const wallScale = this.wallNoiseScale
     for (let y = 0; y < this.map.height; y++) {
       for (let x = 0; x < this.map.width; x++) {
         const h = this.map.getHeight(x, y)
-        const voxel = this.map.voxelAt(x, y, h)
-        if (voxel === VoxelType.Tree || this.map.tileAt(x, y) === '#') {
+        for (let z = h; z < this.map.depth; z++) {
+          const voxel = this.map.voxelAt(x, y, z)
+          if (voxel !== VoxelType.Tree && voxel !== VoxelType.Leaves) {
+            continue
+          }
           const geom = new THREE.BoxGeometry(this.cellSize, 2, this.cellSize)
           const pos = geom.attributes.position as THREE.BufferAttribute
           const normal = geom.attributes.normal as THREE.BufferAttribute
@@ -265,12 +273,17 @@ export default class DungeonView3D {
             uv.push(u, v)
           }
           geom.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2))
-          const tex = voxel === VoxelType.Tree ? treeTex : wallTex
+          const tex =
+            voxel === VoxelType.Tree
+              ? treeTex
+              : voxel === VoxelType.Leaves
+              ? leavesTex
+              : wallTex
           const mat = new THREE.MeshBasicMaterial({ map: tex })
           const wall = new THREE.Mesh(geom, mat)
           wall.position.set(
             (x + 0.5) * this.cellSize,
-            h * this.cellSize + 1,
+            z * this.cellSize + 1,
             (y + 0.5) * this.cellSize
           )
           this.scene.add(wall)
