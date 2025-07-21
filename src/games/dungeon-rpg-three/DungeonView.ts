@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { ImprovedNoise } from 'three/examples/jsm/math/ImprovedNoise.js'
+import { OutlineEffect } from 'three/examples/jsm/effects/OutlineEffect.js'
 import DungeonMap from '../dungeon-rpg/DungeonMap'
 import Player, { Direction } from '../dungeon-rpg/Player'
 import Hero from '../dungeon-rpg/Hero'
@@ -9,6 +10,7 @@ export default class DungeonView3D {
   private scene: THREE.Scene
   private camera: THREE.PerspectiveCamera
   private renderer: THREE.WebGLRenderer
+  private effect: OutlineEffect
   private map: DungeonMap
   private player: Player
   private hero: Hero
@@ -61,7 +63,9 @@ export default class DungeonView3D {
     this.camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000)
     this.renderer = new THREE.WebGLRenderer()
     this.renderer.setSize(width, height)
+    this.renderer.domElement.style.imageRendering = 'pixelated'
     container.appendChild(this.renderer.domElement)
+    this.effect = new OutlineEffect(this.renderer, { defaultThickness: 0.01 })
 
     this.miniMap = miniMap
     if (this.miniMap) {
@@ -327,7 +331,7 @@ export default class DungeonView3D {
   }
 
   render() {
-    this.renderer.render(this.scene, this.camera)
+    this.effect.render(this.scene, this.camera)
   }
 
   getDebugText(): string {
