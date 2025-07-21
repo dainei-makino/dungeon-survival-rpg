@@ -1,19 +1,19 @@
 import type { Direction } from './Player'
 import { MapEnemy, skeletonWarrior } from './Enemy'
+import VoxelMap from '../world/VoxelMap'
+import { VoxelType } from '../world/voxels'
 
-export default class DungeonMap {
-  tiles: string[]
-  width: number
-  height: number
+export default class DungeonMap extends VoxelMap {
+  private tiles: string[]
   enemies: MapEnemy[] = []
   private _playerStart: { x: number; y: number; dir: Direction }
 
   constructor(width = 31, height = 31) {
-    this.width = width
-    this.height = height
+    super(width, height, 3)
     this.tiles = Array.from({ length: height }, () => '#'.repeat(width))
     this._playerStart = { x: 1, y: 1, dir: 'north' }
     this.generate()
+    this.buildVoxels()
     this.placeEnemies()
   }
 
@@ -97,12 +97,27 @@ export default class DungeonMap {
     }
   }
 
+  private buildVoxels() {
+    for (let y = 0; y < this.height; y++) {
+      for (let x = 0; x < this.width; x++) {
+        const ch = this.tiles[y][x]
+        this.setVoxel(x, y, 0, VoxelType.Floor)
+        this.setVoxel(x, y, 2, VoxelType.Ceiling)
+        if (ch === '#') {
+          this.setVoxel(x, y, 1, VoxelType.Wall)
+        } else {
+          this.setVoxel(x, y, 1, VoxelType.Floor)
+        }
+      }
+    }
+  }
+
   tileAt(x: number, y: number): string {
     const ix = Math.floor(x)
     const iy = Math.floor(y)
     if (iy < 0 || iy >= this.height || ix < 0 || ix >= this.width) {
       return '#'
     }
-    return this.tiles[iy][ix]
+    return this.voxelAt(ix, iy, 1) === VoxelType.Wall ? '#' : '.'
   }
 }
