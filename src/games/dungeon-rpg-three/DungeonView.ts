@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { ImprovedNoise } from 'three/examples/jsm/math/ImprovedNoise.js'
 import DungeonMap from '../dungeon-rpg/DungeonMap'
 import Player, { Direction } from '../dungeon-rpg/Player'
 import Hero from '../dungeon-rpg/Hero'
@@ -68,6 +69,38 @@ export default class DungeonView3D {
     this.targetRot = this.startRot
   }
 
+  private perlinTexture(size = 256, base = 30, range = 50) {
+    const canvas = document.createElement('canvas')
+    canvas.width = canvas.height = size
+    const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
+    const imgData = ctx.createImageData(size, size)
+    const noise = new ImprovedNoise()
+    const z = Math.random() * 100
+    let i = 0
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        const v = noise.noise(x / 50, y / 50, z)
+        const c = Math.floor(base + (v + 1) * range)
+        imgData.data[i++] = c
+        imgData.data[i++] = c
+        imgData.data[i++] = c
+        imgData.data[i++] = 255
+      }
+    }
+    ctx.putImageData(imgData, 0, 0)
+    const tex = new THREE.CanvasTexture(canvas)
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping
+    return tex
+  }
+
+  private floorTexture() {
+    return this.perlinTexture(256, 60, 20)
+  }
+
+  private wallTexture() {
+    return this.perlinTexture(256, 70, 30)
+  }
+
   private checkerTexture(color1: string, color2: string, squares = 8) {
     const size = 64
     const canvas = document.createElement('canvas')
@@ -87,7 +120,7 @@ export default class DungeonView3D {
   }
 
   private buildScene() {
-    const floorTex = this.checkerTexture('#555', '#444', 4)
+    const floorTex = this.floorTexture()
     floorTex.repeat.set(this.map.width, this.map.height)
     const floorMaterial = new THREE.MeshBasicMaterial({ map: floorTex })
     const floor = new THREE.Mesh(
@@ -98,7 +131,7 @@ export default class DungeonView3D {
     floor.position.set(this.map.width / 2, 0, this.map.height / 2)
     this.scene.add(floor)
 
-    const ceilTex = this.checkerTexture('#333', '#222', 4)
+    const ceilTex = this.perlinTexture()
     ceilTex.repeat.set(this.map.width, this.map.height)
     const ceilingMaterial = new THREE.MeshBasicMaterial({ map: ceilTex })
     const ceiling = new THREE.Mesh(
@@ -109,7 +142,7 @@ export default class DungeonView3D {
     ceiling.position.set(this.map.width / 2, 2, this.map.height / 2)
     this.scene.add(ceiling)
 
-    const wallTex = this.checkerTexture('#999', '#666', 2)
+    const wallTex = this.wallTexture()
     const wallMaterial = new THREE.MeshBasicMaterial({ map: wallTex })
     const wallGeometry = new THREE.BoxGeometry(1, 2, 1)
     for (let y = 0; y < this.map.height; y++) {
