@@ -25,6 +25,12 @@ export default class DungeonView {
   private readonly maxDepth = 20
   private readonly eyeOffset = 0.6
 
+  // Deterministic noise function for simple wall texturing
+  private noise(x: number, y: number) {
+    const n = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453
+    return n - Math.floor(n)
+  }
+
   constructor(scene: Phaser.Scene) {
     this.scene = scene
     this.graphics = scene.add.graphics()
@@ -280,10 +286,16 @@ export default class DungeonView {
       const corrected = hit.dist * Math.cos(rayAngle - dirAngle)
       const wallScale = width * 0.35
       const h = Math.min(height, wallScale / Math.max(corrected, 0.0001))
-      const shade = Math.max(0, 200 - corrected * 40)
-      const color = Phaser.Display.Color.GetColor(shade, shade, shade)
-      g.fillStyle(color, 1)
-      g.fillRect(i * sliceW, (height - h) / 2, sliceW + 1, h)
+      const baseShade = Math.max(0, 200 - corrected * 40)
+      const startY = (height - h) / 2
+      for (let y = 0; y < h; y += 4) {
+        const n = this.noise(hit.cellX * 13 + hit.cellY * 57, Math.floor(y / 4))
+        const noise = (n - 0.5) * 60
+        const shade = Phaser.Math.Clamp(baseShade + noise, 0, 255)
+        const color = Phaser.Display.Color.GetColor(shade, shade, shade)
+        g.fillStyle(color, 1)
+        g.fillRect(i * sliceW, startY + y, sliceW + 1, Math.min(4, h - y))
+      }
 
       if (prevSide !== null && prevSide !== hit.side) {
         g.lineStyle(1, 0xffffff, 0.3)
