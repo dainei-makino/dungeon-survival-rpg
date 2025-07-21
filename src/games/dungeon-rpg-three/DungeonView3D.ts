@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import DungeonMap from '../dungeon-rpg/DungeonMap'
 import { Biome, forestBiome } from '../world/biomes'
+import MusicGenerator from '../../audio/MusicGenerator'
 import { VoxelType } from '../world/voxels'
 import Player, { Direction } from '../dungeon-rpg/Player'
 import Hero from '../dungeon-rpg/Hero'
@@ -57,6 +58,7 @@ export default class DungeonView3D {
   private mapCenterX = 0
   private mapCenterY = 0
   private enemyBase?: THREE.Group
+  private musicGenerator?: MusicGenerator
   private items: { name: string; x: number; y: number; mesh: THREE.Object3D }[] = []
   private floatMode = false
   private floatOffset = 0
@@ -140,6 +142,7 @@ export default class DungeonView3D {
     this.startRot = this.camera.rotation.y
     this.targetPos.copy(this.startPos)
     this.targetRot = this.startRot
+    this.initMusic(this.biome)
   }
 
 
@@ -881,5 +884,19 @@ export default class DungeonView3D {
       }
     }
     this.spawnEnvironmentMesh(template, x, y)
+  }
+
+  private initMusic(biome: Biome) {
+    if (!biome.music) return
+    const instruments = biome.music.instruments.map((fn) => fn())
+    if (instruments.length === 0) return
+    this.musicGenerator = new MusicGenerator(instruments[0])
+    const tracks = MusicGenerator.generateFixedTracks(instruments)
+    MusicGenerator.playTracks(tracks)
+  }
+
+  setBiome(biome: Biome) {
+    this.biome = biome
+    this.initMusic(biome)
   }
 }
