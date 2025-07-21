@@ -9,10 +9,10 @@ export default function initThreeGame(
     <canvas id="mini-map" width="150" height="150" style="position:absolute;z-index:500;top:10px;right:10px;border:1px solid #000"></canvas>
     <div id="debug-info" style="position:absolute;z-index:800;bottom:10px;left:10px;padding:4px;background:rgba(0,0,0,0.5);color:#fff;font:12px monospace;white-space:pre;"></div>
     <div id="arm-controls" style="position:absolute;z-index:600;top:10px;right:170px;padding:4px;background:rgba(0,0,0,0.5);color:#fff;font:12px monospace;">
-      <div>Left X <input id="arm-left-x" type="range" min="-3.14" max="3.14" step="0.01"></div>
-      <div>Left Z <input id="arm-left-z" type="range" min="-3.14" max="3.14" step="0.01"></div>
-      <div>Right X <input id="arm-right-x" type="range" min="-3.14" max="3.14" step="0.01"></div>
-      <div>Right Z <input id="arm-right-z" type="range" min="-3.14" max="3.14" step="0.01"></div>
+      <div>PosY <input id="arm-pos-y" type="range" min="-1.2" max="0" step="0.01"></div>
+      <div>Upper X <input id="arm-upper-x" type="range" min="-3.14" max="3.14" step="0.01"></div>
+      <div>Lower X <input id="arm-lower-x" type="range" min="-3.14" max="3.14" step="0.01"></div>
+      <div>Rot Z <input id="arm-rot-z" type="range" min="-1.57" max="1.57" step="0.01"></div>
       <div>Scale <input id="arm-scale" type="range" min="0.3" max="2" step="0.01"></div>
       <button id="arm-copy">copy</button>
     </div>
@@ -28,31 +28,31 @@ export default function initThreeGame(
   const view = new DungeonView3D(wrapper, miniMap)
 
   const armControls = container.querySelector('#arm-controls') as HTMLDivElement
-  const leftX = armControls.querySelector('#arm-left-x') as HTMLInputElement
-  const leftZ = armControls.querySelector('#arm-left-z') as HTMLInputElement
-  const rightX = armControls.querySelector('#arm-right-x') as HTMLInputElement
-  const rightZ = armControls.querySelector('#arm-right-z') as HTMLInputElement
+  const posY = armControls.querySelector('#arm-pos-y') as HTMLInputElement
+  const upperX = armControls.querySelector('#arm-upper-x') as HTMLInputElement
+  const lowerX = armControls.querySelector('#arm-lower-x') as HTMLInputElement
+  const rotZ = armControls.querySelector('#arm-rot-z') as HTMLInputElement
   const scale = armControls.querySelector('#arm-scale') as HTMLInputElement
   const copyBtn = armControls.querySelector('#arm-copy') as HTMLButtonElement
 
   const settings = view.getArmSettings()
-  leftX.value = settings.left.rotX.toString()
-  leftZ.value = settings.left.rotZ.toString()
-  rightX.value = settings.right.rotX.toString()
-  rightZ.value = settings.right.rotZ.toString()
+  posY.value = settings.posY.toString()
+  upperX.value = settings.upperRotX.toString()
+  lowerX.value = settings.lowerRotX.toString()
+  rotZ.value = settings.rotZ.toString()
   scale.value = settings.scale.toString()
 
   function updateFromInputs() {
     view.updateArms({
-      leftRotX: parseFloat(leftX.value),
-      leftRotZ: parseFloat(leftZ.value),
-      rightRotX: parseFloat(rightX.value),
-      rightRotZ: parseFloat(rightZ.value),
+      posY: parseFloat(posY.value),
+      upperRotX: parseFloat(upperX.value),
+      lowerRotX: parseFloat(lowerX.value),
+      rotZ: parseFloat(rotZ.value),
       scale: parseFloat(scale.value),
     })
   }
 
-  ;[leftX, leftZ, rightX, rightZ, scale].forEach((input) => {
+  ;[posY, upperX, lowerX, rotZ, scale].forEach((input) => {
     input.addEventListener('input', updateFromInputs)
   })
 

@@ -34,8 +34,10 @@ export default class DungeonView3D {
   private targetRot = 0
   private readonly animDuration = 200 // ms
   private armsGroup?: THREE.Group
-  private leftArm?: THREE.Mesh
-  private rightArm?: THREE.Mesh
+  private leftUpper?: THREE.Mesh
+  private leftLower?: THREE.Mesh
+  private rightUpper?: THREE.Mesh
+  private rightLower?: THREE.Mesh
 
   constructor(container: HTMLElement, miniMap?: HTMLCanvasElement) {
     this.map = new DungeonMap()
@@ -297,52 +299,82 @@ export default class DungeonView3D {
 
     const armMat = new THREE.MeshBasicMaterial({ color: 0xdfcbbd })
 
-    this.leftArm = new THREE.Mesh(geo, armMat)
-    this.leftArm.rotation.z = Math.PI / 8
-    this.leftArm.rotation.x = Math.PI / 3
-    this.leftArm.scale.set(0.8, 0.8, 0.8)
-    this.leftArm.position.set(-0.25, -0.25, -0.6)
+    const makeArm = () => {
+      const upper = new THREE.Mesh(geo, armMat)
+      upper.scale.set(0.1, 0.4, 0.1)
+      const lower = new THREE.Mesh(geo, armMat)
+      lower.scale.set(0.08, 0.3, 0.08)
+      lower.position.set(0, 0, -0.4)
+      const fist = new THREE.Mesh(geo, armMat)
+      fist.scale.set(0.12, 0.12, 0.12)
+      fist.position.set(0, 0, -0.3)
+      lower.add(fist)
+      upper.add(lower)
+      return { upper, lower }
+    }
 
-    this.rightArm = new THREE.Mesh(geo, armMat)
-    this.rightArm.rotation.z = -Math.PI / 8
-    this.rightArm.rotation.x = Math.PI / 3
-    this.rightArm.scale.set(0.8, 0.8, 0.8)
-    this.rightArm.position.set(0.25, -0.25, -0.6)
+    const left = makeArm()
+    const right = makeArm()
 
-    this.armsGroup.add(this.leftArm)
-    this.armsGroup.add(this.rightArm)
+    this.leftUpper = left.upper
+    this.leftLower = left.lower
+    this.rightUpper = right.upper
+    this.rightLower = right.lower
+
+    this.leftUpper.rotation.x = 2.08
+    this.leftUpper.rotation.z = 0.33
+    this.rightUpper.rotation.x = 2.08
+    this.rightUpper.rotation.z = -0.33
+    this.leftUpper.scale.multiplyScalar(0.86)
+    this.leftLower.scale.multiplyScalar(0.86)
+    this.rightUpper.scale.multiplyScalar(0.86)
+    this.rightLower.scale.multiplyScalar(0.86)
+
+    this.leftUpper.position.set(-0.25, 0, -0.6)
+    this.rightUpper.position.set(0.25, 0, -0.6)
+
+    this.armsGroup.add(this.leftUpper)
+    this.armsGroup.add(this.rightUpper)
+    this.armsGroup.position.y = -0.45
     this.camera.add(this.armsGroup)
   }
 
   getArmSettings() {
     return {
-      left: {
-        rotX: this.leftArm?.rotation.x ?? 0,
-        rotZ: this.leftArm?.rotation.z ?? 0,
-      },
-      right: {
-        rotX: this.rightArm?.rotation.x ?? 0,
-        rotZ: this.rightArm?.rotation.z ?? 0,
-      },
-      scale: this.leftArm?.scale.x ?? 1,
+      posY: this.armsGroup?.position.y ?? 0,
+      upperRotX: this.leftUpper?.rotation.x ?? 0,
+      lowerRotX: this.leftLower?.rotation.x ?? 0,
+      rotZ: this.leftUpper?.rotation.z ?? 0,
+      scale: this.leftUpper?.scale.x ?? 1,
     }
   }
 
   updateArms(settings: {
-    leftRotX?: number
-    leftRotZ?: number
-    rightRotX?: number
-    rightRotZ?: number
+    posY?: number
+    upperRotX?: number
+    lowerRotX?: number
+    rotZ?: number
     scale?: number
   }) {
-    if (this.leftArm && this.rightArm) {
-      if (settings.leftRotX !== undefined) this.leftArm.rotation.x = settings.leftRotX
-      if (settings.leftRotZ !== undefined) this.leftArm.rotation.z = settings.leftRotZ
-      if (settings.rightRotX !== undefined) this.rightArm.rotation.x = settings.rightRotX
-      if (settings.rightRotZ !== undefined) this.rightArm.rotation.z = settings.rightRotZ
+    if (this.leftUpper && this.rightUpper && this.leftLower && this.rightLower && this.armsGroup) {
+      if (settings.posY !== undefined) this.armsGroup.position.y = settings.posY
+      if (settings.upperRotX !== undefined) {
+        this.leftUpper.rotation.x = settings.upperRotX
+        this.rightUpper.rotation.x = settings.upperRotX
+      }
+      if (settings.lowerRotX !== undefined) {
+        this.leftLower.rotation.x = settings.lowerRotX
+        this.rightLower.rotation.x = settings.lowerRotX
+      }
+      if (settings.rotZ !== undefined) {
+        this.leftUpper.rotation.z = settings.rotZ
+        this.rightUpper.rotation.z = -settings.rotZ
+      }
       if (settings.scale !== undefined) {
-        this.leftArm.scale.setScalar(settings.scale)
-        this.rightArm.scale.setScalar(settings.scale)
+        this.leftUpper.scale.setScalar(settings.scale)
+        this.leftLower.scale.setScalar(settings.scale)
+        this.rightUpper.scale.setScalar(settings.scale)
+        this.rightLower.scale.setScalar(settings.scale)
       }
     }
   }
