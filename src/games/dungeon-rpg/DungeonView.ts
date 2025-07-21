@@ -111,15 +111,34 @@ export default class DungeonView {
     } else if (this.viewAngle - tweenAngle > Math.PI) {
       tweenAngle += Math.PI * 2
     }
+
+    const overshoot = Phaser.Math.DegToRad(3) * (delta > 0 ? 1 : -1)
+    const overshootAngle = tweenAngle + overshoot
+
     this.player.dir = endDir
-    this.scene.tweens.add({
-      targets: this,
-      viewAngle: tweenAngle,
-      duration: this.rotateDuration,
-      onUpdate: () => {
-        this.draw()
-        this.updateDebugText()
-      },
+    this.scene.tweens.timeline({
+      tweens: [
+        {
+          targets: this,
+          viewAngle: overshootAngle,
+          duration: this.rotateDuration * 0.7,
+          ease: Phaser.Math.Easing.Sine.In,
+          onUpdate: () => {
+            this.draw()
+            this.updateDebugText()
+          },
+        },
+        {
+          targets: this,
+          viewAngle: tweenAngle,
+          duration: this.rotateDuration * 0.3,
+          ease: Phaser.Math.Easing.Sine.Out,
+          onUpdate: () => {
+            this.draw()
+            this.updateDebugText()
+          },
+        },
+      ],
       onComplete: () => {
         this.isRotating = false
         this.viewAngle = finalAngle
