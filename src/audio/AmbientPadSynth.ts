@@ -4,14 +4,15 @@ export default class AmbientPadSynth {
   private filter: BiquadFilterNode
   private output: GainNode
   private noiseBuffer: AudioBuffer
+  private noiseLevel = 0.4
 
   constructor(private ctx: AudioContext, private patch: AmbientPatch = 'saw') {
     this.filter = ctx.createBiquadFilter()
     this.filter.type = 'lowpass'
     this.filter.frequency.value = 800
     this.output = ctx.createGain()
-    // master gain lowered ~20% from previous level
-    this.output.gain.value = 0.2
+    // master gain lowered an additional ~20%
+    this.output.gain.value = 0.16
     this.filter.connect(this.output)
     this.output.connect(ctx.destination)
 
@@ -38,11 +39,19 @@ export default class AmbientPadSynth {
     this.patch = patch
   }
 
+  /**
+   * Adjust noise amplitude when using the "noise" patch.
+   */
+  setNoiseLevel(level: number) {
+    this.noiseLevel = level
+  }
+
   playNote(freq: number, duration = 8) {
     const now = this.ctx.currentTime
     const gain = this.ctx.createGain()
     gain.gain.setValueAtTime(0, now)
-    gain.gain.linearRampToValueAtTime(0.4, now + 2)
+    const peak = this.patch === 'noise' ? this.noiseLevel : 0.4
+    gain.gain.linearRampToValueAtTime(peak, now + 2)
     gain.gain.linearRampToValueAtTime(0, now + duration)
     gain.connect(this.filter)
 
