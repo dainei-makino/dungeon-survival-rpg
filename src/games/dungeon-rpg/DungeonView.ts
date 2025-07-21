@@ -241,16 +241,8 @@ export default class DungeonView {
     g.fillStyle(0x333333, 1)
     g.fillRect(0, height / 2, width, height / 2)
 
-    const dx = Math.round(Math.cos(this.viewAngle))
-    const dy = Math.round(Math.sin(this.viewAngle))
-    const front = this.tileAt(this.viewX + dx, this.viewY + dy)
-
-    let fov = this.FOV
-    let rayCount = this.numRays
-    if (front === '#') {
-      fov = Math.PI / 2
-      rayCount = Math.round(this.numRays * (fov / this.FOV))
-    }
+    const fov = this.FOV
+    const rayCount = this.numRays
 
     const dirAngle = this.viewAngle
     const sliceW = width / rayCount
