@@ -18,6 +18,8 @@ export default class AmbientMusicGenerator {
   private midTermsPerLongTerm = 4
   private longTermIndex = 0
 
+  private readonly defaultGain = 0.03
+
   constructor(
     private ctx: AudioContext,
     private synth: AmbientPadSynth,
@@ -49,6 +51,29 @@ export default class AmbientMusicGenerator {
       clearTimeout(this.timer)
       this.timer = null
     }
+  }
+
+  async playIntro(fadeSec = 3) {
+    this.stop()
+    this.synth.setMasterGain(0, 0)
+    const steps = [0, 2, 4, 2]
+    for (const s of steps) {
+      const freq = this.root * Math.pow(2, s / 12)
+      this.synth.playNote(freq, this.noteDuration)
+      await this.wait(this.chordIntervalMs)
+    }
+    this.synth.setMasterGain(this.defaultGain, fadeSec)
+    this.start()
+  }
+
+  async playBridge(fadeSec = 1) {
+    this.stop()
+    this.synth.setMasterGain(0, fadeSec)
+    await this.wait(fadeSec * 1000)
+  }
+
+  private wait(ms: number) {
+    return new Promise<void>(resolve => setTimeout(resolve, ms))
   }
 
   private schedule() {

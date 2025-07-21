@@ -11,27 +11,27 @@ const biomeConfigs: Record<string, { patch: AmbientPatch; scale: number[]; root:
   plain: { patch: 'saw', scale: [0, 2, 4, 7, 9], root: 220, noise: 0.4 }
 }
 
-export function setAmbientBiome(name: string) {
+export async function setAmbientBiome(name: string, bridge = true) {
   const cfg = biomeConfigs[name]
   if (!cfg) return
-  const fade = 1
-  synth.setMasterGain(0, fade)
-  window.setTimeout(() => {
-    synth.setPatch(cfg.patch)
-    generator.setScale(cfg.scale)
-    generator.setRoot(cfg.root)
-    synth.setNoiseLevel(cfg.noise)
-    synth.setMasterGain(0.16, fade)
-  }, fade * 1000)
+  if (bridge) {
+    await generator.playBridge()
+  }
+  synth.setPatch(cfg.patch)
+  generator.setScale(cfg.scale)
+  generator.setRoot(cfg.root)
+  synth.setNoiseLevel(cfg.noise)
+  synth.setMasterGain(0.03, 1)
+  generator.start()
 }
 
 export function setAmbientIntensity(level: number) {
   generator.setIntensity(level)
 }
 
-export function startAmbientBgm() {
-  setAmbientBiome('forest')
-  generator.start()
+export async function startAmbientBgm() {
+  await setAmbientBiome('forest', false)
+  await generator.playIntro()
 }
 
 export function stopAmbientBgm() {

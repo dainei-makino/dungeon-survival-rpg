@@ -25,4 +25,4 @@ const initialTab = (location.hash.replace('#', '') as Tab) || 'top';
 loadTab(initialTab);
 
 // start ambient background music
-startAmbientBgm();
+startAmbientBgm().catch(console.error)
