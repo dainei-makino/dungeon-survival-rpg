@@ -64,6 +64,7 @@ export default class DungeonView3D {
   private mapCenterY = 0
   private enemyBase?: THREE.Group
   private items: { name: string; x: number; y: number; mesh: THREE.Object3D }[] = []
+
   private spawnCooldown = 0
 
   private isValidSpawn(x: number, y: number): boolean {
@@ -79,6 +80,9 @@ export default class DungeonView3D {
       space2 === VoxelType.Air
     )
   }
+  private floatMode = false
+  private floatOffset = 0
+
 
   constructor(
     container: HTMLElement,
@@ -160,7 +164,7 @@ export default class DungeonView3D {
     const h0 = this.map.getHeight(this.player.x, this.player.y) * this.cellSize
     this.camera.position.set(
       this.player.x * this.cellSize + this.cellSize / 2,
-      h0 + this.eyeLevel,
+      h0 + this.eyeLevel + (this.floatMode ? this.floatOffset : 0),
       this.player.y * this.cellSize + this.cellSize / 2
     )
     this.camera.rotation.set(0, this.angleForDir(this.player.dir), 0)
@@ -207,21 +211,23 @@ export default class DungeonView3D {
 
   private handleKeyDown = (e: KeyboardEvent) => {
     const key = e.key.toLowerCase()
-    if (!['w', 'a', 's', 'd', 'j', 'k', 'u', 'i'].includes(key)) return
+    if (!['w', 'a', 's', 'd', 'j', 'k', 'u', 'i', 'z', 'x'].includes(key)) return
     e.preventDefault()
     const vectors = this.dirVectors[this.player.dir]
 
     const tryMove = (dx: number, dy: number) => {
       const nx = this.player.x + dx
       const ny = this.player.y + dy
-      if (this.map.tileAt(nx, ny) === '#') return false
-      const isDiag = Math.abs(dx) === 1 && Math.abs(dy) === 1
-      if (
-        isDiag &&
-        (this.map.tileAt(this.player.x + dx, this.player.y) === '#' ||
-          this.map.tileAt(this.player.x, this.player.y + dy) === '#')
-      ) {
-        return false
+      if (!this.floatMode) {
+        if (this.map.tileAt(nx, ny) === '#') return false
+        const isDiag = Math.abs(dx) === 1 && Math.abs(dy) === 1
+        if (
+          isDiag &&
+          (this.map.tileAt(this.player.x + dx, this.player.y) === '#' ||
+            this.map.tileAt(this.player.x, this.player.y + dy) === '#')
+        ) {
+          return false
+        }
       }
       this.player.x = nx
       this.player.y = ny
@@ -245,6 +251,10 @@ export default class DungeonView3D {
       this.handleHandAction(true)
     } else if (key === 'i') {
       this.handleHandAction(false)
+    } else if (key === 'z' && this.floatMode) {
+      this.floatOffset += 0.5
+    } else if (key === 'x' && this.floatMode) {
+      this.floatOffset -= 0.5
     }
     this.updateCamera()
     this.checkRegion()
@@ -782,7 +792,7 @@ export default class DungeonView3D {
     this.targetPos.set(
       this.player.x * this.cellSize + this.cellSize / 2,
       this.map.getHeight(this.player.x, this.player.y) * this.cellSize +
-        this.eyeLevel,
+        this.eyeLevel + (this.floatMode ? this.floatOffset : 0),
       this.player.y * this.cellSize + this.cellSize / 2
     )
     this.targetRot = this.angleForDir(this.player.dir)
@@ -823,6 +833,19 @@ export default class DungeonView3D {
 
   getHero() {
     return this.hero
+  }
+
+  toggleFloatMode() {
+    this.floatMode = !this.floatMode
+    if (!this.floatMode) {
+      this.floatOffset = 0
+      this.updateCamera()
+    }
+    return this.floatMode
+  }
+
+  isFloatMode() {
+    return this.floatMode
   }
 
   getDetailedDebug(): string {

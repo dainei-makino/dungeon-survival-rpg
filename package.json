@@ -4,12 +4,15 @@
   "scripts": {
     "build": "vite build",
     "preview": "vite preview --config vite.config.ts --port 4173",
-    "convert-svgs": "node tools/svg-to-json.mjs"
+    "convert-svgs": "node tools/svg-to-json.mjs",
+    "test": "ts-node tests/BasicSynth.test.ts && ts-node tests/MusicGenerator.test.ts"
   },
   "devDependencies": {
     "three": "^0.178.0",
     "vite": "^5.0.0",
     "svgson": "^5.3.1",
-    "svg-path-properties": "^1.3.0"
+    "svg-path-properties": "^1.3.0",
+    "typescript": "^5.0.0",
+    "ts-node": "^10.9.2"
   }
 }
