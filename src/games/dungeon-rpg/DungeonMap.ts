@@ -1,17 +1,20 @@
 import type { Direction } from './Player'
+import { MapEnemy, skeletonWarrior } from './Enemy'
+import VoxelMap from '../world/VoxelMap'
+import { VoxelType } from '../world/voxels'
 
-export default class DungeonMap {
-  tiles: string[]
-  width: number
-  height: number
+export default class DungeonMap extends VoxelMap {
+  private tiles: string[]
+  enemies: MapEnemy[] = []
   private _playerStart: { x: number; y: number; dir: Direction }
 
   constructor(width = 31, height = 31) {
-    this.width = width
-    this.height = height
+    super(width, height, 5)
     this.tiles = Array.from({ length: height }, () => '#'.repeat(width))
     this._playerStart = { x: 1, y: 1, dir: 'north' }
     this.generate()
+    this.buildVoxels()
+    this.placeEnemies()
   }
 
   get playerStart() {
@@ -79,12 +82,44 @@ export default class DungeonMap {
     }
   }
 
+  private placeEnemies() {
+    const enemyCount = 5
+    for (let i = 0; i < enemyCount; i++) {
+      let placed = false
+      while (!placed) {
+        const x = this.rand(1, this.width - 1)
+        const y = this.rand(1, this.height - 1)
+        if (this.tileAt(x, y) === '.') {
+          this.enemies.push(new MapEnemy(skeletonWarrior, x, y))
+          placed = true
+        }
+      }
+    }
+  }
+
+  private buildVoxels() {
+    const top = this.depth - 1
+    for (let y = 0; y < this.height; y++) {
+      for (let x = 0; x < this.width; x++) {
+        const ch = this.tiles[y][x]
+        const ceil = this.rand(3, top + 1)
+        this.setVoxel(x, y, 0, VoxelType.Floor)
+        for (let z = 1; z < ceil; z++) {
+          this.setVoxel(x, y, z, ch === '#' ? VoxelType.Wall : VoxelType.Floor)
+        }
+        for (let z = ceil; z <= top; z++) {
+          this.setVoxel(x, y, z, VoxelType.Ceiling)
+        }
+      }
+    }
+  }
+
   tileAt(x: number, y: number): string {
     const ix = Math.floor(x)
     const iy = Math.floor(y)
     if (iy < 0 || iy >= this.height || ix < 0 || ix >= this.width) {
       return '#'
     }
-    return this.tiles[iy][ix]
+    return this.voxelAt(ix, iy, 1) === VoxelType.Wall ? '#' : '.'
   }
 }
