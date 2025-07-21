@@ -40,9 +40,9 @@ export default class DungeonView3D {
   private rightLower?: THREE.Mesh
   private leftFist?: THREE.Mesh
   private rightFist?: THREE.Mesh
-  private armSpacing = 0.25
-  private lowerDistance = -0.3
-  private fistDistance = -0.14
+  private armSpacing = 0.4
+  private lowerDistance = -0.06
+  private fistDistance = 0
 
   constructor(container: HTMLElement, miniMap?: HTMLCanvasElement) {
     this.map = new DungeonMap()
@@ -336,11 +336,13 @@ export default class DungeonView3D {
     this.rightLower = right.lower
     this.rightFist = right.fist
 
-    this.leftUpper.rotation.x = 2.08
-    this.leftUpper.rotation.z = 0.33
-    this.rightUpper.rotation.x = 2.08
-    this.rightUpper.rotation.z = -0.33
-    const scale = 1.2
+    this.leftUpper.rotation.x = 2.5
+    this.leftUpper.rotation.z = 0.15
+    this.rightUpper.rotation.x = 2.5
+    this.rightUpper.rotation.z = -0.15
+    this.leftLower.rotation.x = 0
+    this.rightLower.rotation.x = 0
+    const scale = 1.1
     this.leftUpper.scale.setScalar(scale)
     this.leftLower.scale.setScalar(scale)
     this.rightUpper.scale.setScalar(scale)
@@ -351,7 +353,7 @@ export default class DungeonView3D {
 
     this.armsGroup.add(this.leftUpper)
     this.armsGroup.add(this.rightUpper)
-    this.armsGroup.position.y = -0.45
+    this.armsGroup.position.y = -0.6
     this.camera.add(this.armsGroup)
   }
 
