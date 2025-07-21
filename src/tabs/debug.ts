@@ -36,6 +36,18 @@ export default function showDebug(
     as: 'url',
     eager: true,
   })
+
+  function normalizePath(...segs: string[]) {
+    const out: string[] = []
+    for (const seg of segs) {
+      for (const part of seg.split('/')) {
+        if (!part || part === '.') continue
+        if (part === '..') out.pop()
+        else out.push(part)
+      }
+    }
+    return out.join('/')
+  }
   const characters = Object.entries(characterModules)
     .map(([path, mod]) => {
       const file = path.split('/').pop() ?? ''
@@ -46,10 +58,12 @@ export default function showDebug(
       const assetUrl = (assetUrls as Record<string, string>)[path]
       const absUrl = new URL(assetUrl, import.meta.url).href
       const baseUrl = absUrl.substring(0, absUrl.lastIndexOf('/') + 1)
+      const relDir = path.slice('../assets/'.length, path.lastIndexOf('/') + 1)
       const spec: any = JSON.parse(JSON.stringify((mod as any).default))
       for (const part of spec.parts) {
         if (part.mesh) {
-          const key = `../assets/${part.mesh.replace(/^\.\//, '').replace(/^\.\.\//, '')}`
+          const joined = normalizePath(relDir, part.mesh)
+          const key = `../assets/${joined}`
           const hashed = (assetUrls as Record<string, string>)[key]
           part.mesh = hashed ? hashed : new URL(part.mesh, baseUrl).href
         }
@@ -57,7 +71,8 @@ export default function showDebug(
           for (const dir in part.textures) {
             const texPath = part.textures[dir]
             if (!texPath) continue
-            const key = `../assets/${texPath.replace(/^\.\//, '').replace(/^\.\.\//, '')}`
+            const joined = normalizePath(relDir, texPath)
+            const key = `../assets/${joined}`
             const hashed = (assetUrls as Record<string, string>)[key]
             part.textures[dir] = hashed ? hashed : new URL(texPath, baseUrl).href
           }
