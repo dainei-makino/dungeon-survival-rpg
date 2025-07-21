@@ -4,6 +4,7 @@ import DungeonMap from '../dungeon-rpg/DungeonMap'
 import Player, { Direction } from '../dungeon-rpg/Player'
 import Hero from '../dungeon-rpg/Hero'
 import Enemy, { skeletonWarrior } from '../dungeon-rpg/Enemy'
+import armBox from '../../assets/arms/arm-box.json'
 
 export default class DungeonView3D {
   private scene: THREE.Scene
@@ -32,6 +33,9 @@ export default class DungeonView3D {
   private targetPos = new THREE.Vector3()
   private targetRot = 0
   private readonly animDuration = 200 // ms
+  private armsGroup?: THREE.Group
+  private leftArm?: THREE.Mesh
+  private rightArm?: THREE.Mesh
 
   constructor(container: HTMLElement, miniMap?: HTMLCanvasElement) {
     this.map = new DungeonMap()
@@ -59,6 +63,7 @@ export default class DungeonView3D {
 
     this.scene = new THREE.Scene()
     this.camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000)
+    this.scene.add(this.camera)
     this.renderer = new THREE.WebGLRenderer()
     this.renderer.setSize(width, height)
     container.appendChild(this.renderer.domElement)
@@ -78,6 +83,7 @@ export default class DungeonView3D {
     window.addEventListener('keydown', this.handleKeyDown)
 
     this.buildScene()
+    this.createArms()
     // set initial camera state without animation
     this.camera.position.set(this.player.x + 0.5, 1.6, this.player.y + 0.5)
     this.camera.rotation.set(0, this.angleForDir(this.player.dir), 0)
@@ -276,6 +282,69 @@ export default class DungeonView3D {
       e.mesh = mesh
       this.scene.add(mesh)
     })
+  }
+
+  private createArms() {
+    this.armsGroup = new THREE.Group()
+
+    const geo = new THREE.BufferGeometry()
+    geo.setAttribute(
+      'position',
+      new THREE.Float32BufferAttribute(armBox.vertices, 3)
+    )
+    geo.setIndex(armBox.indices)
+    geo.computeVertexNormals()
+
+    const armMat = new THREE.MeshBasicMaterial({ color: 0xdfcbbd })
+
+    this.leftArm = new THREE.Mesh(geo, armMat)
+    this.leftArm.rotation.z = Math.PI / 8
+    this.leftArm.rotation.x = Math.PI / 3
+    this.leftArm.scale.set(0.8, 0.8, 0.8)
+    this.leftArm.position.set(-0.25, -0.25, -0.6)
+
+    this.rightArm = new THREE.Mesh(geo, armMat)
+    this.rightArm.rotation.z = -Math.PI / 8
+    this.rightArm.rotation.x = Math.PI / 3
+    this.rightArm.scale.set(0.8, 0.8, 0.8)
+    this.rightArm.position.set(0.25, -0.25, -0.6)
+
+    this.armsGroup.add(this.leftArm)
+    this.armsGroup.add(this.rightArm)
+    this.camera.add(this.armsGroup)
+  }
+
+  getArmSettings() {
+    return {
+      left: {
+        rotX: this.leftArm?.rotation.x ?? 0,
+        rotZ: this.leftArm?.rotation.z ?? 0,
+      },
+      right: {
+        rotX: this.rightArm?.rotation.x ?? 0,
+        rotZ: this.rightArm?.rotation.z ?? 0,
+      },
+      scale: this.leftArm?.scale.x ?? 1,
+    }
+  }
+
+  updateArms(settings: {
+    leftRotX?: number
+    leftRotZ?: number
+    rightRotX?: number
+    rightRotZ?: number
+    scale?: number
+  }) {
+    if (this.leftArm && this.rightArm) {
+      if (settings.leftRotX !== undefined) this.leftArm.rotation.x = settings.leftRotX
+      if (settings.leftRotZ !== undefined) this.leftArm.rotation.z = settings.leftRotZ
+      if (settings.rightRotX !== undefined) this.rightArm.rotation.x = settings.rightRotX
+      if (settings.rightRotZ !== undefined) this.rightArm.rotation.z = settings.rightRotZ
+      if (settings.scale !== undefined) {
+        this.leftArm.scale.setScalar(settings.scale)
+        this.rightArm.scale.setScalar(settings.scale)
+      }
+    }
   }
 
   update() {
