@@ -12,7 +12,11 @@ class MockOscillator {
 }
 
 class MockGain {
-  gain = { value: 1 }
+  gain = {
+    value: 1,
+    setValueAtTime() {},
+    linearRampToValueAtTime() {},
+  }
   connect() {}
   disconnect() {}
 }

@@ -5,6 +5,8 @@ export interface BasicSynthOptions {
   destination?: AudioNode
   eqFilters?: { type?: BiquadFilterType; frequency: number; q?: number; gain?: number }[]
   reverbDuration?: number
+  attack?: number
+  release?: number
 }
 
 export default class BasicSynth {
@@ -14,6 +16,8 @@ export default class BasicSynth {
   private oscillator: OscillatorNode | null = null
   private type: OscillatorType
   private gain: number
+  private attack: number
+  private release: number
   private filters: BiquadFilterNode[] = []
   private convolver?: ConvolverNode
 
@@ -60,6 +64,8 @@ export default class BasicSynth {
     last.connect(this.destination)
     this.type = options.type ?? 'sine'
     this.gain = options.gain ?? 0.2
+    this.attack = options.attack ?? 0.01
+    this.release = options.release ?? 0.3
   }
 
   setType(type: OscillatorType) {
@@ -78,11 +84,15 @@ export default class BasicSynth {
     const gain = this.context.createGain()
     osc.type = this.type
     osc.frequency.value = frequency
-    gain.gain.value = this.gain
+    const t = this.context.currentTime
+    gain.gain.setValueAtTime(0, t)
+    gain.gain.linearRampToValueAtTime(this.gain, t + this.attack)
+    gain.gain.setValueAtTime(this.gain, t + duration)
+    gain.gain.linearRampToValueAtTime(0, t + duration + this.release)
     osc.connect(gain)
     gain.connect(this.master)
     osc.start()
-    osc.stop(this.context.currentTime + duration)
+    osc.stop(t + duration + this.release)
     osc.onended = () => {
       osc.disconnect()
       gain.disconnect()
