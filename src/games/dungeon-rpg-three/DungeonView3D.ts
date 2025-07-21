@@ -46,6 +46,8 @@ export default class DungeonView3D {
   private readonly animDuration = 200 // ms
   private arms: PlayerArms
   private readonly cellSize = 2
+  private readonly playerHeight = this.cellSize * 2
+  private readonly eyeLevel = this.playerHeight - 0.4
   private readonly wallNoiseScale = 25
 
   constructor(
@@ -128,7 +130,7 @@ export default class DungeonView3D {
     const h0 = this.map.getHeight(this.player.x, this.player.y) * this.cellSize
     this.camera.position.set(
       this.player.x * this.cellSize + this.cellSize / 2,
-      h0 + 1.6,
+      h0 + this.eyeLevel,
       this.player.y * this.cellSize + this.cellSize / 2
     )
     this.camera.rotation.set(0, this.angleForDir(this.player.dir), 0)
@@ -285,7 +287,7 @@ export default class DungeonView3D {
     const th = this.map.getHeight(this.player.x, this.player.y) * this.cellSize
     this.torch.position.set(
       this.player.x * this.cellSize + this.cellSize / 2,
-      th + 1.6,
+      th + this.eyeLevel,
       this.player.y * this.cellSize + this.cellSize / 2
     )
     const light = new THREE.PointLight(0xffaa00, 1, 5)
@@ -512,7 +514,8 @@ export default class DungeonView3D {
     this.startRot = this.camera.rotation.y
     this.targetPos.set(
       this.player.x * this.cellSize + this.cellSize / 2,
-      this.map.getHeight(this.player.x, this.player.y) * this.cellSize + 1.6,
+      this.map.getHeight(this.player.x, this.player.y) * this.cellSize +
+        this.eyeLevel,
       this.player.y * this.cellSize + this.cellSize / 2
     )
     this.targetRot = this.angleForDir(this.player.dir)
