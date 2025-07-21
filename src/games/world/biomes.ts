@@ -25,6 +25,7 @@ import EnvironmentCharacter, {
 import Instrument from '../../audio/instruments/Instrument'
 import Piano from '../../audio/instruments/Piano'
 import Pad from '../../audio/instruments/Pad'
+import BasicSynth from '../../audio/BasicSynth'
 import { AmbientMusicConfig } from '../../audio/MusicGenerator'
 
 export interface Biome {
@@ -59,10 +60,13 @@ export const forestBiome: Biome = {
   treeTexture: () => treeTexture(40),
   leavesTexture: () => createLeavesTexture(20),
   music: () => ({
-    instruments: [new Pad(), new Piano()],
+    instruments: [
+      new Pad(new BasicSynth({ attack: 2, release: 4, reverb: 0.8 })),
+      new Piano(new BasicSynth({ attack: 0.5, release: 2, reverb: 0.8 })),
+    ],
     root: 261.63,
     scale: [0, 3, 5, 7, 10],
-    tempo: 60,
+    tempo: 40,
   }),
 }
 

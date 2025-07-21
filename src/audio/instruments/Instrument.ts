@@ -25,4 +25,10 @@ export default class Instrument {
     }
     this.synth.play(frequency, duration)
   }
+
+  fadeIn(duration: number) {
+    if (typeof this.synth.fadeIn === 'function') {
+      this.synth.fadeIn(duration)
+    }
+  }
 }

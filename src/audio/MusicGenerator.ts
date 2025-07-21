@@ -94,10 +94,18 @@ export default class MusicGenerator {
     }
   }
 
-  static startLoop(tracks: Track[], bpm = 120): MusicLoop {
+  static startLoop(tracks: Track[], bpm = 120, intro = 0): MusicLoop {
     const timers: NodeJS.Timeout[] = []
     let stopped = false
     const beat = 60 / bpm
+
+    if (intro > 0) {
+      for (const track of tracks) {
+        if (typeof (track.instrument as any).fadeIn === 'function') {
+          ;(track.instrument as any).fadeIn(intro)
+        }
+      }
+    }
 
     const scheduleTrack = (track: Track) => {
       let index = 0

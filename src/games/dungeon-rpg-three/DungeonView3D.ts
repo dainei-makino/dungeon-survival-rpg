@@ -200,7 +200,8 @@ export default class DungeonView3D {
     this.musicTracks = MusicGenerator.generateAmbientTracks(config)
     this.musicLoop = MusicGenerator.startLoop(
       this.musicTracks,
-      config.tempo
+      config.tempo,
+      15
     )
   }
 
