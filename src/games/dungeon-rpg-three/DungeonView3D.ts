@@ -25,7 +25,14 @@ export default class DungeonView3D {
   private biome: Biome
   private player: Player
   private hero: Hero
-  private enemies: { enemy: Enemy; x: number; y: number; mesh?: THREE.Object3D }[] = []
+  private enemies: {
+    enemy: Enemy
+    x: number
+    y: number
+    dir: Direction
+    nextMove: number
+    mesh?: THREE.Object3D
+  }[] = []
   private keys = new Set<string>()
   private dirVectors: Record<
     Direction,
@@ -196,6 +203,9 @@ export default class DungeonView3D {
           return false
         }
       }
+      if (this.enemies.some((e) => e.x === Math.floor(nx) && e.y === Math.floor(ny))) {
+        return false
+      }
       this.player.x = nx
       this.player.y = ny
       this.hero.hunger = Math.max(0, this.hero.hunger - 1)
@@ -314,6 +324,63 @@ export default class DungeonView3D {
         )
         e.mesh = mesh
         this.mapGroup.add(mesh)
+      }
+    })
+  }
+
+  private moveEnemies() {
+    const now = performance.now()
+    const dirs: Direction[] = [
+      'north',
+      'northEast',
+      'east',
+      'southEast',
+      'south',
+      'southWest',
+      'west',
+      'northWest',
+    ]
+    this.enemies.forEach((e) => {
+      if (now < e.nextMove) return
+      const dir = dirs[Math.floor(Math.random() * dirs.length)]
+      const vec = this.dirVectors[dir]
+      const nx = e.x + vec.dx
+      const ny = e.y + vec.dy
+      if (this.map.tileAt(nx, ny) === '#') {
+        e.nextMove = now + 1000
+        return
+      }
+      const isDiag = Math.abs(vec.dx) === 1 && Math.abs(vec.dy) === 1
+      if (
+        isDiag &&
+        (this.map.tileAt(e.x + vec.dx, e.y) === '#' ||
+          this.map.tileAt(e.x, e.y + vec.dy) === '#')
+      ) {
+        e.nextMove = now + 1000
+        return
+      }
+      if (
+        Math.floor(this.player.x) === nx &&
+        Math.floor(this.player.y) === ny
+      ) {
+        e.nextMove = now + 1000
+        return
+      }
+      if (this.enemies.some((other) => other !== e && other.x === nx && other.y === ny)) {
+        e.nextMove = now + 1000
+        return
+      }
+      e.x = nx
+      e.y = ny
+      e.dir = dir
+      e.nextMove = now + 1000
+      if (e.mesh) {
+        const h = (this.map.getHeight(e.x, e.y) + 1) * this.cellSize
+        e.mesh.position.set(
+          e.x * this.cellSize + this.cellSize / 2,
+          h,
+          e.y * this.cellSize + this.cellSize / 2
+        )
       }
     })
   }
@@ -623,6 +690,8 @@ export default class DungeonView3D {
       }
     }
 
+    // update enemy movement
+    this.moveEnemies()
     // enemies no longer billboard toward the camera
 
     this.renderMiniMap()
@@ -814,7 +883,24 @@ export default class DungeonView3D {
         }
       }
     }
-    this.enemies.push({ enemy: template, x, y })
+    const dirs: Direction[] = [
+      'north',
+      'northEast',
+      'east',
+      'southEast',
+      'south',
+      'southWest',
+      'west',
+      'northWest',
+    ]
+    const dir = dirs[Math.floor(Math.random() * dirs.length)]
+    this.enemies.push({
+      enemy: template,
+      x,
+      y,
+      dir,
+      nextMove: performance.now() + 1000,
+    })
     if (this.enemyBase) {
       this.addEnemies()
     } else {
