@@ -71,7 +71,7 @@ export default class DungeonView {
     this.player.y = ny
     this.bobTween = this.scene.tweens.add({
       targets: this,
-      bobOffset: 4,
+      bobOffset: 3,
       duration: this.moveDuration / 4,
       ease: 'Sine.easeInOut',
       yoyo: true,
