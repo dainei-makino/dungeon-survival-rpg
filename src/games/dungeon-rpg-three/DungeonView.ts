@@ -140,12 +140,47 @@ export default class DungeonView3D {
     return tex
   }
 
+  private perlinTextureColor(
+    size = 256,
+    base: { r: number; g: number; b: number },
+    range: { r: number; g: number; b: number }
+  ) {
+    const canvas = document.createElement('canvas')
+    canvas.width = canvas.height = size
+    const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
+    const imgData = ctx.createImageData(size, size)
+    const noise = new ImprovedNoise()
+    const z = Math.random() * 100
+    let i = 0
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        const v = noise.noise(x / 50, y / 50, z)
+        imgData.data[i++] = Math.floor(base.r + (v + 1) * range.r)
+        imgData.data[i++] = Math.floor(base.g + (v + 1) * range.g)
+        imgData.data[i++] = Math.floor(base.b + (v + 1) * range.b)
+        imgData.data[i++] = 255
+      }
+    }
+    ctx.putImageData(imgData, 0, 0)
+    const tex = new THREE.CanvasTexture(canvas)
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping
+    return tex
+  }
+
   private floorTexture() {
-    return this.perlinTexture(256, 60, 20)
+    return this.perlinTextureColor(
+      256,
+      { r: 80, g: 60, b: 40 },
+      { r: 30, g: 20, b: 15 }
+    )
   }
 
   private wallTexture() {
-    return this.perlinTexture(256, 70, 30)
+    return this.perlinTextureColor(
+      256,
+      { r: 70, g: 70, b: 70 },
+      { r: 40, g: 40, b: 40 }
+    )
   }
 
   private checkerTexture(color1: string, color2: string, squares = 8) {
@@ -188,7 +223,9 @@ export default class DungeonView3D {
     )
     this.scene.add(floor)
 
-    const ceilTex = this.perlinTexture()
+
+    const ceilTex = this.perlinTexture(256, 10, 20)
+
     ceilTex.repeat.set(
       this.map.width * this.cellSize,
       this.map.height * this.cellSize
@@ -209,13 +246,19 @@ export default class DungeonView3D {
     )
     this.scene.add(ceiling)
 
-    const wallTex = this.wallTexture()
-    const wallMaterial = new THREE.MeshBasicMaterial({ map: wallTex })
+    const wallMaterials = Array.from({ length: 4 }, () =>
+      new THREE.MeshBasicMaterial({ map: this.wallTexture() })
+    )
+
     const wallGeometry = new THREE.BoxGeometry(this.cellSize, 2, this.cellSize)
     for (let y = 0; y < this.map.height; y++) {
       for (let x = 0; x < this.map.width; x++) {
         if (this.map.tileAt(x, y) === '#') {
-          const wall = new THREE.Mesh(wallGeometry, wallMaterial)
+          const mat = wallMaterials[
+            Math.floor(Math.random() * wallMaterials.length)
+          ]
+          const wall = new THREE.Mesh(wallGeometry, mat)
+
           wall.position.set(
             (x + 0.5) * this.cellSize,
             1,
@@ -226,7 +269,7 @@ export default class DungeonView3D {
       }
     }
 
-    this.scene.add(new THREE.AmbientLight(0xcccccc))
+    this.scene.add(new THREE.AmbientLight(0x666666))
 
     const torchGeo = new THREE.SphereGeometry(0.1, 8, 8)
     const torchMat = new THREE.MeshBasicMaterial({ color: 0xffaa00 })
