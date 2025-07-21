@@ -1,0 +1,23 @@
+[
+  {
+    "time": 0,
+    "joints": {
+      "leftUpperArm": { "rotation": [2.5, 0, 0] },
+      "rightUpperArm": { "rotation": [2.5, 0, 0] }
+    }
+  },
+  {
+    "time": 250,
+    "joints": {
+      "leftUpperArm": { "rotation": [1.0, 0, 0] },
+      "rightUpperArm": { "rotation": [1.0, 0, 0] }
+    }
+  },
+  {
+    "time": 500,
+    "joints": {
+      "leftUpperArm": { "rotation": [0, 0, 0] },
+      "rightUpperArm": { "rotation": [0, 0, 0] }
+    }
+  }
+]
