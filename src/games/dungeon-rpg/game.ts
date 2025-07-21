@@ -1,6 +1,8 @@
 import Phaser from 'phaser'
 import DungeonView from './DungeonView'
 
+const rightArmUrl = new URL('./assets/right-arm.svg', import.meta.url).href
+
 export default function initGame(
   container: HTMLElement,
   loadTab: (tab: 'top') => void
@@ -24,7 +26,9 @@ export default function initGame(
       autoCenter: Phaser.Scale.CENTER_BOTH,
     },
     scene: {
-      preload() {},
+      preload() {
+        this.load.image('right-arm', rightArmUrl)
+      },
       create() {
         view = new DungeonView(this)
         view.draw()

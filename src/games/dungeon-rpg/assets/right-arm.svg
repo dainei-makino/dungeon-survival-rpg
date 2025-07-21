@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 300">
+  <g id="arm" fill="none" stroke="#444" stroke-width="6">
+    <path d="M60 300 C55 230 55 160 60 100"/>
+  </g>
+  <g id="fist" fill="none" stroke="#444" stroke-width="6">
+    <circle cx="60" cy="80" r="20"/>
+  </g>
+  <g id="fingers" fill="none" stroke="#444" stroke-width="6" stroke-linecap="round">
+    <line x1="60" y1="60" x2="60" y2="40"/>
+    <line x1="50" y1="65" x2="50" y2="45"/>
+    <line x1="70" y1="65" x2="70" y2="45"/>
+  </g>
+</svg>

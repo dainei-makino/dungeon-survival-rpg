@@ -16,6 +16,9 @@ export default class DungeonView {
   private dirVectors: Record<Direction, { dx: number; dy: number; left: { dx: number; dy: number }; right: { dx: number; dy: number } }>
   private debugText: Phaser.GameObjects.Text
   private miniMap: Phaser.GameObjects.Graphics
+  private rightArm!: Phaser.GameObjects.Image
+  private leftArm!: Phaser.GameObjects.Image
+  private armsShown = false
   private isMoving = false
   private isRotating = false
   private bobOffset = 0
@@ -50,6 +53,19 @@ export default class DungeonView {
     })
     this.debugText.setOrigin(1, 0)
     this.miniMap = scene.add.graphics()
+    this.rightArm = scene
+      .add.image(0, 0, 'right-arm')
+      .setOrigin(0.5, 1)
+      .setScale(1.5)
+      .setDepth(10)
+    this.leftArm = scene
+      .add.image(0, 0, 'right-arm')
+      .setOrigin(0.5, 1)
+      .setFlipX(true)
+      .setScale(1.5)
+      .setDepth(10)
+    this.positionArms(true)
+    this.showArms()
     this.updateDebugText()
   }
 
@@ -88,6 +104,7 @@ export default class DungeonView {
         this.viewX = Phaser.Math.Linear(sx, nx, progress)
         this.viewY = Phaser.Math.Linear(sy, ny, progress)
         this.bobOffset = Math.sin(Math.PI * t) * this.bobAmplitude
+        this.swingArms(t)
         this.draw()
         this.updateDebugText()
       },
@@ -96,6 +113,7 @@ export default class DungeonView {
         this.viewX = nx
         this.viewY = ny
         this.bobOffset = 0
+        this.swingArms(0)
         this.draw()
         this.updateDebugText()
       },
@@ -168,6 +186,41 @@ export default class DungeonView {
     const py = y + this.viewY * cellH + cellH / 2
     g.fillStyle(0xff0000, 1)
     g.fillCircle(px, py, Math.min(cellW, cellH) / 3)
+  }
+
+  private positionArms(initial = false) {
+    const width = this.scene.scale.width
+    const height = this.scene.scale.height
+    const offsetX = width * 0.25
+    const finalY = height + 20 + this.bobOffset
+    const offscreenY = finalY + 150
+    this.rightArm.x = width - offsetX
+    this.leftArm.x = offsetX
+    if (initial) {
+      this.rightArm.y = offscreenY
+      this.leftArm.y = offscreenY
+    } else {
+      this.rightArm.y = finalY
+      this.leftArm.y = finalY
+    }
+  }
+
+  private showArms() {
+    if (this.armsShown) return
+    const finalY = this.scene.scale.height + 20
+    this.scene.tweens.add({
+      targets: [this.rightArm, this.leftArm],
+      y: finalY,
+      duration: 500,
+      ease: 'Sine.easeOut',
+    })
+    this.armsShown = true
+  }
+
+  private swingArms(t: number) {
+    const angle = Math.sin(Math.PI * t) * Phaser.Math.DegToRad(20)
+    this.rightArm.rotation = angle
+    this.leftArm.rotation = -angle
   }
 
   private angleForDir(dir: Direction): number {
@@ -308,6 +361,7 @@ export default class DungeonView {
     }
 
     this.drawMiniMap()
+    this.positionArms()
   }
 
   update() {
