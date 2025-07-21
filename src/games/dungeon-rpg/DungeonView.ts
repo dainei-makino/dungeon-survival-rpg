@@ -1,3 +1,4 @@
+import Phaser from 'phaser'
 import DungeonMap from './DungeonMap'
 import Player, { Direction } from './Player'
 import { animationSpeed, BASE_STEP_TIME_MS } from './config'
@@ -14,6 +15,7 @@ export default class DungeonView {
   private dirVectors: Record<Direction, { dx: number; dy: number; left: { dx: number; dy: number }; right: { dx: number; dy: number } }>
   private debugText: Phaser.GameObjects.Text
   private miniMap: Phaser.GameObjects.Graphics
+  private hands: Phaser.GameObjects.Graphics
   private isMoving = false
   private isRotating = false
   private bobOffset = 0
@@ -47,6 +49,8 @@ export default class DungeonView {
     })
     this.debugText.setOrigin(1, 0)
     this.miniMap = scene.add.graphics()
+    this.hands = scene.add.graphics()
+    this.hands.setDepth(10)
     this.updateDebugText()
   }
 
@@ -156,6 +160,32 @@ export default class DungeonView {
     const py = y + this.viewY * cellH + cellH / 2
     g.fillStyle(0xff0000, 1)
     g.fillCircle(px, py, Math.min(cellW, cellH) / 3)
+  }
+
+  private drawHands() {
+    const width = this.scene.scale.width
+    const height = this.scene.scale.height
+    const g = this.hands
+    g.clear()
+
+    const handSize = height * 0.15
+    const y = height * 0.8 + this.bobOffset
+    const leftX = width * 0.35
+    const rightX = width * 0.65
+
+    // left fist
+    g.fillStyle(0xd2b48c, 1)
+    g.fillRoundedRect(leftX - handSize / 2, y - handSize / 2, handSize, handSize, handSize * 0.2)
+
+    // torch handle in right hand
+    g.fillStyle(0x8b4513, 1)
+    g.fillRect(rightX - handSize * 0.1, y - handSize / 2, handSize * 0.2, handSize)
+
+    // torch flame
+    g.fillStyle(0xffa500, 1)
+    g.fillCircle(rightX, y - handSize, handSize * 0.4)
+    g.fillStyle(0xffff66, 1)
+    g.fillCircle(rightX, y - handSize * 1.3, handSize * 0.3)
   }
 
   private angleForDir(dir: Direction): number {
@@ -296,6 +326,7 @@ export default class DungeonView {
     }
 
     this.drawMiniMap()
+    this.drawHands()
   }
 
   update() {
