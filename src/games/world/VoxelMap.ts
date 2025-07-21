@@ -1,4 +1,5 @@
 import { VoxelType } from './voxels'
+import type { VoxelObject } from './VoxelObject'
 
 export default class VoxelMap {
   width: number
@@ -43,6 +44,12 @@ export default class VoxelMap {
       return
     }
     this.voxels[z][y][x] = type
+  }
+
+  placeObject(x: number, y: number, z: number, obj: VoxelObject) {
+    for (const part of obj.parts) {
+      this.setVoxel(x + part.dx, y + part.dy, z + part.dz, part.type)
+    }
   }
 
   /**

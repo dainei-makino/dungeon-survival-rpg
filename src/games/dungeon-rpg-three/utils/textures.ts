@@ -78,6 +78,10 @@ export function treeTexture(scale: number) {
   return perlinTextureColor(256, { r: 70, g: 40, b: 20 }, { r: 40, g: 30, b: 20 }, scale)
 }
 
+export function leavesTexture(scale: number) {
+  return perlinTextureColor(256, { r: 30, g: 80, b: 30 }, { r: 20, g: 40, b: 20 }, scale)
+}
+
 export function wallTexture(scale: number) {
   return perlinTextureColor(256, { r: 70, g: 70, b: 70 }, { r: 50, g: 50, b: 50 }, scale)
 }

@@ -3,9 +3,9 @@
 This directory stores JSON vertex data for decorative environment characters.
 The files are loaded directly by the game.
 
-Available character meshes:
+-Available character meshes:
 
-- `seaweed.json`
+- `seaweed-blocky.json`
 - `woodPiece.json`
 - `tree.json` (not yet implemented)
 - `bush.json` (not yet implemented)

@@ -7,12 +7,12 @@ import Hero from '../dungeon-rpg/Hero'
 import Enemy, { skeletonWarrior } from '../dungeon-rpg/Enemy'
 import PlayerArms from './components/PlayerArms'
 import BlockyCharacterLoader from './components/BlockyCharacterLoader'
-import skeletonShape from '../../assets/enemies/json/skeleton-warrior.json'
 import {
   floorTexture,
   wallTexture,
   perlinTexture,
   treeTexture,
+  leavesTexture,
 } from './utils/textures'
 import sound from '../../audio'
 
@@ -25,7 +25,7 @@ export default class DungeonView3D {
   private biome: Biome
   private player: Player
   private hero: Hero
-  private enemies: { enemy: Enemy; x: number; y: number; mesh?: THREE.Mesh }[] = []
+  private enemies: { enemy: Enemy; x: number; y: number; mesh?: THREE.Object3D }[] = []
   private keys = new Set<string>()
   private dirVectors: Record<
     Direction,
@@ -52,9 +52,10 @@ export default class DungeonView3D {
   private readonly eyeLevel = this.playerHeight - 0.4
   private readonly wallNoiseScale = 25
   private readonly renderRadius = 24
-  private wallMeshes = new Map<string, THREE.Mesh>()
+  private wallMeshes = new Map<string, THREE.Object3D>()
   private wallTex!: THREE.Texture
   private treeTex!: THREE.Texture
+  private leavesTex!: THREE.Texture
 
   constructor(
     container: HTMLElement,
@@ -230,12 +231,11 @@ export default class DungeonView3D {
       }
     }
 
-    this.wallTex = wallTexture(this.wallNoiseScale)
-    this.wallTex.wrapS = this.wallTex.wrapT = THREE.RepeatWrapping
-    this.treeTex = this.biome.treeTexture
-      ? this.biome.treeTexture()
-      : treeTexture(this.wallNoiseScale)
     this.treeTex.wrapS = this.treeTex.wrapT = THREE.RepeatWrapping
+    this.leavesTex = this.biome.leavesTexture
+      ? this.biome.leavesTexture()
+      : leavesTexture(this.wallNoiseScale)
+    this.leavesTex.wrapS = this.leavesTex.wrapT = THREE.RepeatWrapping
 
     this.updateVisibleWalls()
 
@@ -361,37 +361,22 @@ export default class DungeonView3D {
   }
 
   private spawnEnemies() {
-    const shapes = (skeletonShape.paths as number[][][]).map((pts) => {
-      const sh = new THREE.Shape()
-      pts.forEach(([x, y], idx) => {
-        if (idx === 0) sh.moveTo(x, -y)
-        else sh.lineTo(x, -y)
+    const loader = new BlockyCharacterLoader(
+      new URL('../../assets/enemies/json/skeleton-warrior-blocky.json', import.meta.url).href
+    )
+    loader.load().then((base) => {
+      this.enemies.forEach((e) => {
+        const mesh = base.clone(true)
+        const scale = 0.3 * this.cellSize
+        mesh.scale.set(scale, scale, scale)
+        mesh.position.set(
+          e.x * this.cellSize + this.cellSize / 2,
+          0,
+          e.y * this.cellSize + this.cellSize / 2
+        )
+        e.mesh = mesh
+        this.scene.add(mesh)
       })
-      return sh
-    })
-    const enemyGeo = new THREE.ShapeGeometry(shapes)
-    enemyGeo.computeBoundingBox()
-    if (enemyGeo.boundingBox) {
-      const bb = enemyGeo.boundingBox
-      const offX = -(bb.min.x + bb.max.x) / 2
-      const offY = -bb.min.y
-      enemyGeo.translate(offX, offY, 0)
-    }
-    const enemyMat = new THREE.MeshBasicMaterial({
-      color: 0xffffff,
-      side: THREE.DoubleSide,
-    })
-    this.enemies.forEach((e) => {
-      const mesh = new THREE.Mesh(enemyGeo, enemyMat)
-      const scale = 0.08 * this.cellSize
-      mesh.scale.set(scale, scale, scale)
-      mesh.position.set(
-        e.x * this.cellSize + this.cellSize / 2,
-        0,
-        e.y * this.cellSize + this.cellSize / 2
-      )
-      e.mesh = mesh
-      this.scene.add(mesh)
     })
   }
 
@@ -423,49 +408,64 @@ export default class DungeonView3D {
     })
   }
 
-  private createWallMesh(x: number, y: number): THREE.Mesh | null {
+  private createWallMesh(x: number, y: number): THREE.Object3D | null {
+    const group = new THREE.Group()
+    let added = false
     const h = this.map.getHeight(x, y)
-    const voxel = this.map.voxelAt(x, y, h)
-    if (voxel !== VoxelType.Tree && this.map.tileAt(x, y) !== '#') {
-      return null
-    }
-    const geom = new THREE.BoxGeometry(this.cellSize, 2, this.cellSize)
-    const pos = geom.attributes.position as THREE.BufferAttribute
-    const normal = geom.attributes.normal as THREE.BufferAttribute
-    const uv: number[] = []
-    for (let i = 0; i < pos.count; i++) {
-      const vx = pos.getX(i)
-      const vy = pos.getY(i)
-      const vz = pos.getZ(i)
-      const nx = normal.getX(i)
-      const nz = normal.getZ(i)
-      const wx = (x + 0.5) * this.cellSize + vx
-      const wy = vy + 1
-      const wz = (y + 0.5) * this.cellSize + vz
-      let u = 0
-      let v = 0
-      if (Math.abs(nx) === 1) {
-        u = wz / this.wallNoiseScale
-        v = wy / this.wallNoiseScale
-      } else if (Math.abs(nz) === 1) {
-        u = wx / this.wallNoiseScale
-        v = wy / this.wallNoiseScale
-      } else {
-        u = wx / this.wallNoiseScale
-        v = wz / this.wallNoiseScale
+    for (let z = h; z < this.map.depth; z++) {
+      const voxel = this.map.voxelAt(x, y, z)
+      if (z === h && voxel !== VoxelType.Tree && this.map.tileAt(x, y) !== '#') {
+        return null
       }
-      uv.push(u, v)
+      if (voxel !== VoxelType.Tree && voxel !== VoxelType.Leaves) {
+        continue
+      }
+      const geom = new THREE.BoxGeometry(this.cellSize, 2, this.cellSize)
+      const pos = geom.attributes.position as THREE.BufferAttribute
+      const normal = geom.attributes.normal as THREE.BufferAttribute
+      const uv: number[] = []
+      for (let i = 0; i < pos.count; i++) {
+        const vx = pos.getX(i)
+        const vy = pos.getY(i)
+        const vz = pos.getZ(i)
+        const nx = normal.getX(i)
+        const nz = normal.getZ(i)
+        const wx = (x + 0.5) * this.cellSize + vx
+        const wy = vy + 1
+        const wz = (y + 0.5) * this.cellSize + vz
+        let u = 0
+        let v = 0
+        if (Math.abs(nx) === 1) {
+          u = wz / this.wallNoiseScale
+          v = wy / this.wallNoiseScale
+        } else if (Math.abs(nz) === 1) {
+          u = wx / this.wallNoiseScale
+          v = wy / this.wallNoiseScale
+        } else {
+          u = wx / this.wallNoiseScale
+          v = wz / this.wallNoiseScale
+        }
+        uv.push(u, v)
+      }
+      geom.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2))
+      const tex =
+        voxel === VoxelType.Tree
+          ? this.treeTex
+          : voxel === VoxelType.Leaves
+          ? this.leavesTex
+          : this.wallTex
+      const mat = new THREE.MeshBasicMaterial({ map: tex })
+      const mesh = new THREE.Mesh(geom, mat)
+      mesh.position.set(
+        (x + 0.5) * this.cellSize,
+        z * this.cellSize + 1,
+        (y + 0.5) * this.cellSize
+      )
+      group.add(mesh)
+      added = true
     }
-    geom.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2))
-    const tex = voxel === VoxelType.Tree ? this.treeTex : this.wallTex
-    const mat = new THREE.MeshBasicMaterial({ map: tex })
-    const mesh = new THREE.Mesh(geom, mat)
-    mesh.position.set(
-      (x + 0.5) * this.cellSize,
-      h * this.cellSize + 1,
-      (y + 0.5) * this.cellSize
-    )
-    return mesh
+
+    return added ? group : null
   }
 
   private updateVisibleWalls() {
