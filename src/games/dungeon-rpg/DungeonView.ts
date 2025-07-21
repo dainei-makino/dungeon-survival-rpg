@@ -21,7 +21,7 @@ export default class DungeonView {
   private readonly FOV = Math.PI / 3
   private readonly numRays = 120
   private readonly maxDepth = 20
-  private readonly eyeOffset = 0.3
+  private readonly eyeOffset = 0.6
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene
