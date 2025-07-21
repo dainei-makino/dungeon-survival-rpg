@@ -26,7 +26,8 @@ characters, as well as fog, lighting, and whether a ceiling is used. The
 following biomes are defined:
 
 - **forest** – default biome with a noise-based terrain generator. Swampy ground
-  and tree voxels are used, and the ceiling is replaced by a dark sky.
+  and tree voxels are used. The ceiling is removed and a distant dark sky
+  texture surrounds the map.
 - **cave** – darker environment with damp weather.
 - **plain** – open terrain with windy weather.
 

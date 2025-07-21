@@ -3,7 +3,11 @@ import { VoxelType } from './voxels'
 import VoxelMap from './VoxelMap'
 import DungeonMap from '../dungeon-rpg/DungeonMap'
 import ForestMap from './ForestMap'
-import { swampTexture, treeTexture } from '../dungeon-rpg-three/utils/textures'
+import {
+  swampTexture,
+  treeTexture,
+  darkSkyTexture,
+} from '../dungeon-rpg-three/utils/textures'
 import EnvironmentCharacter, {
   tree,
   bush,
@@ -25,6 +29,7 @@ export interface Biome {
   lighting?: { color: number; intensity: number }
   hasCeiling?: boolean
   skyColor?: number
+  skyTexture?: () => THREE.Texture
   floorTexture?: () => THREE.Texture
   treeTexture?: () => THREE.Texture
 }
@@ -39,6 +44,7 @@ export const forestBiome: Biome = {
   lighting: { color: 0xaaaaaa, intensity: 0.8 },
   hasCeiling: false,
   skyColor: 0x000000,
+  skyTexture: darkSkyTexture,
   floorTexture: swampTexture,
   treeTexture: () => treeTexture(40),
 }

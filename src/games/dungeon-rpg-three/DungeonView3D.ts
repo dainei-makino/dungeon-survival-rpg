@@ -199,6 +199,17 @@ export default class DungeonView3D {
       this.scene.add(ceiling)
     } else if (this.biome.skyColor !== undefined) {
       this.scene.background = new THREE.Color(this.biome.skyColor)
+      if (this.biome.skyTexture) {
+        const tex = this.biome.skyTexture()
+        tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping
+        const skyGeo = new THREE.SphereGeometry(500, 32, 32)
+        const skyMat = new THREE.MeshBasicMaterial({
+          map: tex,
+          side: THREE.BackSide,
+        })
+        const sky = new THREE.Mesh(skyGeo, skyMat)
+        this.scene.add(sky)
+      }
     }
 
     const wallTex = wallTexture(this.wallNoiseScale)
