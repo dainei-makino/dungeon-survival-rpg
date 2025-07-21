@@ -5,14 +5,12 @@ import { VoxelType } from './voxels'
 import { ImprovedNoise } from 'three/examples/jsm/math/ImprovedNoise.js'
 
 export default class ForestMap extends VoxelMap {
-  private tiles: string[]
   enemies: MapEnemy[] = []
   private _playerStart: { x: number; y: number; dir: Direction }
   private heights: number[][]
 
   constructor(width = 96, height = 96, depth = 20, private density = 0.3) {
     super(width, height, depth)
-    this.tiles = Array.from({ length: height }, () => '.'.repeat(width))
     this.heights = Array.from({ length: height }, () => Array(width).fill(1))
     this._playerStart = { x: Math.floor(width / 2), y: Math.floor(height / 2), dir: 'north' }
     this.generate()
@@ -26,12 +24,6 @@ export default class ForestMap extends VoxelMap {
 
   private rand(min: number, max: number) {
     return Math.floor(Math.random() * (max - min) + min)
-  }
-
-  private setTile(x: number, y: number, val: string) {
-    const row = this.tiles[y].split('')
-    row[x] = val
-    this.tiles[y] = row.join('')
   }
 
   private generate() {
@@ -48,18 +40,6 @@ export default class ForestMap extends VoxelMap {
         let h = (base * 0.7 + detail * 0.3 + 1) / 2
         h = Math.floor(h * amp) + 2
         this.heights[y][x] = Math.min(h, this.depth - 1)
-        if (Math.random() < this.density) {
-          this.setTile(x, y, '#')
-        }
-      }
-    }
-    const cx = this._playerStart.x
-    const cy = this._playerStart.y
-    for (let y = cy - 3; y <= cy + 3; y++) {
-      for (let x = cx - 3; x <= cx + 3; x++) {
-        if (x >= 0 && x < this.width && y >= 0 && y < this.height) {
-          this.setTile(x, y, '.')
-        }
       }
     }
   }
@@ -92,10 +72,23 @@ export default class ForestMap extends VoxelMap {
             this.setVoxel(x, y, z, VoxelType.Swamp)
           }
         }
-        if (this.tiles[y][x] === '#') {
+        if (Math.random() < this.density) {
           const treeHeight = this.rand(2, Math.min(this.depth - h, 5))
           for (let z = h; z < h + treeHeight && z < this.depth; z++) {
             this.setVoxel(x, y, z, VoxelType.Tree)
+          }
+        }
+      }
+    }
+    // clear trees around the player start position
+    const cx = this._playerStart.x
+    const cy = this._playerStart.y
+    for (let y = cy - 3; y <= cy + 3; y++) {
+      for (let x = cx - 3; x <= cx + 3; x++) {
+        const h = this.getHeight(x, y)
+        for (let z = h; z < this.depth; z++) {
+          if (this.voxelAt(x, y, z) === VoxelType.Tree) {
+            this.setVoxel(x, y, z, VoxelType.Air)
           }
         }
       }
@@ -108,6 +101,16 @@ export default class ForestMap extends VoxelMap {
     if (iy < 0 || iy >= this.height || ix < 0 || ix >= this.width) {
       return '#'
     }
-    return this.tiles[iy][ix] === '#' ? '#' : '.'
+    const h = this.heights[iy][ix]
+    return this.voxelAt(ix, iy, h) === VoxelType.Tree ? '#' : '.'
+  }
+
+  getHeight(x: number, y: number): number {
+    const ix = Math.floor(x)
+    const iy = Math.floor(y)
+    if (iy < 0 || iy >= this.height || ix < 0 || ix >= this.width) {
+      return 0
+    }
+    return this.heights[iy][ix]
   }
 }

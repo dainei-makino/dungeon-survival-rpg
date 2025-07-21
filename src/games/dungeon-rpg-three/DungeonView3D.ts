@@ -123,9 +123,10 @@ export default class DungeonView3D {
     this.buildScene()
     this.arms = new PlayerArms(this.camera)
     // set initial camera state without animation
+    const h0 = this.map.getHeight(this.player.x, this.player.y) * this.cellSize
     this.camera.position.set(
       this.player.x * this.cellSize + this.cellSize / 2,
-      1.6,
+      h0 + 1.6,
       this.player.y * this.cellSize + this.cellSize / 2
     )
     this.camera.rotation.set(0, this.angleForDir(this.player.dir), 0)
@@ -154,19 +155,26 @@ export default class DungeonView3D {
     const floorTex = this.biome.floorTexture
       ? this.biome.floorTexture()
       : floorTexture()
-    floorTex.repeat.set(
+    const geo = new THREE.PlaneGeometry(
       this.map.width * this.cellSize,
-      this.map.height * this.cellSize
+      this.map.height * this.cellSize,
+      this.map.width,
+      this.map.height
     )
-    const floorMaterial = new THREE.MeshBasicMaterial({ map: floorTex })
-    const floor = new THREE.Mesh(
-      new THREE.PlaneGeometry(
-        this.map.width * this.cellSize,
-        this.map.height * this.cellSize
-      ),
-      floorMaterial
-    )
-    floor.rotation.x = -Math.PI / 2
+    const pos = geo.attributes.position as THREE.BufferAttribute
+    for (let y = 0; y <= this.map.height; y++) {
+      for (let x = 0; x <= this.map.width; x++) {
+        const idx = y * (this.map.width + 1) + x
+        const h = this.map.getHeight(Math.min(x, this.map.width - 1), Math.min(y, this.map.height - 1))
+        pos.setZ(idx, h * this.cellSize)
+      }
+    }
+    geo.rotateX(-Math.PI / 2)
+    pos.needsUpdate = true
+    floorTex.wrapS = floorTex.wrapT = THREE.RepeatWrapping
+    floorTex.repeat.set(this.map.width, this.map.height)
+    const floorMaterial = new THREE.MeshBasicMaterial({ map: floorTex, side: THREE.DoubleSide })
+    const floor = new THREE.Mesh(geo, floorMaterial)
     floor.position.set(
       (this.map.width * this.cellSize) / 2,
       0,
@@ -221,7 +229,8 @@ export default class DungeonView3D {
     const wallScale = this.wallNoiseScale
     for (let y = 0; y < this.map.height; y++) {
       for (let x = 0; x < this.map.width; x++) {
-        const voxel = this.map.voxelAt(x, y, 1)
+        const h = this.map.getHeight(x, y)
+        const voxel = this.map.voxelAt(x, y, h)
         if (voxel === VoxelType.Tree || this.map.tileAt(x, y) === '#') {
           const geom = new THREE.BoxGeometry(this.cellSize, 2, this.cellSize)
           const pos = geom.attributes.position as THREE.BufferAttribute
@@ -256,7 +265,7 @@ export default class DungeonView3D {
           const wall = new THREE.Mesh(geom, mat)
           wall.position.set(
             (x + 0.5) * this.cellSize,
-            1,
+            h * this.cellSize + 1,
             (y + 0.5) * this.cellSize
           )
           this.scene.add(wall)
@@ -271,9 +280,10 @@ export default class DungeonView3D {
     const torchGeo = new THREE.SphereGeometry(0.1, 8, 8)
     const torchMat = new THREE.MeshBasicMaterial({ color: 0xffaa00 })
     this.torch = new THREE.Mesh(torchGeo, torchMat)
+    const th = this.map.getHeight(this.player.x, this.player.y) * this.cellSize
     this.torch.position.set(
       this.player.x * this.cellSize + this.cellSize / 2,
-      1.6,
+      th + 1.6,
       this.player.y * this.cellSize + this.cellSize / 2
     )
     const light = new THREE.PointLight(0xffaa00, 1, 5)
@@ -449,7 +459,7 @@ export default class DungeonView3D {
       if (this.torch) {
         this.torch.position.set(
           this.camera.position.x,
-          1.6,
+          this.camera.position.y,
           this.camera.position.z
         )
       }
@@ -496,7 +506,7 @@ export default class DungeonView3D {
     this.startRot = this.camera.rotation.y
     this.targetPos.set(
       this.player.x * this.cellSize + this.cellSize / 2,
-      1.6,
+      this.map.getHeight(this.player.x, this.player.y) * this.cellSize + 1.6,
       this.player.y * this.cellSize + this.cellSize / 2
     )
     this.targetRot = this.angleForDir(this.player.dir)
