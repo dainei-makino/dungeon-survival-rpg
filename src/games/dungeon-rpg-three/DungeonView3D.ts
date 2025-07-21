@@ -27,10 +27,17 @@ export default class DungeonView3D {
   private hero: Hero
   private enemies: {
     enemy: Enemy
+    gridX: number
+    gridY: number
     x: number
     y: number
     dir: Direction
     nextMove: number
+    moveStart?: number
+    startX?: number
+    startY?: number
+    targetX?: number
+    targetY?: number
     mesh?: THREE.Object3D
   }[] = []
   private keys = new Set<string>()
@@ -203,7 +210,11 @@ export default class DungeonView3D {
           return false
         }
       }
-      if (this.enemies.some((e) => e.x === Math.floor(nx) && e.y === Math.floor(ny))) {
+      if (
+        this.enemies.some(
+          (e) => e.gridX === Math.floor(nx) && e.gridY === Math.floor(ny)
+        )
+      ) {
         return false
       }
       this.player.x = nx
@@ -242,7 +253,9 @@ export default class DungeonView3D {
     const vectors = this.dirVectors[this.player.dir]
     const targetX = Math.floor(this.player.x + vectors.dx)
     const targetY = Math.floor(this.player.y + vectors.dy)
-    const enemy = this.enemies.find((e) => e.x === targetX && e.y === targetY)
+    const enemy = this.enemies.find(
+      (e) => e.gridX === targetX && e.gridY === targetY
+    )
     const hand = left ? 'leftHand' : 'rightHand'
     const current = (this.hero as any)[hand] as string
     const itemIdx = this.items.findIndex((i) => i.x === targetX && i.y === targetY)
@@ -341,11 +354,11 @@ export default class DungeonView3D {
       'northWest',
     ]
     this.enemies.forEach((e) => {
-      if (now < e.nextMove) return
+      if (now < e.nextMove || e.moveStart !== undefined) return
       const dir = dirs[Math.floor(Math.random() * dirs.length)]
       const vec = this.dirVectors[dir]
-      const nx = e.x + vec.dx
-      const ny = e.y + vec.dy
+      const nx = e.gridX + vec.dx
+      const ny = e.gridY + vec.dy
       if (this.map.tileAt(nx, ny) === '#') {
         e.nextMove = now + 1000
         return
@@ -353,8 +366,8 @@ export default class DungeonView3D {
       const isDiag = Math.abs(vec.dx) === 1 && Math.abs(vec.dy) === 1
       if (
         isDiag &&
-        (this.map.tileAt(e.x + vec.dx, e.y) === '#' ||
-          this.map.tileAt(e.x, e.y + vec.dy) === '#')
+        (this.map.tileAt(e.gridX + vec.dx, e.gridY) === '#' ||
+          this.map.tileAt(e.gridX, e.gridY + vec.dy) === '#')
       ) {
         e.nextMove = now + 1000
         return
@@ -366,14 +379,33 @@ export default class DungeonView3D {
         e.nextMove = now + 1000
         return
       }
-      if (this.enemies.some((other) => other !== e && other.x === nx && other.y === ny)) {
+      if (
+        this.enemies.some(
+          (other) => other !== e && other.gridX === nx && other.gridY === ny
+        )
+      ) {
         e.nextMove = now + 1000
         return
       }
-      e.x = nx
-      e.y = ny
+      e.startX = e.x
+      e.startY = e.y
+      e.targetX = nx
+      e.targetY = ny
+      e.gridX = nx
+      e.gridY = ny
       e.dir = dir
+      e.moveStart = now
       e.nextMove = now + 1000
+    })
+  }
+
+  private updateEnemyAnimations() {
+    const now = performance.now()
+    this.enemies.forEach((e) => {
+      if (e.moveStart === undefined) return
+      const t = Math.min(1, (now - e.moveStart) / this.animDuration)
+      e.x = (1 - t) * (e.startX as number) + t * (e.targetX as number)
+      e.y = (1 - t) * (e.startY as number) + t * (e.targetY as number)
       if (e.mesh) {
         const h = (this.map.getHeight(e.x, e.y) + 1) * this.cellSize
         e.mesh.position.set(
@@ -381,6 +413,10 @@ export default class DungeonView3D {
           h,
           e.y * this.cellSize + this.cellSize / 2
         )
+      }
+      if (t === 1) {
+        e.moveStart = undefined
+        e.startX = e.startY = e.targetX = e.targetY = undefined
       }
     })
   }
@@ -690,6 +726,8 @@ export default class DungeonView3D {
       }
     }
 
+    this.updateEnemyAnimations()
+
     // update enemy movement
     this.moveEnemies()
     // enemies no longer billboard toward the camera
@@ -806,7 +844,7 @@ export default class DungeonView3D {
         const x = Math.floor(this.player.x) + dx
         const y = Math.floor(this.player.y) + dy
         const tile = this.map.tileAt(x, y)
-        const enemy = this.enemies.find((e) => e.x === x && e.y === y)
+        const enemy = this.enemies.find((e) => e.gridX === x && e.gridY === y)
         const voxel = this.map.voxelAt(x, y, footH - 1)
         const voxelName = voxel !== null ? voxel : 'null'
         lines.push(
@@ -894,12 +932,15 @@ export default class DungeonView3D {
       'northWest',
     ]
     const dir = dirs[Math.floor(Math.random() * dirs.length)]
+    const now = performance.now()
     this.enemies.push({
       enemy: template,
+      gridX: x,
+      gridY: y,
       x,
       y,
       dir,
-      nextMove: performance.now() + 1000,
+      nextMove: now + 1000,
     })
     if (this.enemyBase) {
       this.addEnemies()
