@@ -19,6 +19,8 @@ export default class DungeonView {
   private readonly WALL_COLOR = 0xcccccc
   private readonly FLOOR_COLOR = 0x996633
   private readonly CEILING_COLOR = 0x6666ff
+  private readonly cameraHeight = 0.5
+  private readonly cameraDistance = 2.5
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene
@@ -115,12 +117,26 @@ export default class DungeonView {
 
   private buildWorld() {
     this.mesh.clear()
-    this.addCube(0, 0, 0, 200, this.WALL_COLOR)
+    this.addFloor()
+    this.addCeiling()
+    for (let r = 0; r < this.map.height; r++) {
+      for (let c = 0; c < this.map.width; c++) {
+        if (this.map.tiles[r][c] === '#') {
+          this.addCube(c + 0.5, 0.5, r + 0.5, 1, this.WALL_COLOR)
+        }
+      }
+    }
   }
 
   private updateView() {
-    this.mesh.modelRotation.set(0, 0, 0)
-    this.mesh.viewPosition.set(0, 0, 300)
+    const angle = this.angleForDir(this.player.dir)
+    this.mesh.modelRotation.set(0, -angle, 0)
+    this.mesh.viewPosition.set(
+      this.player.x + 0.5,
+      this.cameraHeight,
+      this.player.y + 0.5
+    )
+    this.mesh.viewPosition.z += this.cameraDistance
   }
 
   private updateDebugText() {
