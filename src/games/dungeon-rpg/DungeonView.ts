@@ -236,10 +236,30 @@ export default class DungeonView {
     const g = this.graphics
 
     g.clear()
-    g.fillStyle(0x666666, 1)
+    // ceiling with eerie random pattern
+    g.fillStyle(0x222222, 1)
     g.fillRect(0, 0, width, height / 2)
-    g.fillStyle(0x333333, 1)
+    for (let i = 0; i < 40; i++) {
+      const cx = Math.random() * width
+      const cy = Math.random() * (height / 2)
+      const radius = 5 + Math.random() * 20
+      const col = Phaser.Display.Color.GetColor(
+        50 + Math.random() * 80,
+        0,
+        50 + Math.random() * 80
+      )
+      g.fillStyle(col, 0.4)
+      g.fillCircle(cx, cy, radius)
+    }
+
+    // floor with carpet and border
+    g.fillStyle(0x8b4513, 1)
     g.fillRect(0, height / 2, width, height / 2)
+    const carpetMargin = width * 0.25
+    g.fillStyle(0xff0000, 1)
+    g.fillRect(carpetMargin, height / 2, width - carpetMargin * 2, height / 2)
+    g.lineStyle(4, 0xffff00, 1)
+    g.strokeRect(carpetMargin, height / 2, width - carpetMargin * 2, height / 2)
 
     const fov = this.FOV
     const rayCount = this.numRays
@@ -251,10 +271,18 @@ export default class DungeonView {
       const rayAngle = dirAngle - fov / 2 + (i / rayCount) * fov
       const dist = this.castRay(rayAngle)
       const corrected = dist * Math.cos(rayAngle - dirAngle)
-      const wallScale = width * 0.3
+      // higher walls than before
+      const wallScale = width * 0.5
       const h = Math.min(height, wallScale / Math.max(corrected, 0.0001))
-      const shade = Math.max(0, 200 - corrected * 40)
-      const color = Phaser.Display.Color.GetColor(shade, shade, shade)
+      const baseR = 255
+      const baseG = 250
+      const baseB = 240
+      const shadeFactor = Math.max(0, 1 - corrected / 15)
+      const color = Phaser.Display.Color.GetColor(
+        baseR * shadeFactor,
+        baseG * shadeFactor,
+        baseB * shadeFactor
+      )
       g.fillStyle(color, 1)
       g.fillRect(i * sliceW, (height - h) / 2, sliceW + 1, h)
     }
