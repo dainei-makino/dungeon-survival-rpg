@@ -22,6 +22,18 @@ export default function initThreeGame(
       <button id="arm-copy">copy</button>
     </div>
     <div id="three-game" style="width:100%;height:100%"></div>
+    <div id="left-hand-ui" style="position:absolute;z-index:650;bottom:0;left:0;width:120px;height:120px;pointer-events:none;">
+      <div style="position:absolute;bottom:0;left:0;width:100%;height:100%;border:4px solid #fff;border-color:transparent #fff #fff transparent;border-radius:50%;box-sizing:border-box;"></div>
+      <div style="position:absolute;bottom:0;left:0;width:calc(100% - 16px);height:calc(100% - 16px);margin:8px;border:4px solid #fff;border-color:transparent #fff #fff transparent;border-radius:50%;box-sizing:border-box;"></div>
+      <div id="left-cooldown" style="position:absolute;bottom:0;left:0;width:100%;height:100%;background:rgba(255,255,0,0.6);clip-path:polygon(0% 100%,0% 0%,100% 100%);transform-origin:0% 100%;transform:scaleY(0);"></div>
+      <div id="left-item" style="position:absolute;bottom:8px;left:8px;color:#fff;font-size:14px;text-shadow:0 0 2px #000;"></div>
+    </div>
+    <div id="right-hand-ui" style="position:absolute;z-index:650;bottom:0;right:0;width:120px;height:120px;pointer-events:none;">
+      <div style="position:absolute;bottom:0;right:0;width:100%;height:100%;border:4px solid #fff;border-color:#fff transparent transparent #fff;border-radius:50%;box-sizing:border-box;"></div>
+      <div style="position:absolute;bottom:0;right:0;width:calc(100% - 16px);height:calc(100% - 16px);margin:8px;border:4px solid #fff;border-color:#fff transparent transparent #fff;border-radius:50%;box-sizing:border-box;"></div>
+      <div id="right-cooldown" style="position:absolute;bottom:0;right:0;width:100%;height:100%;background:rgba(255,255,0,0.6);clip-path:polygon(100% 100%,0% 100%,100% 0%);transform-origin:100% 100%;transform:scaleY(0);"></div>
+      <div id="right-item" style="position:absolute;bottom:8px;right:8px;color:#fff;font-size:14px;text-shadow:0 0 2px #000;text-align:right;"></div>
+    </div>
   `
   const back = container.querySelector('#back-to-top') as HTMLButtonElement
   back.addEventListener('click', () => loadTab('top'))
@@ -30,6 +42,10 @@ export default function initThreeGame(
   const miniMap = container.querySelector('#mini-map') as HTMLCanvasElement
   const statusDiv = container.querySelector('#status-display') as HTMLDivElement
   const debugDiv = container.querySelector('#debug-info') as HTMLDivElement
+  const leftItem = container.querySelector('#left-item') as HTMLDivElement
+  const rightItem = container.querySelector('#right-item') as HTMLDivElement
+  const leftCooldown = container.querySelector('#left-cooldown') as HTMLDivElement
+  const rightCooldown = container.querySelector('#right-cooldown') as HTMLDivElement
   container.style.position = 'relative'
   const view = new DungeonView3D(wrapper, miniMap, forestBiome)
 
@@ -76,6 +92,11 @@ export default function initThreeGame(
   function animate() {
     view.update()
     view.render()
+    const info = view.getHandInfo()
+    if (leftItem) leftItem.textContent = info.left
+    if (rightItem) rightItem.textContent = info.right
+    if (leftCooldown) leftCooldown.style.transform = `scaleY(${info.leftCooldown})`
+    if (rightCooldown) rightCooldown.style.transform = `scaleY(${info.rightCooldown})`
     if (debugDiv) {
       debugDiv.textContent = view.getDebugText()
     }
@@ -84,5 +105,10 @@ export default function initThreeGame(
     }
     requestAnimationFrame(animate)
   }
+  const first = view.getHandInfo()
+  if (leftItem) leftItem.textContent = first.left
+  if (rightItem) rightItem.textContent = first.right
+  if (leftCooldown) leftCooldown.style.transform = `scaleY(${first.leftCooldown})`
+  if (rightCooldown) rightCooldown.style.transform = `scaleY(${first.rightCooldown})`
   animate()
 }

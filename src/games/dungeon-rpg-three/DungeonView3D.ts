@@ -57,6 +57,9 @@ export default class DungeonView3D {
   private mapCenterY = 0
   private enemyBase?: THREE.Group
   private items: { name: string; x: number; y: number; mesh: THREE.Object3D }[] = []
+  private handCooldown = { left: 0, right: 0 }
+  private readonly punchCooldown = 500
+  private lastTime = performance.now()
 
   constructor(
     container: HTMLElement,
@@ -252,6 +255,7 @@ export default class DungeonView3D {
       } else {
         console.log(`${left ? 'Left' : 'Right'} hand finds nothing`)
       }
+      this.triggerPunch(left)
     } else {
       console.log(`${left ? 'Left' : 'Right'} hand uses ${current}`)
     }
@@ -592,6 +596,13 @@ export default class DungeonView3D {
   }
 
   update() {
+    const now = performance.now()
+    const dt = now - this.lastTime
+    this.lastTime = now
+    if (this.handCooldown.left > 0)
+      this.handCooldown.left = Math.max(0, this.handCooldown.left - dt)
+    if (this.handCooldown.right > 0)
+      this.handCooldown.right = Math.max(0, this.handCooldown.right - dt)
     if (this.torch) {
       this.torch.rotation.y += 0.01
     }
@@ -696,5 +707,30 @@ export default class DungeonView3D {
       `L: ${this.hero.leftHand} R: ${this.hero.rightHand}\n` +
       `Enemies: ${enemyInfo}`
     )
+  }
+
+  private triggerPunch(left: boolean) {
+    if (left) {
+      this.handCooldown.left = this.punchCooldown
+    } else {
+      this.handCooldown.right = this.punchCooldown
+    }
+  }
+
+  getHandInfo() {
+    const leftCooldown =
+      this.hero.leftHand === 'unarmed'
+        ? 1 - this.handCooldown.left / this.punchCooldown
+        : 0
+    const rightCooldown =
+      this.hero.rightHand === 'unarmed'
+        ? 1 - this.handCooldown.right / this.punchCooldown
+        : 0
+    return {
+      left: this.hero.leftHand,
+      right: this.hero.rightHand,
+      leftCooldown,
+      rightCooldown,
+    }
   }
 }
