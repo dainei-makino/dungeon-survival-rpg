@@ -1,5 +1,5 @@
 import type { Direction } from '../dungeon-rpg/Player'
-import { MapEnemy } from '../dungeon-rpg/Enemy'
+import { MapEnemy, skeletonWarrior } from '../dungeon-rpg/Enemy'
 import VoxelMap from './VoxelMap'
 import { VoxelType } from './voxels'
 import { createTreeObject } from './VoxelObject'
@@ -24,6 +24,7 @@ export default class ForestMap extends VoxelMap {
     this.generate()
     this.buildVoxels()
     this.placeEnvironmentItems()
+    this.placeEnemies()
   }
 
   get playerStart() {
@@ -53,7 +54,21 @@ export default class ForestMap extends VoxelMap {
   }
 
   private placeEnemies() {
-    // intentionally left blank – enemies will spawn dynamically elsewhere
+    const count = Math.floor(this.width * this.height * 0.001)
+    for (let i = 0; i < count; i++) {
+      let placed = false
+      for (let t = 0; t < 50 && !placed; t++) {
+        const x = this.rand(1, this.width - 1)
+        const y = this.rand(1, this.height - 1)
+        if (this.tileAt(x, y) === '.') {
+          const baseH = this.getHeight(x, y)
+          if (this.isClearAbove(x, y, baseH + 1, 2)) {
+            this.enemies.push(new MapEnemy(skeletonWarrior, x, y))
+            placed = true
+          }
+        }
+      }
+    }
   }
 
   private placeEnvironmentItems() {
