@@ -10,7 +10,8 @@ export default class AmbientPadSynth {
     this.filter.type = 'lowpass'
     this.filter.frequency.value = 800
     this.output = ctx.createGain()
-    this.output.gain.value = 0.25
+    // master gain lowered ~20% from previous level
+    this.output.gain.value = 0.2
     this.filter.connect(this.output)
     this.output.connect(ctx.destination)
 
@@ -20,6 +21,21 @@ export default class AmbientPadSynth {
     for (let i = 0; i < data.length; i++) {
       data[i] = Math.random() * 2 - 1
     }
+  }
+
+  /**
+   * Smoothly adjust the master gain.
+   */
+  setMasterGain(value: number, time = 0.5) {
+    const now = this.ctx.currentTime
+    this.output.gain.linearRampToValueAtTime(value, now + time)
+  }
+
+  /**
+   * Change the current timbre patch.
+   */
+  setPatch(patch: AmbientPatch) {
+    this.patch = patch
   }
 
   playNote(freq: number, duration = 8) {

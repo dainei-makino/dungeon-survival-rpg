@@ -10,6 +10,7 @@ export default class AmbientMusicGenerator {
   private midTermProgression = [0, 5, -3, 7]
   private chordIntervalMs = 4000
   private noteDuration = 8
+  private intensity = 0
 
   private chordCount = 0
   private chordsPerMidTerm = 8
@@ -22,6 +23,21 @@ export default class AmbientMusicGenerator {
     private synth: AmbientPadSynth,
     private root = 220
   ) {}
+
+  setRoot(root: number) {
+    this.root = root
+  }
+
+  setScale(scale: number[]) {
+    this.longTermScales = [scale]
+    this.longTermIndex = 0
+  }
+
+  setIntensity(level: number) {
+    this.intensity = Math.max(0, Math.min(1, level))
+    this.chordIntervalMs = Math.max(800, 4000 - 3200 * this.intensity)
+    this.noteDuration = Math.max(4, 8 - 4 * this.intensity)
+  }
 
   start() {
     if (this.timer !== null) return
