@@ -5,7 +5,7 @@
     "build": "vite build",
     "preview": "vite preview --config vite.config.ts --port 4173",
     "convert-svgs": "node tools/svg-to-json.mjs",
-    "test": "ts-node tests/BasicSynth.test.ts"
+    "test": "ts-node tests/BasicSynth.test.ts && ts-node tests/MusicGenerator.test.ts"
   },
   "devDependencies": {
     "three": "^0.178.0",

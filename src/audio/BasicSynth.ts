@@ -25,6 +25,14 @@ export default class BasicSynth {
     this.gain = options.gain ?? 0.2
   }
 
+  setType(type: OscillatorType) {
+    this.type = type
+  }
+
+  setGain(gain: number) {
+    this.gain = gain
+  }
+
   play(frequency: number, duration = 1) {
     if (this.oscillator) {
       this.stop()
