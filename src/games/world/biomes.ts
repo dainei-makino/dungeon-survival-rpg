@@ -1,6 +1,7 @@
 import { VoxelType } from './voxels'
 import VoxelMap from './VoxelMap'
 import DungeonMap from '../dungeon-rpg/DungeonMap'
+import ForestMap from './ForestMap'
 import EnvironmentCharacter, {
   tree,
   bush,
@@ -24,7 +25,7 @@ export interface Biome {
 
 export const forestBiome: Biome = {
   name: 'forest',
-  generateMap: () => new DungeonMap(),
+  generateMap: () => new ForestMap(),
   voxels: [VoxelType.Floor, VoxelType.Wall, VoxelType.Ceiling],
   environment: [tree, bush, woodPiece],
   fog: '#88aa88',
