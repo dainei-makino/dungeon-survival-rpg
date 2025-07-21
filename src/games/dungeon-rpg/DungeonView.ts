@@ -2,6 +2,7 @@ import DungeonMap from './DungeonMap'
 import Player, { Direction } from './Player'
 import { animationSpeed, BASE_STEP_TIME_MS } from './config'
 import Hero from './Hero'
+import PerlinNoise from './PerlinNoise'
 
 export default class DungeonView {
   private scene: Phaser.Scene
@@ -9,6 +10,7 @@ export default class DungeonView {
   private map: DungeonMap
   private player: Player
   private hero: Hero
+  private noise: PerlinNoise
   private viewX: number
   private viewY: number
   private viewAngle: number
@@ -33,6 +35,7 @@ export default class DungeonView {
     this.map = new DungeonMap()
     this.player = new Player(this.map.playerStart)
     this.hero = new Hero()
+    this.noise = new PerlinNoise()
     this.viewX = this.player.x
     this.viewY = this.player.y
     this.viewAngle = this.angleForDir(this.player.dir)
@@ -170,6 +173,29 @@ export default class DungeonView {
     g.fillCircle(px, py, Math.min(cellW, cellH) / 3)
   }
 
+  private drawFloor(width: number, height: number) {
+    const g = this.graphics
+    const step = 4
+    const scale = 0.1
+    for (let y = height / 2; y < height; y += step) {
+      for (let x = 0; x < width; x += step) {
+        const nx = this.viewX * 0.3 + x * scale
+        const ny = this.viewY * 0.3 + y * scale
+        let n = this.noise.noise(nx, ny)
+        n = (n + 1) / 2
+        const base = 80
+        const shade = Math.floor(base + n * 60)
+        const color = Phaser.Display.Color.GetColor(
+          shade,
+          shade * 0.8,
+          shade * 0.5
+        )
+        g.fillStyle(color, 1)
+        g.fillRect(x, y, step, step)
+      }
+    }
+  }
+
   private angleForDir(dir: Direction): number {
     switch (dir) {
       case 'north':
@@ -276,8 +302,7 @@ export default class DungeonView {
     g.clear()
     g.fillStyle(0x666666, 1)
     g.fillRect(0, 0, width, height / 2)
-    g.fillStyle(0x333333, 1)
-    g.fillRect(0, height / 2, width, height / 2)
+    this.drawFloor(width, height)
 
     const fov = this.FOV
     const rayCount = this.numRays
