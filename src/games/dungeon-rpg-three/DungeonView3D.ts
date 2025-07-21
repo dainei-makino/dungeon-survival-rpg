@@ -51,6 +51,10 @@ export default class DungeonView3D {
   private readonly playerHeight = this.cellSize * 2
   private readonly eyeLevel = this.playerHeight - 0.4
   private readonly wallNoiseScale = 25
+  private readonly renderRadius = 12
+  private wallMeshes = new Map<string, THREE.Mesh>()
+  private wallTex!: THREE.Texture
+  private treeTex!: THREE.Texture
 
   constructor(
     container: HTMLElement,
@@ -226,58 +230,14 @@ export default class DungeonView3D {
       }
     }
 
-    const wallTex = wallTexture(this.wallNoiseScale)
-    wallTex.wrapS = wallTex.wrapT = THREE.RepeatWrapping
-    const treeTex = this.biome.treeTexture
+    this.wallTex = wallTexture(this.wallNoiseScale)
+    this.wallTex.wrapS = this.wallTex.wrapT = THREE.RepeatWrapping
+    this.treeTex = this.biome.treeTexture
       ? this.biome.treeTexture()
       : treeTexture(this.wallNoiseScale)
-    treeTex.wrapS = treeTex.wrapT = THREE.RepeatWrapping
-    const wallScale = this.wallNoiseScale
-    for (let y = 0; y < this.map.height; y++) {
-      for (let x = 0; x < this.map.width; x++) {
-        const h = this.map.getHeight(x, y)
-        const voxel = this.map.voxelAt(x, y, h)
-        if (voxel === VoxelType.Tree || this.map.tileAt(x, y) === '#') {
-          const geom = new THREE.BoxGeometry(this.cellSize, 2, this.cellSize)
-          const pos = geom.attributes.position as THREE.BufferAttribute
-          const normal = geom.attributes.normal as THREE.BufferAttribute
-          const uv: number[] = []
-          for (let i = 0; i < pos.count; i++) {
-            const vx = pos.getX(i)
-            const vy = pos.getY(i)
-            const vz = pos.getZ(i)
-            const nx = normal.getX(i)
-            const nz = normal.getZ(i)
-            const wx = (x + 0.5) * this.cellSize + vx
-            const wy = vy + 1
-            const wz = (y + 0.5) * this.cellSize + vz
-            let u = 0
-            let v = 0
-            if (Math.abs(nx) === 1) {
-              u = wz / wallScale
-              v = wy / wallScale
-            } else if (Math.abs(nz) === 1) {
-              u = wx / wallScale
-              v = wy / wallScale
-            } else {
-              u = wx / wallScale
-              v = wz / wallScale
-            }
-            uv.push(u, v)
-          }
-          geom.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2))
-          const tex = voxel === VoxelType.Tree ? treeTex : wallTex
-          const mat = new THREE.MeshBasicMaterial({ map: tex })
-          const wall = new THREE.Mesh(geom, mat)
-          wall.position.set(
-            (x + 0.5) * this.cellSize,
-            h * this.cellSize + 1,
-            (y + 0.5) * this.cellSize
-          )
-          this.scene.add(wall)
-        }
-      }
-    }
+    this.treeTex.wrapS = this.treeTex.wrapT = THREE.RepeatWrapping
+
+    this.updateVisibleWalls()
 
     if (!this.biome.lighting) {
       this.scene.add(new THREE.AmbientLight(0x666666))
@@ -463,6 +423,80 @@ export default class DungeonView3D {
     })
   }
 
+  private createWallMesh(x: number, y: number): THREE.Mesh | null {
+    const h = this.map.getHeight(x, y)
+    const voxel = this.map.voxelAt(x, y, h)
+    if (voxel !== VoxelType.Tree && this.map.tileAt(x, y) !== '#') {
+      return null
+    }
+    const geom = new THREE.BoxGeometry(this.cellSize, 2, this.cellSize)
+    const pos = geom.attributes.position as THREE.BufferAttribute
+    const normal = geom.attributes.normal as THREE.BufferAttribute
+    const uv: number[] = []
+    for (let i = 0; i < pos.count; i++) {
+      const vx = pos.getX(i)
+      const vy = pos.getY(i)
+      const vz = pos.getZ(i)
+      const nx = normal.getX(i)
+      const nz = normal.getZ(i)
+      const wx = (x + 0.5) * this.cellSize + vx
+      const wy = vy + 1
+      const wz = (y + 0.5) * this.cellSize + vz
+      let u = 0
+      let v = 0
+      if (Math.abs(nx) === 1) {
+        u = wz / this.wallNoiseScale
+        v = wy / this.wallNoiseScale
+      } else if (Math.abs(nz) === 1) {
+        u = wx / this.wallNoiseScale
+        v = wy / this.wallNoiseScale
+      } else {
+        u = wx / this.wallNoiseScale
+        v = wz / this.wallNoiseScale
+      }
+      uv.push(u, v)
+    }
+    geom.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2))
+    const tex = voxel === VoxelType.Tree ? this.treeTex : this.wallTex
+    const mat = new THREE.MeshBasicMaterial({ map: tex })
+    const mesh = new THREE.Mesh(geom, mat)
+    mesh.position.set(
+      (x + 0.5) * this.cellSize,
+      h * this.cellSize + 1,
+      (y + 0.5) * this.cellSize
+    )
+    return mesh
+  }
+
+  private updateVisibleWalls() {
+    const minX = Math.max(0, Math.floor(this.player.x - this.renderRadius))
+    const maxX = Math.min(this.map.width - 1, Math.floor(this.player.x + this.renderRadius))
+    const minY = Math.max(0, Math.floor(this.player.y - this.renderRadius))
+    const maxY = Math.min(this.map.height - 1, Math.floor(this.player.y + this.renderRadius))
+
+    const keep = new Set<string>()
+    for (let y = minY; y <= maxY; y++) {
+      for (let x = minX; x <= maxX; x++) {
+        const key = `${x},${y}`
+        keep.add(key)
+        if (!this.wallMeshes.has(key)) {
+          const mesh = this.createWallMesh(x, y)
+          if (mesh) {
+            this.wallMeshes.set(key, mesh)
+            this.scene.add(mesh)
+          }
+        }
+      }
+    }
+
+    for (const [key, mesh] of this.wallMeshes) {
+      if (!keep.has(key)) {
+        this.scene.remove(mesh)
+        this.wallMeshes.delete(key)
+      }
+    }
+  }
+
   getArmSettings() {
     return this.arms.getSettings()
   }
@@ -518,6 +552,7 @@ export default class DungeonView3D {
       }
     })
 
+    this.updateVisibleWalls()
     this.renderMiniMap()
   }
 
