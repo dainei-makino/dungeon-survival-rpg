@@ -116,7 +116,7 @@ export default class DungeonView {
     const overshootAngle = tweenAngle + overshoot
 
     this.player.dir = endDir
-    this.scene.tweens.timeline({
+    this.scene.tweens.chain({
       tweens: [
         {
           targets: this,
