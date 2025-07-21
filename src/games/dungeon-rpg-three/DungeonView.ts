@@ -277,12 +277,18 @@ export default class DungeonView3D {
       })
       return sh
     })
-    const enemyGeo = new THREE.ExtrudeGeometry(shapes, {
-      depth: 0.2,
-      bevelEnabled: false,
+    const enemyGeo = new THREE.ShapeGeometry(shapes)
+    enemyGeo.computeBoundingBox()
+    if (enemyGeo.boundingBox) {
+      const bb = enemyGeo.boundingBox
+      const offX = -(bb.min.x + bb.max.x) / 2
+      const offY = -bb.min.y
+      enemyGeo.translate(offX, offY, 0)
+    }
+    const enemyMat = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      side: THREE.DoubleSide,
     })
-    enemyGeo.rotateX(-Math.PI / 2)
-    const enemyMat = new THREE.MeshBasicMaterial({ color: 0xffffff })
     this.enemies.forEach((e) => {
       const mesh = new THREE.Mesh(enemyGeo, enemyMat)
       const scale = 0.08
@@ -316,6 +322,15 @@ export default class DungeonView3D {
         this.animStart = null
       }
     }
+
+    // orient billboard enemies toward the camera
+    this.enemies.forEach((e) => {
+      if (e.mesh) {
+        const camPos = this.camera.position.clone()
+        camPos.y = e.mesh.position.y
+        e.mesh.lookAt(camPos)
+      }
+    })
 
     this.renderMiniMap()
   }
