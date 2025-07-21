@@ -240,17 +240,19 @@ export default class DungeonView3D {
     const tryMove = (dx: number, dy: number) => {
       const nx = this.player.x + dx
       const ny = this.player.y + dy
-      if (this.map.tileAt(nx, ny) === '#') return
+      if (this.map.tileAt(nx, ny) === '#') return false
       const isDiag = Math.abs(dx) === 1 && Math.abs(dy) === 1
       if (
         isDiag &&
         (this.map.tileAt(this.player.x + dx, this.player.y) === '#' ||
           this.map.tileAt(this.player.x, this.player.y + dy) === '#')
       ) {
-        return
+        return false
       }
       this.player.x = nx
       this.player.y = ny
+      this.hero.hunger = Math.max(0, this.hero.hunger - 1)
+      return true
     }
 
     if (key === 'a') {
@@ -456,11 +458,13 @@ export default class DungeonView3D {
   }
 
   getStatusHTML(): string {
+    const heartIcon = '❤️'
     const hungerIcon = '🍖'
     const staminaIcon = '⚡'
-    const hunger = hungerIcon.repeat(this.hero.hunger)
+    const hearts = heartIcon.repeat(this.hero.hp)
+    const hunger = hungerIcon.repeat(Math.floor(this.hero.hunger / 100))
     const stamina = staminaIcon.repeat(this.hero.stamina)
-    return `${hunger} ${stamina}`
+    return `<div>${hearts}</div><div>${hunger}</div><div>${stamina}</div>`
   }
 
   getDebugText(): string {
