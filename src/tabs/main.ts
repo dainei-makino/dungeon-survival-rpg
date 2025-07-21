@@ -1,4 +1,3 @@
-
 const content = document.getElementById('content') as HTMLElement
 
 type Tab = 'top' | 'novel' | 'game'
@@ -11,10 +10,10 @@ async function loadTab(tab: Tab) {
     const { default: showTop } = await import('./top');
     showTop(content, loadTab);
   } else if (tab === 'novel') {
-    const { default: showNovel } = await import('../novel/novel');
+    const { default: showNovel } = await import('../novel/showNovel');
     showNovel(content, loadTab);
   } else if (tab === 'game') {
-    const { default: initGame } = await import('../games/dungeon-rpg-three/game')
+    const { default: initGame } = await import('../games/dungeon-rpg-three/initGame')
     initGame(content, loadTab)
   }
 }
