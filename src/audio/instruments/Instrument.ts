@@ -31,4 +31,10 @@ export default class Instrument {
       this.synth.fadeIn(duration)
     }
   }
+
+  fadeOut(duration: number) {
+    if (typeof (this.synth as any).fadeOut === 'function') {
+      ;(this.synth as any).fadeOut(duration)
+    }
+  }
 }

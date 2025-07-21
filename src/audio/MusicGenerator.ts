@@ -22,6 +22,12 @@ export interface AmbientMusicConfig {
   tempo?: number
 }
 
+export interface MusicSection {
+  tracks: Track[]
+  /** Start time in seconds from the beginning of playback */
+  start: number
+}
+
 export default class MusicGenerator {
   private instrument: Instrument
 
@@ -86,6 +92,16 @@ export default class MusicGenerator {
     return tracks
   }
 
+  static generateEvolvingAmbientTracks(
+    config: AmbientMusicConfig,
+  ): Track[][] {
+    return [
+      MusicGenerator.generateAmbientTracks(config),
+      MusicGenerator.generateAmbientTracks(config),
+      MusicGenerator.generateAmbientTracks(config),
+    ]
+  }
+
   static playTracks(tracks: Track[]) {
     for (const track of tracks) {
       for (const note of track.sequence) {
@@ -127,6 +143,52 @@ export default class MusicGenerator {
     return {
       stop() {
         stopped = true
+        for (const t of timers) clearTimeout(t)
+      },
+    }
+  }
+
+  static startEvolvingLoop(
+    sections: MusicSection[],
+    bpm = 120,
+    transition = 15,
+    intro = 0,
+  ): MusicLoop {
+    if (sections.length === 0) {
+      return { stop() {} }
+    }
+    const timers: NodeJS.Timeout[] = []
+    let currentLoop = MusicGenerator.startLoop(sections[0].tracks, bpm, intro)
+    let currentTracks = sections[0].tracks
+
+    const switchTo = (next: MusicSection) => {
+      for (const t of currentTracks) {
+        if (typeof (t.instrument as any).fadeOut === 'function') {
+          ;(t.instrument as any).fadeOut(transition)
+        }
+      }
+      const newLoop = MusicGenerator.startLoop(next.tracks, bpm, transition)
+      timers.push(
+        setTimeout(() => {
+          currentLoop.stop()
+        }, transition * 1000),
+      )
+      currentLoop = newLoop
+      currentTracks = next.tracks
+    }
+
+    for (let i = 1; i < sections.length; i++) {
+      const sec = sections[i]
+      timers.push(
+        setTimeout(() => {
+          switchTo(sec)
+        }, sec.start * 1000),
+      )
+    }
+
+    return {
+      stop() {
+        currentLoop.stop()
         for (const t of timers) clearTimeout(t)
       },
     }

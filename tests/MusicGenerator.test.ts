@@ -53,6 +53,18 @@ async function run() {
   assert.strictEqual(ambientTracks[0].sequence.length, 4)
   const loop = MusicGenerator.startLoop(ambientTracks, config.tempo)
   loop.stop()
+
+  const sections = MusicGenerator.generateEvolvingAmbientTracks(config)
+  const evolving = MusicGenerator.startEvolvingLoop(
+    [
+      { tracks: sections[0], start: 0 },
+      { tracks: sections[1], start: 1 },
+      { tracks: sections[2], start: 2 },
+    ],
+    config.tempo,
+    1,
+  )
+  evolving.stop()
   console.log('MusicGenerator test passed')
 }
 

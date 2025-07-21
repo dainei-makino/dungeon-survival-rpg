@@ -2,6 +2,8 @@ export interface BasicSynthOptions {
   type?: OscillatorType
   gain?: number
   context?: any
+  /** Overall output volume. 1.0 is 100% */
+  masterGain?: number
   attack?: number
   release?: number
   reverb?: number
@@ -28,6 +30,7 @@ export default class BasicSynth {
       throw new Error('No AudioContext available')
     }
     this.master = this.context.createGain()
+    this.master.gain.value = options.masterGain ?? 0.05
     this.master.connect(this.context.destination)
     this.type = options.type ?? 'sine'
     this.gain = options.gain ?? 0.2
@@ -58,6 +61,11 @@ export default class BasicSynth {
   fadeIn(duration: number) {
     this.master.gain.setValueAtTime(0, this.context.currentTime)
     this.master.gain.linearRampToValueAtTime(1, this.context.currentTime + duration)
+  }
+
+  fadeOut(duration: number) {
+    this.master.gain.setValueAtTime(this.master.gain.value, this.context.currentTime)
+    this.master.gain.linearRampToValueAtTime(0, this.context.currentTime + duration)
   }
 
   play(frequency: number, duration = 1) {

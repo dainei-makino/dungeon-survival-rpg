@@ -15,7 +15,7 @@ import {
   treeTexture,
   leavesTexture,
 } from './utils/textures'
-import MusicGenerator, { Track, MusicLoop } from '../../audio/MusicGenerator'
+import MusicGenerator, { MusicLoop } from '../../audio/MusicGenerator'
 
 
 export default class DungeonView3D {
@@ -58,7 +58,6 @@ export default class DungeonView3D {
   private mapCenterY = 0
   private enemyBase?: THREE.Group
   private items: { name: string; x: number; y: number; mesh: THREE.Object3D }[] = []
-  private musicTracks: Track[] | null = null
   private musicLoop: MusicLoop | null = null
 
   constructor(
@@ -197,11 +196,16 @@ export default class DungeonView3D {
     }
     if (!this.biome.music) return
     const config = this.biome.music()
-    this.musicTracks = MusicGenerator.generateAmbientTracks(config)
-    this.musicLoop = MusicGenerator.startLoop(
-      this.musicTracks,
+    const sections = MusicGenerator.generateEvolvingAmbientTracks(config)
+    this.musicLoop = MusicGenerator.startEvolvingLoop(
+      [
+        { tracks: sections[0], start: 0 },
+        { tracks: sections[1], start: 60 },
+        { tracks: sections[2], start: 300 },
+      ],
       config.tempo,
-      15
+      15,
+      15,
     )
   }
 

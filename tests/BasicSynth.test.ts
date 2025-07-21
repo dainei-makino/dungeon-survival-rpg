@@ -35,10 +35,12 @@ class MockContext {
 async function run() {
   const context = new MockContext()
   const synth = new BasicSynth({ context: context as any })
+  assert.strictEqual((synth as any).master.gain.value, 0.05)
   synth.fadeIn(0.5)
   synth.play(440, 0.01)
   assert.ok((synth as any).oscillator, 'oscillator should be created')
   ;(synth as any).oscillator!.stop()
+  synth.fadeOut(0.5)
   assert.strictEqual((synth as any).oscillator, null, 'oscillator should stop')
   console.log('BasicSynth test passed')
 }
