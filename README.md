@@ -17,3 +17,8 @@ To build the project for production:
 npm run build
 ```
 
+## Animation Design
+
+See `docs/character-animation.md` for the approach used to animate characters
+with SVG or vertex JSON assets.
+
