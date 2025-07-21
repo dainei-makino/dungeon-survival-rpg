@@ -44,7 +44,8 @@ export default function showDebug(
         .replace(/-/g, ' ')
         .replace(/\b\w/g, (c) => c.toUpperCase())
       const assetUrl = (assetUrls as Record<string, string>)[path]
-      const baseUrl = assetUrl.substring(0, assetUrl.lastIndexOf('/') + 1)
+      const absUrl = new URL(assetUrl, import.meta.url).href
+      const baseUrl = absUrl.substring(0, absUrl.lastIndexOf('/') + 1)
       const spec: any = JSON.parse(JSON.stringify((mod as any).default))
       for (const part of spec.parts) {
         if (part.mesh) {
@@ -62,7 +63,7 @@ export default function showDebug(
           }
         }
       }
-      return { name, spec }
+      return { name, spec, baseUrl }
     })
     .sort((a, b) => a.name.localeCompare(b.name))
   characters.forEach((c) => {
@@ -87,7 +88,7 @@ export default function showDebug(
     const ch = characters.find((c) => c.name === name)
     if (!ch) return
     const loader = new BlockyCharacterLoader()
-    const obj = await loader.fromSpec(ch.spec)
+    const obj = await loader.fromSpec(ch.spec, ch.baseUrl)
     if (model) scene.remove(model)
     model = obj
     scene.add(model)
