@@ -16,6 +16,8 @@ export default class DungeonView {
   private miniMap: Phaser.GameObjects.Graphics
   private isMoving = false
   private isRotating = false
+  private bobOffset = 0
+  private bobTween?: Phaser.Tweens.Tween
   private readonly moveDuration = 150 * animationSpeed
   private readonly rotateDuration = 150 * animationSpeed
   private readonly FOV = Math.PI / 3
@@ -67,6 +69,14 @@ export default class DungeonView {
     this.isMoving = true
     this.player.x = nx
     this.player.y = ny
+    this.bobTween = this.scene.tweens.add({
+      targets: this,
+      bobOffset: 4,
+      duration: this.moveDuration / 4,
+      ease: 'Sine.easeInOut',
+      yoyo: true,
+      repeat: -1,
+    })
     this.scene.tweens.add({
       targets: this,
       viewX: nx,
@@ -78,6 +88,8 @@ export default class DungeonView {
       },
       onComplete: () => {
         this.isMoving = false
+        this.bobTween?.stop()
+        this.bobOffset = 0
         this.draw()
         this.updateDebugText()
       },
@@ -235,6 +247,7 @@ export default class DungeonView {
     const height = this.scene.scale.height
     const g = this.graphics
 
+    g.setPosition(0, this.bobOffset)
     g.clear()
     g.fillStyle(0x666666, 1)
     g.fillRect(0, 0, width, height / 2)
