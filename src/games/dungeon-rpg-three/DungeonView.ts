@@ -233,7 +233,7 @@ export default class DungeonView3D {
 
   private handleKeyDown = (e: KeyboardEvent) => {
     const key = e.key.toLowerCase()
-    if (!['w', 'a', 's', 'd', 'j', 'k'].includes(key)) return
+    if (!['w', 'a', 's', 'd', 'j', 'k', 'u', 'i'].includes(key)) return
     e.preventDefault()
     const vectors = this.dirVectors[this.player.dir]
 
@@ -265,9 +265,31 @@ export default class DungeonView3D {
       tryMove(vectors.left.dx, vectors.left.dy)
     } else if (key === 'k') {
       tryMove(vectors.right.dx, vectors.right.dy)
+    } else if (key === 'u') {
+      this.handleHandAction(true)
+    } else if (key === 'i') {
+      this.handleHandAction(false)
     }
     this.updateCamera()
     this.renderMiniMap()
+  }
+
+  private handleHandAction(left: boolean) {
+    const vectors = this.dirVectors[this.player.dir]
+    const targetX = Math.floor(this.player.x + vectors.dx)
+    const targetY = Math.floor(this.player.y + vectors.dy)
+    const enemy = this.enemies.find((e) => e.x === targetX && e.y === targetY)
+    const hand = left ? 'leftHand' : 'rightHand'
+    const item = (this.hero as any)[hand] as string
+    if (item === 'unarmed') {
+      if (enemy) {
+        console.log(`${left ? 'Left' : 'Right'} hand interacts with ${enemy.enemy.name}`)
+      } else {
+        console.log(`${left ? 'Left' : 'Right'} hand finds nothing`)
+      }
+    } else {
+      console.log(`${left ? 'Left' : 'Right'} hand uses ${item}`)
+    }
   }
 
   private renderMiniMap() {
@@ -441,6 +463,7 @@ export default class DungeonView3D {
     return (
       `Pos: ${pos} Dir: ${this.player.dir}\n` +
       `HP: ${this.hero.hp} STR: ${this.hero.strength}\n` +
+      `L: ${this.hero.leftHand} R: ${this.hero.rightHand}\n` +
       `Enemies: ${enemyInfo}`
     )
   }
