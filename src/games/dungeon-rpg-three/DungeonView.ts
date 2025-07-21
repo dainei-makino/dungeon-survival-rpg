@@ -297,13 +297,15 @@ export default class DungeonView3D {
 
     const leftArm = new THREE.Mesh(geo, armMat)
     leftArm.rotation.z = Math.PI / 8
-    leftArm.rotation.x = Math.PI / 2
-    leftArm.position.set(-0.25, -0.3, -0.6)
+    leftArm.rotation.x = Math.PI / 3
+    leftArm.scale.set(0.8, 0.8, 0.8)
+    leftArm.position.set(-0.25, -0.25, -0.6)
 
     const rightArm = new THREE.Mesh(geo, armMat)
     rightArm.rotation.z = -Math.PI / 8
-    rightArm.rotation.x = Math.PI / 2
-    rightArm.position.set(0.25, -0.3, -0.6)
+    rightArm.rotation.x = Math.PI / 3
+    rightArm.scale.set(0.8, 0.8, 0.8)
+    rightArm.position.set(0.25, -0.25, -0.6)
 
     this.armsGroup.add(leftArm)
     this.armsGroup.add(rightArm)
