@@ -37,4 +37,10 @@ export default class Instrument {
       ;(this.synth as any).fadeOut(duration)
     }
   }
+
+  setMuted(m: boolean) {
+    if (typeof (this.synth as any).setMuted === 'function') {
+      ;(this.synth as any).setMuted(m)
+    }
+  }
 }

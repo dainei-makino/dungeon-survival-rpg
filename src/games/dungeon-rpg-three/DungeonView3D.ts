@@ -16,6 +16,7 @@ import {
   leavesTexture,
 } from './utils/textures'
 import MusicGenerator, { MusicLoop } from '../../audio/MusicGenerator'
+import Instrument from '../../audio/instruments/Instrument'
 
 
 export default class DungeonView3D {
@@ -59,6 +60,7 @@ export default class DungeonView3D {
   private enemyBase?: THREE.Group
   private items: { name: string; x: number; y: number; mesh: THREE.Object3D }[] = []
   private musicLoop: MusicLoop | null = null
+  private musicInstruments: Instrument[] = []
 
   constructor(
     container: HTMLElement,
@@ -196,6 +198,7 @@ export default class DungeonView3D {
     }
     if (!this.biome.music) return
     const config = this.biome.music()
+    this.musicInstruments = config.instruments
     const sections = MusicGenerator.generateEvolvingAmbientTracks(config)
     this.musicLoop = MusicGenerator.startEvolvingLoop(
       [
@@ -734,6 +737,17 @@ export default class DungeonView3D {
     if (this.musicLoop) {
       this.musicLoop.stop()
       this.musicLoop = null
+    }
+  }
+
+  getMusicInstruments() {
+    return this.musicInstruments
+  }
+
+  toggleMusicTrack(index: number, enabled: boolean) {
+    const inst = this.musicInstruments[index]
+    if (inst) {
+      inst.setMuted(!enabled)
     }
   }
 

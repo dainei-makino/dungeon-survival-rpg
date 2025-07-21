@@ -57,6 +57,10 @@ async function run() {
   ;(synth as any).oscillator!.stop()
   synth.fadeOut(0.5)
   assert.strictEqual((synth as any).oscillator, null, 'oscillator should stop')
+  synth.setMuted(true)
+  assert.strictEqual((synth as any).master.gain.value, 0)
+  synth.setMuted(false)
+  assert.strictEqual((synth as any).master.gain.value, 0.003)
   console.log('BasicSynth test passed')
 }
 

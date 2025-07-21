@@ -28,6 +28,8 @@ export default class BasicSynth {
   private attack: number
   private release: number
   private reverb: number
+  private baseGain: number
+  private muted = false
   private delay: DelayNode | null = null
   private feedback: GainNode | null = null
   private eqNodes?: {
@@ -45,7 +47,8 @@ export default class BasicSynth {
       throw new Error('No AudioContext available')
     }
     this.master = this.context.createGain()
-    this.master.gain.value = options.masterGain ?? 0.003
+    this.baseGain = options.masterGain ?? 0.003
+    this.master.gain.value = this.baseGain
     if (options.output) {
       this.master.connect(options.output)
     } else if (options.context) {
@@ -108,9 +111,15 @@ export default class BasicSynth {
     this.master.connect(node)
   }
 
+  setMuted(muted: boolean) {
+    this.muted = muted
+    const value = muted ? 0 : this.baseGain
+    this.master.gain.setValueAtTime(value, this.context.currentTime)
+  }
+
   fadeIn(duration: number) {
     this.master.gain.setValueAtTime(0, this.context.currentTime)
-    this.master.gain.linearRampToValueAtTime(1, this.context.currentTime + duration)
+    this.master.gain.linearRampToValueAtTime(this.baseGain, this.context.currentTime + duration)
   }
 
   fadeOut(duration: number) {

@@ -11,7 +11,8 @@ export default function initThreeGame(
     <div id="debug-overlay" style="display:none;position:absolute;z-index:900;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);">
       <div id="debug-window" style="position:absolute;top:20px;left:20px;background:rgba(0,0,0,0.8);padding:0;color:#fff;">
         <div id="debug-header" style="background:#555;padding:4px;cursor:move;">Debug</div>
-        <div style="padding:10px;">
+        <div style="display:flex;">
+        <div id="debug-main" style="padding:10px;">
           <div id="status-display" style="font-size:24px;text-shadow:0 0 2px #000"></div>
           <pre id="debug-info" style="font:12px monospace;white-space:pre;"></pre>
           <canvas id="mini-map" width="150" height="150" style="margin-top:10px;border:1px solid #000"></canvas>
@@ -32,6 +33,8 @@ export default function initThreeGame(
           <div>Stamina <input id="hero-stamina" type="number" style="width:60px;"></div>
         </div>
         </div>
+        <div id="music-controls" style="padding:10px;border-left:1px solid #555;font:12px monospace;"></div>
+        </div>
       </div>
     </div>
   `
@@ -46,11 +49,33 @@ export default function initThreeGame(
   const statusDiv = container.querySelector('#status-display') as HTMLDivElement
   const debugDiv = container.querySelector('#debug-info') as HTMLPreElement
   const heroControls = container.querySelector('#hero-controls') as HTMLDivElement
+  const musicControls = container.querySelector('#music-controls') as HTMLDivElement
   const heroHp = heroControls.querySelector('#hero-hp') as HTMLInputElement
   const heroHunger = heroControls.querySelector('#hero-hunger') as HTMLInputElement
   const heroStamina = heroControls.querySelector('#hero-stamina') as HTMLInputElement
   container.style.position = 'relative'
   const view = new DungeonView3D(wrapper, miniMap, forestBiome)
+  updateMusicControls()
+
+  function updateMusicControls() {
+    if (!musicControls) return
+    musicControls.innerHTML = ''
+    const instruments = view.getMusicInstruments()
+    instruments.forEach((inst, i) => {
+      const div = document.createElement('div')
+      const checkbox = document.createElement('input')
+      checkbox.type = 'checkbox'
+      checkbox.checked = true
+      checkbox.addEventListener('change', () => {
+        view.toggleMusicTrack(i, checkbox.checked)
+      })
+      const label = document.createElement('label')
+      label.textContent = ` ${inst.constructor.name}`
+      div.appendChild(checkbox)
+      div.appendChild(label)
+      musicControls.appendChild(div)
+    })
+  }
 
   heroHp.value = view.getHero().hp.toString()
   heroHunger.value = view.getHero().hunger.toString()
