@@ -43,11 +43,13 @@ This design makes it possible to create common animations (walking, attacking, j
 
 ## JSON Character Format
 
-Characters made from cubes can be described in external JSON files. Each file lists
-an array of parts with a body part name, box size and offset:
+Characters made from cubes can be described in external JSON files. Each file includes
+a `voxelHeight` property indicating how many vertical map cells the character occupies
+and an array of parts with a body part name, box size and offset:
 
 ```json
 {
+  "voxelHeight": 3,
   "parts": [
     { "name": "head", "size": [0.3, 0.3, 0.3], "position": [0, 0.9, 0] }
   ]

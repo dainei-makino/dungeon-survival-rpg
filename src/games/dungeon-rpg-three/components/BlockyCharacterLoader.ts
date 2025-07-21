@@ -7,6 +7,7 @@ export interface BoxPartSpec {
 }
 
 export interface CharacterSpec {
+  voxelHeight?: number
   parts: BoxPartSpec[]
 }
 
@@ -29,6 +30,9 @@ export default class BlockyCharacterLoader {
     const group = new THREE.Group()
     const mat = this.material || new THREE.MeshLambertMaterial({ color: 0xcccccc })
     ;(group.userData.parts ||= {})
+    if (typeof spec.voxelHeight === 'number') {
+      group.userData.voxelHeight = spec.voxelHeight
+    }
     spec.parts.forEach((p) => {
       const mesh = new THREE.Mesh(new THREE.BoxGeometry(...p.size), mat)
       mesh.position.set(...p.position)
