@@ -7,7 +7,7 @@ export default function showTop(
     <div class="tiles">
       <div class="tile" data-tab="novel">小説</div>
       <div class="tile" data-tab="game">ビデオゲーム</div>
-      <div class="tile" data-tab="three">Three.js Demo</div>
+      <div class="tile" data-tab="three">3D Dungeon</div>
     </div>
     <footer>&copy; 牧野大寧</footer>
   `;

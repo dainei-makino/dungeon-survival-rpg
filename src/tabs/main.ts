@@ -17,8 +17,8 @@ async function loadTab(tab: Tab) {
     const { default: initGame } = await import('../games/dungeon-rpg/game');
     initGame(content, loadTab);
   } else if (tab === 'three') {
-    const { default: initThreeDemo } = await import('../games/three-demo/demo');
-    initThreeDemo(content, loadTab);
+    const { default: initThreeGame } = await import('../games/dungeon-rpg-three/game');
+    initThreeGame(content, loadTab);
   }
 }
 
