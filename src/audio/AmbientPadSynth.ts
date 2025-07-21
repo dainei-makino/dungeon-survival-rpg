@@ -1,4 +1,4 @@
-export type AmbientPatch = 'saw' | 'triangle' | 'square' | 'noise'
+export type AmbientPatch = 'saw' | 'triangle' | 'square' | 'noise' | 'woodbass'
 
 export interface ADSR {
   attack: number
@@ -49,9 +49,11 @@ export default class AmbientPadSynth {
 
   /**
    * Change the current timbre patch.
-   */
+  */
   setPatch(patch: AmbientPatch | AmbientPatch[]) {
     this.patches = Array.isArray(patch) ? patch : [patch]
+    // use a lower filter cutoff when woodbass is included
+    this.filter.frequency.value = this.patches.includes('woodbass') ? 600 : 800
   }
 
   /**
@@ -99,6 +101,22 @@ export default class AmbientPadSynth {
         src.connect(gain)
         src.start(now)
         src.stop(releaseStart + release)
+        continue
+      }
+
+      if (patch === 'woodbass') {
+        const osc = this.ctx.createOscillator()
+        osc.type = 'sawtooth'
+        osc.frequency.value = freq
+        osc.connect(gain)
+        const sub = this.ctx.createOscillator()
+        sub.type = 'sine'
+        sub.frequency.value = freq / 2
+        sub.connect(gain)
+        osc.start(now)
+        sub.start(now)
+        osc.stop(releaseStart + release)
+        sub.stop(releaseStart + release)
         continue
       }
 

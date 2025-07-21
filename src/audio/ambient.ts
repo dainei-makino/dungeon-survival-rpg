@@ -16,14 +16,14 @@ const biomeConfigs: Record<string, {
   noteLength?: number
 }> = {
   forest: {
-    patch: ['triangle', 'saw'],
+    patch: ['triangle', 'saw', 'woodbass'],
     scales: [[0, 2, 5, 7, 9], [0, 4, 5, 7, 11]],
     root: 220,
     noise: 0.05,
     decay: 12,
     intensity: 0.3,
     envelope: { attack: 0.5, decay: 0.2, sustain: 0.8, release: 12 },
-    noteLength: 0.5
+    noteLength: 0.3
   },
   cave: {
     patch: 'noise',
@@ -55,7 +55,7 @@ export async function setAmbientBiome(name: string, bridge = true) {
   generator.setRoot(cfg.root)
   synth.setNoiseLevel(cfg.noise)
   synth.setDecay(cfg.decay)
-  if (cfg.noteLength !== undefined) generator.setNoteDuration(cfg.noteLength)
+  if (cfg.noteLength !== undefined) generator.setNoteValue(cfg.noteLength)
   generator.setIntensity(cfg.intensity)
   synth.setMasterGain(0.03, 15)
   generator.start()
