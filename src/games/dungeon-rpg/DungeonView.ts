@@ -24,6 +24,7 @@ export default class DungeonView {
   private readonly numRays = 120
   private readonly maxDepth = 20
   private readonly eyeOffset = 0.6
+  private readonly floorAmplitude = 15
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene
@@ -260,10 +261,12 @@ export default class DungeonView {
     const height = this.scene.scale.height
     const g = this.graphics
 
-    g.setPosition(0, this.bobOffset)
+    const eyeH = this.map.heightAt(this.viewX, this.viewY)
+    g.setPosition(0, this.bobOffset - this.floorAmplitude * (eyeH - 0.5))
     g.clear()
     g.fillStyle(0x666666, 1)
     g.fillRect(0, 0, width, height / 2)
+
     g.fillStyle(0x333333, 1)
     g.fillRect(0, height / 2, width, height / 2)
 
@@ -282,14 +285,26 @@ export default class DungeonView {
       const h = Math.min(height, wallScale / Math.max(corrected, 0.0001))
       const shade = Math.max(0, 200 - corrected * 40)
       const color = Phaser.Display.Color.GetColor(shade, shade, shade)
+      const cellHeight = this.map.heightAt(hit.cellX, hit.cellY)
+      const offset = this.floorAmplitude * (cellHeight - 0.5)
+      const top = (height - h) / 2 - offset
       g.fillStyle(color, 1)
-      g.fillRect(i * sliceW, (height - h) / 2, sliceW + 1, h)
+      g.fillRect(i * sliceW, top, sliceW + 1, h)
+
+      const floorShade = 51 + offset
+      const floorColor = Phaser.Display.Color.GetColor(
+        floorShade,
+        floorShade,
+        floorShade
+      )
+      g.fillStyle(floorColor, 1)
+      g.fillRect(i * sliceW, top + h, sliceW + 1, height - (top + h))
 
       if (prevSide !== null && prevSide !== hit.side) {
         g.lineStyle(1, 0xffffff, 0.3)
         g.beginPath()
-        g.moveTo(i * sliceW, (height - h) / 2)
-        g.lineTo(i * sliceW, (height + h) / 2)
+        g.moveTo(i * sliceW, top)
+        g.lineTo(i * sliceW, top + h)
         g.strokePath()
       }
       prevSide = hit.side

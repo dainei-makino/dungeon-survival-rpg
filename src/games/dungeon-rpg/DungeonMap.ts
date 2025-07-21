@@ -1,17 +1,21 @@
 import type { Direction } from './Player'
+import PerlinNoise from './utils/PerlinNoise'
 
 export default class DungeonMap {
   tiles: string[]
   width: number
   height: number
+  heights: number[][]
   private _playerStart: { x: number; y: number; dir: Direction }
 
   constructor(width = 31, height = 31) {
     this.width = width
     this.height = height
     this.tiles = Array.from({ length: height }, () => '#'.repeat(width))
+    this.heights = Array.from({ length: height }, () => Array.from({ length: width }, () => 0))
     this._playerStart = { x: 1, y: 1, dir: 'north' }
     this.generate()
+    this.generateHeights()
   }
 
   get playerStart() {
@@ -77,6 +81,25 @@ export default class DungeonMap {
       }
       rooms.push(room)
     }
+  }
+
+  private generateHeights() {
+    const noise = new PerlinNoise()
+    const freq = 0.2
+    for (let y = 0; y < this.height; y++) {
+      for (let x = 0; x < this.width; x++) {
+        this.heights[y][x] = noise.noise2D(x * freq, y * freq)
+      }
+    }
+  }
+
+  heightAt(x: number, y: number): number {
+    const ix = Math.floor(x)
+    const iy = Math.floor(y)
+    if (iy < 0 || iy >= this.height || ix < 0 || ix >= this.width) {
+      return 0.5
+    }
+    return this.heights[iy][ix]
   }
 
   tileAt(x: number, y: number): string {
