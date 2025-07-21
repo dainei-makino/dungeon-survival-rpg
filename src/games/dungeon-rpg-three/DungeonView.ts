@@ -3,6 +3,7 @@ import { ImprovedNoise } from 'three/examples/jsm/math/ImprovedNoise.js'
 import DungeonMap from '../dungeon-rpg/DungeonMap'
 import Player, { Direction } from '../dungeon-rpg/Player'
 import Hero from '../dungeon-rpg/Hero'
+import Enemy, { skeletonWarrior } from '../dungeon-rpg/Enemy'
 
 export default class DungeonView3D {
   private scene: THREE.Scene
@@ -11,6 +12,7 @@ export default class DungeonView3D {
   private map: DungeonMap
   private player: Player
   private hero: Hero
+  private enemies: { enemy: Enemy; x: number; y: number; mesh?: THREE.Mesh }[] = []
   private keys = new Set<string>()
   private dirVectors: Record<
     Direction,
@@ -35,6 +37,22 @@ export default class DungeonView3D {
     this.map = new DungeonMap()
     this.player = new Player(this.map.playerStart)
     this.hero = new Hero()
+    // place a sample enemy for debugging purposes
+    let ex = this.map.playerStart.x + 3
+    let ey = this.map.playerStart.y
+    if (this.map.tileAt(ex, ey) === '#') {
+      // find first open tile
+      outer: for (let y = 1; y < this.map.height - 1; y++) {
+        for (let x = 1; x < this.map.width - 1; x++) {
+          if (this.map.tileAt(x, y) !== '#') {
+            ex = x
+            ey = y
+            break outer
+          }
+        }
+      }
+    }
+    this.enemies.push({ enemy: skeletonWarrior, x: ex, y: ey })
 
     const width = container.clientWidth
     const height = container.clientHeight
@@ -168,6 +186,8 @@ export default class DungeonView3D {
     const light = new THREE.PointLight(0xffaa00, 1, 5)
     this.torch.add(light)
     this.scene.add(this.torch)
+
+    this.spawnEnemies()
   }
 
   private handleKeyDown = (e: KeyboardEvent) => {
@@ -236,6 +256,26 @@ export default class DungeonView3D {
     ctx.beginPath()
     ctx.arc(px, py, Math.min(cellW, cellH) / 3, 0, Math.PI * 2)
     ctx.fill()
+
+    ctx.fillStyle = '#0f0'
+    this.enemies.forEach((e) => {
+      const ex = e.x * cellW + cellW / 2
+      const ey = e.y * cellH + cellH / 2
+      ctx.beginPath()
+      ctx.arc(ex, ey, Math.min(cellW, cellH) / 3, 0, Math.PI * 2)
+      ctx.fill()
+    })
+  }
+
+  private spawnEnemies() {
+    const enemyGeo = new THREE.BoxGeometry(0.8, 1.6, 0.8)
+    const enemyMat = new THREE.MeshBasicMaterial({ color: 0xaa0000 })
+    this.enemies.forEach((e) => {
+      const mesh = new THREE.Mesh(enemyGeo, enemyMat)
+      mesh.position.set(e.x + 0.5, 0.8, e.y + 0.5)
+      e.mesh = mesh
+      this.scene.add(mesh)
+    })
   }
 
   update() {
@@ -287,5 +327,20 @@ export default class DungeonView3D {
 
   render() {
     this.renderer.render(this.scene, this.camera)
+  }
+
+  getDebugText(): string {
+    const pos = `(${this.player.x.toFixed(1)}, ${this.player.y.toFixed(1)})`
+    const enemyInfo =
+      this.enemies.length > 0
+        ? this.enemies
+            .map((e) => `${e.enemy.name}@(${e.x},${e.y})`)
+            .join(', ')
+        : 'none'
+    return (
+      `Pos: ${pos} Dir: ${this.player.dir}\n` +
+      `HP: ${this.hero.hp} STR: ${this.hero.strength}\n` +
+      `Enemies: ${enemyInfo}`
+    )
   }
 }
