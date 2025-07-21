@@ -25,7 +25,14 @@ export default class DungeonView3D {
   private biome: Biome
   private player: Player
   private hero: Hero
-  private enemies: { enemy: Enemy; x: number; y: number; mesh?: THREE.Object3D }[] = []
+  private enemies: {
+    enemy: Enemy
+    x: number
+    y: number
+    mesh?: THREE.Object3D
+    dir: Direction
+    nextMove: number
+  }[] = []
   private keys = new Set<string>()
   private dirVectors: Record<
     Direction,
@@ -57,6 +64,7 @@ export default class DungeonView3D {
   private mapCenterY = 0
   private enemyBase?: THREE.Group
   private items: { name: string; x: number; y: number; mesh: THREE.Object3D }[] = []
+  private spawnCooldown = 0
 
   constructor(
     container: HTMLElement,
@@ -67,22 +75,19 @@ export default class DungeonView3D {
     this.map = biome.generateMap() as DungeonMap
     this.player = new Player(this.map.playerStart)
     this.hero = new Hero()
-    // place a sample enemy for debugging purposes
-    let ex = this.map.playerStart.x + 3
-    let ey = this.map.playerStart.y
-    if (this.map.tileAt(ex, ey) === '#') {
-      // find first open tile
-      outer: for (let y = 1; y < this.map.height - 1; y++) {
-        for (let x = 1; x < this.map.width - 1; x++) {
-          if (this.map.tileAt(x, y) !== '#') {
-            ex = x
-            ey = y
-            break outer
-          }
-        }
-      }
+    const mapAny: any = this.map as any
+    if (Array.isArray(mapAny.enemies)) {
+      const now = performance.now()
+      mapAny.enemies.forEach((e: any) => {
+        this.enemies.push({
+          enemy: e.template,
+          x: e.x,
+          y: e.y,
+          dir: 'south',
+          nextMove: now + Math.random() * 1000,
+        })
+      })
     }
-    this.enemies.push({ enemy: skeletonWarrior, x: ex, y: ey })
 
     this.mapCenterX = Math.floor(this.player.x)
     this.mapCenterY = Math.floor(this.player.y)
@@ -331,6 +336,12 @@ export default class DungeonView3D {
         )
         e.mesh = mesh
         this.mapGroup.add(mesh)
+      } else {
+        e.mesh.position.set(
+          e.x * this.cellSize + this.cellSize / 2,
+          0,
+          e.y * this.cellSize + this.cellSize / 2
+        )
       }
     })
   }
@@ -421,6 +432,66 @@ export default class DungeonView3D {
       )
       this.items.push({ name: 'seaweed', x, y, mesh: obj })
       this.mapGroup.add(obj)
+    })
+  }
+
+  private randomSpawnLocation() {
+    for (let i = 0; i < 20; i++) {
+      const x = Math.floor(Math.random() * this.map.width)
+      const y = Math.floor(Math.random() * this.map.height)
+      if (this.map.tileAt(x, y) !== '#') {
+        const dx = x - this.player.x
+        const dy = y - this.player.y
+        if (dx * dx + dy * dy > this.drawDistance * this.drawDistance) {
+          return { x, y }
+        }
+      }
+    }
+    return null
+  }
+
+  private spawnFromBiome() {
+    if (!this.biome.spawns) return
+    this.biome.spawns.forEach((s) => {
+      if (Math.random() < s.probability) {
+        const loc = this.randomSpawnLocation()
+        if (loc) {
+          this.enemies.push({
+            enemy: s.enemy,
+            x: loc.x,
+            y: loc.y,
+            dir: 'south',
+            nextMove: performance.now() + Math.random() * 1000,
+          })
+          this.addEnemies()
+        }
+      }
+    })
+  }
+
+  private updateEnemies() {
+    const now = performance.now()
+    this.enemies.forEach((e) => {
+      if (now >= e.nextMove) {
+        const dirs: Direction[] = ['north', 'south', 'east', 'west']
+        const dir = dirs[Math.floor(Math.random() * dirs.length)]
+        const vec = this.dirVectors[dir]
+        const nx = e.x + vec.dx
+        const ny = e.y + vec.dy
+        if (this.map.tileAt(nx, ny) !== '#') {
+          e.x = nx
+          e.y = ny
+          if (e.mesh) {
+            e.mesh.position.set(
+              e.x * this.cellSize + this.cellSize / 2,
+              0,
+              e.y * this.cellSize + this.cellSize / 2
+            )
+          }
+        }
+        e.dir = dir
+        e.nextMove = now + 1000 + Math.random() * 1000
+      }
     })
   }
 
@@ -594,6 +665,12 @@ export default class DungeonView3D {
   update() {
     if (this.torch) {
       this.torch.rotation.y += 0.01
+    }
+
+    this.updateEnemies()
+    if (performance.now() > this.spawnCooldown) {
+      this.spawnFromBiome()
+      this.spawnCooldown = performance.now() + 5000
     }
 
     if (this.animStart !== null) {

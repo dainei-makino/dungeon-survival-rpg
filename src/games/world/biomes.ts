@@ -22,6 +22,12 @@ import EnvironmentCharacter, {
   stump,
   fallenLeaves,
 } from '../dungeon-rpg/Environment'
+import Enemy, { skeletonWarrior } from '../dungeon-rpg/Enemy'
+
+export interface EnemySpawn {
+  enemy: Enemy
+  probability: number
+}
 
 export interface Biome {
   name: string
@@ -37,6 +43,7 @@ export interface Biome {
   floorTexture?: () => THREE.Texture
   treeTexture?: () => THREE.Texture
   leavesTexture?: () => THREE.Texture
+  spawns?: EnemySpawn[]
 }
 
 export const forestBiome: Biome = {
@@ -53,6 +60,9 @@ export const forestBiome: Biome = {
   floorTexture: swampTexture,
   treeTexture: () => treeTexture(40),
   leavesTexture: () => createLeavesTexture(20),
+  spawns: [
+    { enemy: skeletonWarrior, probability: 0.05 },
+  ],
 }
 
 export const caveBiome: Biome = {
@@ -63,6 +73,7 @@ export const caveBiome: Biome = {
   fog: '#555555',
   weather: 'damp',
   lighting: { color: 0x888888, intensity: 0.5 },
+  spawns: [],
 }
 
 export const plainBiome: Biome = {
@@ -73,6 +84,7 @@ export const plainBiome: Biome = {
   fog: '#ccffcc',
   weather: 'windy',
   lighting: { color: 0xffffff, intensity: 1 },
+  spawns: [],
 }
 
 export const biomes = {
