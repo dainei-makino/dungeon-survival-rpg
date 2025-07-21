@@ -40,6 +40,7 @@ export default class DungeonView3D {
   private miniCtx?: CanvasRenderingContext2D
   private torch?: THREE.Mesh
   private blockyNPC?: THREE.Group
+  private blockyNPCPos?: { x: number; y: number }
   private animStart: number | null = null
   private startPos = new THREE.Vector3()
   private startRot = 0
@@ -60,6 +61,7 @@ export default class DungeonView3D {
   private floatMode = false
   private floatOffset = 0
   private environmentBases = new Map<EnvironmentCharacter, THREE.Group>()
+  private environmentInstances: { template: EnvironmentCharacter; x: number; y: number }[] = []
   private nextEnvSpawn = 0
   private readonly envSpawnInterval = 10000
 
@@ -343,6 +345,7 @@ export default class DungeonView3D {
         y * this.cellSize + this.cellSize / 2
       )
       this.blockyNPC = doll
+      this.blockyNPCPos = { x, y }
       this.mapGroup.add(doll)
     })
   }
@@ -388,6 +391,7 @@ export default class DungeonView3D {
     const h = this.map.getHeight(x, y) * this.cellSize
     mesh.position.set(x * this.cellSize + this.cellSize / 2, h, y * this.cellSize + this.cellSize / 2)
     this.scene.add(mesh)
+    this.environmentInstances.push({ template, x, y })
   }
 
   private spawnRandomEnvironmentItems(count: number, outsideView = false) {
@@ -736,6 +740,23 @@ export default class DungeonView3D {
       }
     }
     lines.push(`Map ${this.map.width}x${this.map.height}`)
+    return lines.join('\n')
+  }
+
+  getCharacterList(): string {
+    const lines: string[] = []
+    lines.push(
+      `Player @ (${this.player.x.toFixed(1)}, ${this.player.y.toFixed(1)})`
+    )
+    if (this.blockyNPCPos) {
+      lines.push(`NPC @ (${this.blockyNPCPos.x}, ${this.blockyNPCPos.y})`)
+    }
+    this.enemies.forEach((e) =>
+      lines.push(`${e.enemy.name} @ (${e.x}, ${e.y})`)
+    )
+    this.environmentInstances.forEach((e) =>
+      lines.push(`${e.template.name} @ (${e.x}, ${e.y})`)
+    )
     return lines.join('\n')
   }
 }
