@@ -22,11 +22,11 @@ npm run build
 ## Biomes
 
 Each biome specifies the map generation style, available voxels and decoration
-characters, as well as fog and lighting settings. The following biomes are
-defined:
+characters, as well as fog, lighting, and whether a ceiling is used. The
+following biomes are defined:
 
-- **forest** – default biome with basic outdoor lighting and a dense forest map
-  generator.
+- **forest** – default biome with a dense forest map generator. Swampy ground
+  and tree voxels are used, and the ceiling is replaced by a dark sky.
 - **cave** – darker environment with damp weather.
 - **plain** – open terrain with windy weather.
 

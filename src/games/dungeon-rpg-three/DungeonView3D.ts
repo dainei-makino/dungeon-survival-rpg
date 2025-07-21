@@ -1,12 +1,18 @@
 import * as THREE from 'three'
 import DungeonMap from '../dungeon-rpg/DungeonMap'
 import { Biome, forestBiome } from '../world/biomes'
+import { VoxelType } from '../world/voxels'
 import Player, { Direction } from '../dungeon-rpg/Player'
 import Hero from '../dungeon-rpg/Hero'
 import Enemy, { skeletonWarrior } from '../dungeon-rpg/Enemy'
 import PlayerArms from './components/PlayerArms'
 import skeletonShape from '../../assets/enemies/json/skeleton-warrior.json'
-import { floorTexture, wallTexture, perlinTexture } from './utils/textures'
+import {
+  floorTexture,
+  wallTexture,
+  perlinTexture,
+  treeTexture,
+} from './utils/textures'
 
 export default class DungeonView3D {
   private scene: THREE.Scene
@@ -145,7 +151,9 @@ export default class DungeonView3D {
       this.scene.add(new THREE.AmbientLight(0x666666))
     }
     // TODO: use this.biome.weather to add weather effects
-    const floorTex = floorTexture()
+    const floorTex = this.biome.floorTexture
+      ? this.biome.floorTexture()
+      : floorTexture()
     floorTex.repeat.set(
       this.map.width * this.cellSize,
       this.map.height * this.cellSize
@@ -167,34 +175,43 @@ export default class DungeonView3D {
     this.scene.add(floor)
 
 
-    const ceilTex = perlinTexture(256, 10, 20)
+    if (this.biome.hasCeiling !== false) {
+      const ceilTex = perlinTexture(256, 10, 20)
 
-    ceilTex.repeat.set(
-      this.map.width * this.cellSize,
-      this.map.height * this.cellSize
-    )
-    const ceilingMaterial = new THREE.MeshBasicMaterial({ map: ceilTex })
-    const ceiling = new THREE.Mesh(
-      new THREE.PlaneGeometry(
+      ceilTex.repeat.set(
         this.map.width * this.cellSize,
         this.map.height * this.cellSize
-      ),
-      ceilingMaterial
-    )
-    ceiling.rotation.x = Math.PI / 2
-    ceiling.position.set(
-      (this.map.width * this.cellSize) / 2,
-      2,
-      (this.map.height * this.cellSize) / 2
-    )
-    this.scene.add(ceiling)
+      )
+      const ceilingMaterial = new THREE.MeshBasicMaterial({ map: ceilTex })
+      const ceiling = new THREE.Mesh(
+        new THREE.PlaneGeometry(
+          this.map.width * this.cellSize,
+          this.map.height * this.cellSize
+        ),
+        ceilingMaterial
+      )
+      ceiling.rotation.x = Math.PI / 2
+      ceiling.position.set(
+        (this.map.width * this.cellSize) / 2,
+        2,
+        (this.map.height * this.cellSize) / 2
+      )
+      this.scene.add(ceiling)
+    } else if (this.biome.skyColor !== undefined) {
+      this.scene.background = new THREE.Color(this.biome.skyColor)
+    }
 
     const wallTex = wallTexture(this.wallNoiseScale)
     wallTex.wrapS = wallTex.wrapT = THREE.RepeatWrapping
+    const treeTex = this.biome.treeTexture
+      ? this.biome.treeTexture()
+      : treeTexture(this.wallNoiseScale)
+    treeTex.wrapS = treeTex.wrapT = THREE.RepeatWrapping
     const wallScale = this.wallNoiseScale
     for (let y = 0; y < this.map.height; y++) {
       for (let x = 0; x < this.map.width; x++) {
-        if (this.map.tileAt(x, y) === '#') {
+        const voxel = this.map.voxelAt(x, y, 1)
+        if (voxel === VoxelType.Tree || this.map.tileAt(x, y) === '#') {
           const geom = new THREE.BoxGeometry(this.cellSize, 2, this.cellSize)
           const pos = geom.attributes.position as THREE.BufferAttribute
           const normal = geom.attributes.normal as THREE.BufferAttribute
@@ -223,7 +240,8 @@ export default class DungeonView3D {
             uv.push(u, v)
           }
           geom.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2))
-          const mat = new THREE.MeshBasicMaterial({ map: wallTex })
+          const tex = voxel === VoxelType.Tree ? treeTex : wallTex
+          const mat = new THREE.MeshBasicMaterial({ map: tex })
           const wall = new THREE.Mesh(geom, mat)
           wall.position.set(
             (x + 0.5) * this.cellSize,

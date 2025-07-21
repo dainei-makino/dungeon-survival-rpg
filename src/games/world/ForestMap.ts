@@ -72,13 +72,12 @@ export default class ForestMap extends VoxelMap {
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
         const ch = this.tiles[y][x]
-        const ceil = this.rand(3, top + 1)
-        this.setVoxel(x, y, 0, VoxelType.Floor)
-        for (let z = 1; z < ceil; z++) {
-          this.setVoxel(x, y, z, ch === '#' ? VoxelType.Wall : VoxelType.Floor)
-        }
-        for (let z = ceil; z <= top; z++) {
-          this.setVoxel(x, y, z, VoxelType.Ceiling)
+        this.setVoxel(x, y, 0, VoxelType.Swamp)
+        if (ch === '#') {
+          const treeHeight = this.rand(2, top + 1)
+          for (let z = 1; z < treeHeight; z++) {
+            this.setVoxel(x, y, z, VoxelType.Tree)
+          }
         }
       }
     }
@@ -90,6 +89,7 @@ export default class ForestMap extends VoxelMap {
     if (iy < 0 || iy >= this.height || ix < 0 || ix >= this.width) {
       return '#'
     }
-    return this.voxelAt(ix, iy, 1) === VoxelType.Wall ? '#' : '.'
+    const v = this.voxelAt(ix, iy, 1)
+    return v === VoxelType.Tree ? '#' : '.'
   }
 }
