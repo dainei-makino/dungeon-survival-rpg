@@ -4,6 +4,7 @@ import DungeonMap from '../dungeon-rpg/DungeonMap'
 import Player, { Direction } from '../dungeon-rpg/Player'
 import Hero from '../dungeon-rpg/Hero'
 import Enemy, { skeletonWarrior } from '../dungeon-rpg/Enemy'
+import skeletonShape from '../../assets/enemies/json/skeleton-warrior.json'
 
 export default class DungeonView3D {
   private scene: THREE.Scene
@@ -268,11 +269,25 @@ export default class DungeonView3D {
   }
 
   private spawnEnemies() {
-    const enemyGeo = new THREE.BoxGeometry(0.8, 1.6, 0.8)
-    const enemyMat = new THREE.MeshBasicMaterial({ color: 0xaa0000 })
+    const shapes = (skeletonShape.paths as number[][][]).map((pts) => {
+      const sh = new THREE.Shape()
+      pts.forEach(([x, y], idx) => {
+        if (idx === 0) sh.moveTo(x, -y)
+        else sh.lineTo(x, -y)
+      })
+      return sh
+    })
+    const enemyGeo = new THREE.ExtrudeGeometry(shapes, {
+      depth: 0.2,
+      bevelEnabled: false,
+    })
+    enemyGeo.rotateX(-Math.PI / 2)
+    const enemyMat = new THREE.MeshBasicMaterial({ color: 0xffffff })
     this.enemies.forEach((e) => {
       const mesh = new THREE.Mesh(enemyGeo, enemyMat)
-      mesh.position.set(e.x + 0.5, 0.8, e.y + 0.5)
+      const scale = 0.08
+      mesh.scale.set(scale, scale, scale)
+      mesh.position.set(e.x + 0.5, 0, e.y + 0.5)
       e.mesh = mesh
       this.scene.add(mesh)
     })
