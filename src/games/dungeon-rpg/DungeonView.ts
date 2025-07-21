@@ -290,7 +290,7 @@ export default class DungeonView {
       const rayAngle = dirAngle - fov / 2 + (i / rayCount) * fov
       const hit = this.castRay(rayAngle)
       const corrected = hit.dist * Math.cos(rayAngle - dirAngle)
-      const wallScale = width * 0.35
+      const wallScale = width * 0.7
       const h = Math.min(height, wallScale / Math.max(corrected, 0.0001))
       const shade = Math.max(0, 200 - corrected * 40)
       const color = Phaser.Display.Color.GetColor(shade, shade, shade)
