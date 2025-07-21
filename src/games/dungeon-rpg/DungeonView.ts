@@ -111,17 +111,22 @@ export default class DungeonView {
     } else if (this.viewAngle - tweenAngle > Math.PI) {
       tweenAngle += Math.PI * 2
     }
+
+    const blur = this.graphics.postFX.addBlur(0, 1, 1, 0.4)
+
     this.player.dir = endDir
     this.scene.tweens.add({
       targets: this,
       viewAngle: tweenAngle,
       duration: this.rotateDuration,
+      ease: Phaser.Math.Easing.Sine.InOut,
       onUpdate: () => {
         this.draw()
         this.updateDebugText()
       },
       onComplete: () => {
         this.isRotating = false
+        this.graphics.postFX.remove(blur)
         this.viewAngle = finalAngle
         this.draw()
         this.updateDebugText()
