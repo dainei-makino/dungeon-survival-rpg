@@ -1,12 +1,14 @@
 import DungeonMap from './DungeonMap'
 import Player, { Direction } from './Player'
 import { animationSpeed, BASE_STEP_TIME_MS } from './config'
+import Hero from './Hero'
 
 export default class DungeonView {
   private scene: Phaser.Scene
   private graphics: Phaser.GameObjects.Graphics
   private map: DungeonMap
   private player: Player
+  private hero: Hero
   private viewX: number
   private viewY: number
   private viewAngle: number
@@ -30,6 +32,7 @@ export default class DungeonView {
     this.graphics = scene.add.graphics()
     this.map = new DungeonMap()
     this.player = new Player(this.map.playerStart)
+    this.hero = new Hero()
     this.viewX = this.player.x
     this.viewY = this.player.y
     this.viewAngle = this.angleForDir(this.player.dir)
@@ -56,7 +59,11 @@ export default class DungeonView {
       .map(([name]) => name)
       .join(' ')
     this.debugText.setText(
-      `Keys: ${pressed}\nPos: ${this.player.x},${this.player.y}\nDir: ${this.player.dir}`
+      `Keys: ${pressed}\n` +
+        `Pos: ${this.player.x},${this.player.y}\n` +
+        `Dir: ${this.player.dir}\n` +
+        `HP: ${this.hero.hp}\n` +
+        `STR: ${this.hero.strength}`
     )
     this.debugText.setPosition(this.scene.scale.width - 10, 10)
   }
