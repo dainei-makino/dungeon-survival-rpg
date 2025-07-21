@@ -22,6 +22,8 @@ class MockContext {
   destination = {}
   createOscillator() { return new MockOscillator() }
   createGain() { return new MockGain() }
+  createBiquadFilter() { return { connect() {}, frequency: { value: 0 }, Q: { value: 0 }, gain: { value: 0 } } as any }
+  createConvolver() { return { connect() {}, buffer: null } as any }
 }
 
 async function run() {

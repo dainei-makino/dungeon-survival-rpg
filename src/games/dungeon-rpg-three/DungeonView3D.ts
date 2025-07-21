@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import DungeonMap from '../dungeon-rpg/DungeonMap'
 import { Biome, forestBiome } from '../world/biomes'
+import BiomeMusicManager from '../../audio/BiomeMusicManager'
 import { VoxelType } from '../world/voxels'
 import Player, { Direction } from '../dungeon-rpg/Player'
 import Hero from '../dungeon-rpg/Hero'
@@ -23,6 +24,7 @@ export default class DungeonView3D {
   private renderer: THREE.WebGLRenderer
   private map: DungeonMap
   private biome: Biome
+  private music: BiomeMusicManager
   private player: Player
   private hero: Hero
   private enemies: { enemy: Enemy; x: number; y: number; mesh?: THREE.Object3D }[] = []
@@ -71,6 +73,9 @@ export default class DungeonView3D {
     biome: Biome = forestBiome
   ) {
     this.biome = biome
+    this.music = new BiomeMusicManager()
+    this.music.setBiome(biome)
+    this.music.start()
     this.map = biome.generateMap() as DungeonMap
     this.player = new Player(this.map.playerStart)
     this.hero = new Hero()
@@ -858,5 +863,11 @@ export default class DungeonView3D {
       }
     }
     this.spawnEnvironmentMesh(template, x, y)
+  }
+
+  setBiome(biome: Biome) {
+    this.biome = biome
+    this.music.setBiome(biome)
+    this.music.start()
   }
 }

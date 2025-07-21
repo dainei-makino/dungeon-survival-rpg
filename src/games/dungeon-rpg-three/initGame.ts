@@ -1,5 +1,5 @@
 import DungeonView3D from './DungeonView3D'
-import { forestBiome } from '../world/biomes'
+import { forestBiome, biomes } from '../world/biomes'
 
 export default function initThreeGame(
   container: HTMLElement,
@@ -42,6 +42,12 @@ export default function initThreeGame(
           <div style="font-weight:bold;margin-bottom:4px;">Spawn</div>
           <select id="spawn-select" style="width:100%;margin-bottom:4px;"></select>
           <button id="spawn-btn">Spawn</button>
+          <div style="margin-top:10px;font-weight:bold;">Biome</div>
+          <select id="biome-select" style="width:100%;margin-bottom:4px;">
+            <option value="forest">forest</option>
+            <option value="cave">cave</option>
+            <option value="plain">plain</option>
+          </select>
         </div>
         </div>
       </div>
@@ -60,6 +66,7 @@ export default function initThreeGame(
   const charList = container.querySelector('#character-list') as HTMLPreElement
   const spawnSelect = container.querySelector('#spawn-select') as HTMLSelectElement
   const spawnBtn = container.querySelector('#spawn-btn') as HTMLButtonElement
+  const biomeSelect = container.querySelector('#biome-select') as HTMLSelectElement
   const heroControls = container.querySelector('#hero-controls') as HTMLDivElement
   const heroHp = heroControls.querySelector('#hero-hp') as HTMLInputElement
   const heroHunger = heroControls.querySelector('#hero-hunger') as HTMLInputElement
@@ -81,6 +88,11 @@ export default function initThreeGame(
 
   spawnBtn.addEventListener('click', () => {
     view.spawnCharacter(spawnSelect.value)
+  })
+
+  biomeSelect.addEventListener('change', () => {
+    const val = biomeSelect.value as 'forest' | 'cave' | 'plain'
+    view.setBiome(biomes[val])
   })
 
   function updateHero() {
