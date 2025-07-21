@@ -8,17 +8,19 @@ export type FaceDirection =
   | 'top'
   | 'bottom'
 
-export interface BoxPartSpec {
+export interface PartSpec {
   name: string
-  size: [number, number, number]
   position: [number, number, number]
+  size?: [number, number, number]
+  mesh?: string
+  scale?: [number, number, number]
   color?: string
   textures?: Partial<Record<FaceDirection, string>>
 }
 
 export interface CharacterSpec {
   voxelHeight?: number
-  parts: BoxPartSpec[]
+  parts: PartSpec[]
 }
 
 export default class BlockyCharacterLoader {
@@ -37,15 +39,28 @@ export default class BlockyCharacterLoader {
     return this.fromSpec(spec)
   }
 
-  fromSpec(spec: CharacterSpec): THREE.Group {
+  async fromSpec(spec: CharacterSpec): Promise<THREE.Group> {
     const group = new THREE.Group()
     ;(group.userData.parts ||= {})
     const baseUrl = this.url.substring(0, this.url.lastIndexOf('/') + 1)
     if (typeof spec.voxelHeight === 'number') {
       group.userData.voxelHeight = spec.voxelHeight
     }
-    spec.parts.forEach((p) => {
-      const geom = new THREE.BoxGeometry(...p.size)
+    for (const p of spec.parts) {
+      let geom: THREE.BufferGeometry | THREE.BoxGeometry
+      if (p.mesh) {
+        const url = new URL(p.mesh, baseUrl).href
+        const resp = await fetch(url)
+        const data: { vertices: number[]; indices: number[] } = await resp.json()
+        geom = new THREE.BufferGeometry()
+        geom.setAttribute('position', new THREE.Float32BufferAttribute(data.vertices, 3))
+        geom.setIndex(data.indices)
+        geom.computeVertexNormals()
+      } else if (p.size) {
+        geom = new THREE.BoxGeometry(...p.size)
+      } else {
+        continue
+      }
       const color = p.color ? new THREE.Color(p.color) : new THREE.Color(0xcccccc)
       let mesh: THREE.Mesh
       if (p.textures) {
@@ -75,9 +90,12 @@ export default class BlockyCharacterLoader {
         mesh = new THREE.Mesh(geom, mat)
       }
       mesh.position.set(...p.position)
+      if (p.scale) {
+        mesh.scale.set(...p.scale)
+      }
       group.add(mesh)
       group.userData.parts[p.name] = mesh
-    })
+    }
     return group
   }
 }
