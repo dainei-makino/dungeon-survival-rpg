@@ -115,7 +115,7 @@ export default class DungeonView {
     const overshoot = Phaser.Math.DegToRad(1) * (delta > 0 ? 1 : -1)
     const overshootAngle = tweenAngle + overshoot
 
-    const blur = this.graphics.postFX.addBlur()
+    const blur = this.graphics.postFX.addBlur(0, 1, 1, 0.4)
 
     this.player.dir = endDir
     this.scene.tweens.chain({
