@@ -1,11 +1,41 @@
 {
   "voxelHeight": 3,
   "parts": [
-    { "name": "head", "size": [0.6, 0.6, 0.6], "position": [0, 1.8, 0] },
-    { "name": "body", "size": [0.8, 1.2, 0.4], "position": [0, 0.9, 0] },
-    { "name": "leftArm", "size": [0.3, 1.0, 0.3], "position": [-0.55, 0.9, 0] },
-    { "name": "rightArm", "size": [0.3, 1.0, 0.3], "position": [0.55, 0.9, 0] },
-    { "name": "leftLeg", "size": [0.3, 1.2, 0.3], "position": [-0.2, -0.1, 0] },
-    { "name": "rightLeg", "size": [0.3, 1.2, 0.3], "position": [0.2, -0.1, 0] }
+    {
+      "name": "head",
+      "size": [0.6, 0.6, 0.6],
+      "position": [0, 1.8, 0],
+      "color": "#ffd4aa"
+    },
+    {
+      "name": "body",
+      "size": [0.8, 1.2, 0.4],
+      "position": [0, 0.9, 0],
+      "color": "#3366cc"
+    },
+    {
+      "name": "leftArm",
+      "size": [0.3, 1.0, 0.3],
+      "position": [-0.55, 0.9, 0],
+      "color": "#ffd4aa"
+    },
+    {
+      "name": "rightArm",
+      "size": [0.3, 1.0, 0.3],
+      "position": [0.55, 0.9, 0],
+      "color": "#ffd4aa"
+    },
+    {
+      "name": "leftLeg",
+      "size": [0.3, 1.2, 0.3],
+      "position": [-0.2, -0.1, 0],
+      "color": "#663300"
+    },
+    {
+      "name": "rightLeg",
+      "size": [0.3, 1.2, 0.3],
+      "position": [0.2, -0.1, 0],
+      "color": "#663300"
+    }
   ]
 }
