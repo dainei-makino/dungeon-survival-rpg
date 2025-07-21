@@ -30,17 +30,21 @@ export default function showDebug(
   const zoomOut = container.querySelector('#zoom-out') as HTMLButtonElement
 
   const characterModules = import.meta.glob('../assets/characters/*.json', {
+    as: 'url',
     eager: true,
   })
-  const characters = Object.keys(characterModules).map((path) => {
-    const file = path.split('/').pop() ?? ''
-    const name = file
-      .replace(/\.json$/, '')
-      .replace(/-/g, ' ')
-      .replace(/\b\w/g, (c) => c.toUpperCase())
-    const url = new URL(path, import.meta.url).href
-    return { name, url }
-  })
+  // Ensure arm meshes are bundled
+  import.meta.glob('../assets/arms/**/*.json', { as: 'url', eager: true })
+  const characters = Object.entries(characterModules)
+    .map(([path, url]) => {
+      const file = path.split('/').pop() ?? ''
+      const name = file
+        .replace(/\.json$/, '')
+        .replace(/-/g, ' ')
+        .replace(/\b\w/g, (c) => c.toUpperCase())
+      return { name, url: url as string }
+    })
+    .sort((a, b) => a.name.localeCompare(b.name))
   characters.forEach((c) => {
     const opt = document.createElement('option')
     opt.value = c.url
