@@ -52,6 +52,11 @@ export default class DungeonView3D {
   private readonly playerHeight = this.cellSize * 2
   private readonly eyeLevel = this.playerHeight - 0.4
   private readonly wallNoiseScale = 25
+  private readonly drawDistance = 30
+  private mapGroup = new THREE.Group()
+  private mapCenterX = 0
+  private mapCenterY = 0
+  private enemyBase?: THREE.Group
 
   constructor(
     container: HTMLElement,
@@ -78,6 +83,9 @@ export default class DungeonView3D {
       }
     }
     this.enemies.push({ enemy: skeletonWarrior, x: ex, y: ey })
+
+    this.mapCenterX = Math.floor(this.player.x)
+    this.mapCenterY = Math.floor(this.player.y)
 
     const width = container.clientWidth
     const height = container.clientHeight
@@ -158,143 +166,9 @@ export default class DungeonView3D {
     } else {
       this.scene.add(new THREE.AmbientLight(0x666666))
     }
-    // TODO: use this.biome.weather to add weather effects
-    const floorTex = this.biome.floorTexture
-      ? this.biome.floorTexture()
-      : floorTexture()
-    const geo = new THREE.PlaneGeometry(
-      this.map.width * this.cellSize,
-      this.map.height * this.cellSize,
-      this.map.width,
-      this.map.height
-    )
-    const pos = geo.attributes.position as THREE.BufferAttribute
-    for (let y = 0; y <= this.map.height; y++) {
-      for (let x = 0; x <= this.map.width; x++) {
-        const idx = y * (this.map.width + 1) + x
-        const h = this.map.getHeight(Math.min(x, this.map.width - 1), Math.min(y, this.map.height - 1))
-        pos.setZ(idx, h * this.cellSize)
-      }
-    }
-    geo.rotateX(-Math.PI / 2)
-    pos.needsUpdate = true
-    floorTex.wrapS = floorTex.wrapT = THREE.RepeatWrapping
-    floorTex.repeat.set(this.map.width, this.map.height)
-    const floorMaterial = new THREE.MeshBasicMaterial({ map: floorTex, side: THREE.DoubleSide })
-    const floor = new THREE.Mesh(geo, floorMaterial)
-    floor.position.set(
-      (this.map.width * this.cellSize) / 2,
-      0,
-      (this.map.height * this.cellSize) / 2
-    )
-    this.scene.add(floor)
 
-
-    if (this.biome.hasCeiling !== false) {
-      const ceilTex = perlinTexture(256, 10, 20)
-
-      ceilTex.repeat.set(
-        this.map.width * this.cellSize,
-        this.map.height * this.cellSize
-      )
-      const ceilingMaterial = new THREE.MeshBasicMaterial({ map: ceilTex })
-      const ceiling = new THREE.Mesh(
-        new THREE.PlaneGeometry(
-          this.map.width * this.cellSize,
-          this.map.height * this.cellSize
-        ),
-        ceilingMaterial
-      )
-      ceiling.rotation.x = Math.PI / 2
-      ceiling.position.set(
-        (this.map.width * this.cellSize) / 2,
-        2,
-        (this.map.height * this.cellSize) / 2
-      )
-      this.scene.add(ceiling)
-    } else if (this.biome.skyColor !== undefined) {
-      this.scene.background = new THREE.Color(this.biome.skyColor)
-      if (this.biome.skyTexture) {
-        const tex = this.biome.skyTexture()
-        tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping
-        const skyGeo = new THREE.SphereGeometry(500, 32, 32)
-        const skyMat = new THREE.MeshBasicMaterial({
-          map: tex,
-          side: THREE.BackSide,
-        })
-        const sky = new THREE.Mesh(skyGeo, skyMat)
-        this.scene.add(sky)
-      }
-    }
-
-    const wallTex = wallTexture(this.wallNoiseScale)
-    wallTex.wrapS = wallTex.wrapT = THREE.RepeatWrapping
-    const treeTex = this.biome.treeTexture
-      ? this.biome.treeTexture()
-      : treeTexture(this.wallNoiseScale)
-    treeTex.wrapS = treeTex.wrapT = THREE.RepeatWrapping
-    const leavesTex = this.biome.leavesTexture
-      ? this.biome.leavesTexture()
-      : leavesTexture(this.wallNoiseScale)
-    leavesTex.wrapS = leavesTex.wrapT = THREE.RepeatWrapping
-    const wallScale = this.wallNoiseScale
-    for (let y = 0; y < this.map.height; y++) {
-      for (let x = 0; x < this.map.width; x++) {
-        const h = this.map.getHeight(x, y)
-        for (let z = h; z < this.map.depth; z++) {
-          const voxel = this.map.voxelAt(x, y, z)
-          if (voxel !== VoxelType.Tree && voxel !== VoxelType.Leaves) {
-            continue
-          }
-          const geom = new THREE.BoxGeometry(this.cellSize, 2, this.cellSize)
-          const pos = geom.attributes.position as THREE.BufferAttribute
-          const normal = geom.attributes.normal as THREE.BufferAttribute
-          const uv: number[] = []
-          for (let i = 0; i < pos.count; i++) {
-            const vx = pos.getX(i)
-            const vy = pos.getY(i)
-            const vz = pos.getZ(i)
-            const nx = normal.getX(i)
-            const nz = normal.getZ(i)
-            const wx = (x + 0.5) * this.cellSize + vx
-            const wy = vy + 1
-            const wz = (y + 0.5) * this.cellSize + vz
-            let u = 0
-            let v = 0
-            if (Math.abs(nx) === 1) {
-              u = wz / wallScale
-              v = wy / wallScale
-            } else if (Math.abs(nz) === 1) {
-              u = wx / wallScale
-              v = wy / wallScale
-            } else {
-              u = wx / wallScale
-              v = wz / wallScale
-            }
-            uv.push(u, v)
-          }
-          geom.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2))
-          const tex =
-            voxel === VoxelType.Tree
-              ? treeTex
-              : voxel === VoxelType.Leaves
-              ? leavesTex
-              : wallTex
-          const mat = new THREE.MeshBasicMaterial({ map: tex })
-          const wall = new THREE.Mesh(geom, mat)
-          wall.position.set(
-            (x + 0.5) * this.cellSize,
-            z * this.cellSize + 1,
-            (y + 0.5) * this.cellSize
-          )
-          this.scene.add(wall)
-        }
-      }
-    }
-
-    if (!this.biome.lighting) {
-      this.scene.add(new THREE.AmbientLight(0x666666))
-    }
+    this.scene.add(this.mapGroup)
+    this.buildMapGeometry(this.mapCenterX, this.mapCenterY)
 
     const torchGeo = new THREE.SphereGeometry(0.1, 8, 8)
     const torchMat = new THREE.MeshBasicMaterial({ color: 0xffaa00 })
@@ -310,7 +184,6 @@ export default class DungeonView3D {
     this.scene.add(this.torch)
 
     this.spawnEnemies()
-    this.spawnBlockyNPC()
     this.spawnEnvironment()
   }
 
@@ -356,6 +229,7 @@ export default class DungeonView3D {
       this.handleHandAction(false)
     }
     this.updateCamera()
+    this.checkRegion()
     this.renderMiniMap()
   }
 
@@ -415,12 +289,35 @@ export default class DungeonView3D {
   }
 
   private spawnEnemies() {
+    if (this.enemyBase) {
+      this.addEnemies()
+      return
+    }
     const loader = new BlockyCharacterLoader(
       new URL('../../assets/enemies/json/skeleton-warrior-blocky.json', import.meta.url).href
     )
     loader.load().then((base) => {
-      this.enemies.forEach((e) => {
-        const mesh = base.clone(true)
+      this.enemyBase = base
+      this.addEnemies()
+    })
+  }
+
+  private addEnemies() {
+    if (!this.enemyBase) return
+    const minX = this.mapCenterX - this.drawDistance
+    const maxX = this.mapCenterX + this.drawDistance
+    const minY = this.mapCenterY - this.drawDistance
+    const maxY = this.mapCenterY + this.drawDistance
+    this.enemies.forEach((e) => {
+      if (e.x < minX || e.x > maxX || e.y < minY || e.y > maxY) {
+        if (e.mesh) {
+          this.mapGroup.remove(e.mesh)
+          e.mesh = undefined
+        }
+        return
+      }
+      if (!e.mesh) {
+        const mesh = this.enemyBase.clone(true)
         const scale = 0.3 * this.cellSize
         mesh.scale.set(scale, scale, scale)
         mesh.position.set(
@@ -429,12 +326,16 @@ export default class DungeonView3D {
           e.y * this.cellSize + this.cellSize / 2
         )
         e.mesh = mesh
-        this.scene.add(mesh)
-      })
+        this.mapGroup.add(mesh)
+      }
     })
   }
 
   private spawnBlockyNPC() {
+    if (this.blockyNPC) {
+      this.mapGroup.add(this.blockyNPC)
+      return
+    }
     const loader = new BlockyCharacterLoader(
       new URL('../../assets/characters/blocky-doll.json', import.meta.url).href
     )
@@ -458,7 +359,7 @@ export default class DungeonView3D {
         y * this.cellSize + this.cellSize / 2
       )
       this.blockyNPC = doll
-      this.scene.add(doll)
+      this.mapGroup.add(doll)
     })
   }
 
@@ -498,6 +399,154 @@ export default class DungeonView3D {
         this.scene.add(mesh)
       })
     })
+  }
+
+  private buildMapGeometry(cx: number, cy: number) {
+    this.mapCenterX = cx
+    this.mapCenterY = cy
+    this.mapGroup.clear()
+
+    const minX = Math.max(0, cx - this.drawDistance)
+    const maxX = Math.min(this.map.width - 1, cx + this.drawDistance)
+    const minY = Math.max(0, cy - this.drawDistance)
+    const maxY = Math.min(this.map.height - 1, cy + this.drawDistance)
+    const width = maxX - minX + 1
+    const height = maxY - minY + 1
+
+    const floorTex = this.biome.floorTexture
+      ? this.biome.floorTexture()
+      : floorTexture()
+    const geo = new THREE.PlaneGeometry(
+      width * this.cellSize,
+      height * this.cellSize,
+      width,
+      height
+    )
+    const pos = geo.attributes.position as THREE.BufferAttribute
+    for (let y = 0; y <= height; y++) {
+      for (let x = 0; x <= width; x++) {
+        const idx = y * (width + 1) + x
+        const h = this.map.getHeight(minX + Math.min(x, width - 1), minY + Math.min(y, height - 1))
+        pos.setZ(idx, h * this.cellSize)
+      }
+    }
+    geo.rotateX(-Math.PI / 2)
+    pos.needsUpdate = true
+    floorTex.wrapS = floorTex.wrapT = THREE.RepeatWrapping
+    floorTex.repeat.set(width, height)
+    const floorMat = new THREE.MeshBasicMaterial({ map: floorTex, side: THREE.DoubleSide })
+    const floor = new THREE.Mesh(geo, floorMat)
+    floor.position.set(
+      (minX + width / 2) * this.cellSize,
+      0,
+      (minY + height / 2) * this.cellSize
+    )
+    this.mapGroup.add(floor)
+
+    if (this.biome.hasCeiling !== false) {
+      const ceilTex = perlinTexture(256, 10, 20)
+      ceilTex.repeat.set(width * this.cellSize, height * this.cellSize)
+      const ceilingMaterial = new THREE.MeshBasicMaterial({ map: ceilTex })
+      const ceiling = new THREE.Mesh(
+        new THREE.PlaneGeometry(width * this.cellSize, height * this.cellSize),
+        ceilingMaterial
+      )
+      ceiling.rotation.x = Math.PI / 2
+      ceiling.position.set(
+        (minX + width / 2) * this.cellSize,
+        2,
+        (minY + height / 2) * this.cellSize
+      )
+      this.mapGroup.add(ceiling)
+    } else if (this.biome.skyColor !== undefined) {
+      this.scene.background = new THREE.Color(this.biome.skyColor)
+      if (this.biome.skyTexture) {
+        const tex = this.biome.skyTexture()
+        tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping
+        const skyGeo = new THREE.SphereGeometry(500, 32, 32)
+        const skyMat = new THREE.MeshBasicMaterial({ map: tex, side: THREE.BackSide })
+        const sky = new THREE.Mesh(skyGeo, skyMat)
+        this.mapGroup.add(sky)
+      }
+    }
+
+    const wallTex = wallTexture(this.wallNoiseScale)
+    wallTex.wrapS = wallTex.wrapT = THREE.RepeatWrapping
+    const treeTex = this.biome.treeTexture ? this.biome.treeTexture() : treeTexture(this.wallNoiseScale)
+    treeTex.wrapS = treeTex.wrapT = THREE.RepeatWrapping
+    const leavesTex = this.biome.leavesTexture ? this.biome.leavesTexture() : leavesTexture(this.wallNoiseScale)
+    leavesTex.wrapS = leavesTex.wrapT = THREE.RepeatWrapping
+    const wallScale = this.wallNoiseScale
+    for (let y = minY; y <= maxY; y++) {
+      for (let x = minX; x <= maxX; x++) {
+        const h = this.map.getHeight(x, y)
+        for (let z = h; z < this.map.depth; z++) {
+          const voxel = this.map.voxelAt(x, y, z)
+          if (voxel !== VoxelType.Tree && voxel !== VoxelType.Leaves) continue
+          const geom = new THREE.BoxGeometry(this.cellSize, 2, this.cellSize)
+          const pos = geom.attributes.position as THREE.BufferAttribute
+          const normal = geom.attributes.normal as THREE.BufferAttribute
+          const uv: number[] = []
+          for (let i = 0; i < pos.count; i++) {
+            const vx = pos.getX(i)
+            const vy = pos.getY(i)
+            const vz = pos.getZ(i)
+            const nx = normal.getX(i)
+            const nz = normal.getZ(i)
+            const wx = (x + 0.5) * this.cellSize + vx
+            const wy = vy + 1
+            const wz = (y + 0.5) * this.cellSize + vz
+            let u = 0
+            let v = 0
+            if (Math.abs(nx) === 1) {
+              u = wz / wallScale
+              v = wy / wallScale
+            } else if (Math.abs(nz) === 1) {
+              u = wx / wallScale
+              v = wy / wallScale
+            } else {
+              u = wx / wallScale
+              v = wz / wallScale
+            }
+            uv.push(u, v)
+          }
+          geom.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2))
+          const tex =
+            voxel === VoxelType.Tree
+              ? treeTex
+              : voxel === VoxelType.Leaves
+              ? leavesTex
+              : wallTex
+          const mat = new THREE.MeshBasicMaterial({ map: tex })
+          const wall = new THREE.Mesh(geom, mat)
+          wall.position.set(
+            (x + 0.5) * this.cellSize,
+            z * this.cellSize + 1,
+            (y + 0.5) * this.cellSize
+          )
+          this.mapGroup.add(wall)
+        }
+      }
+    }
+
+    this.addEnemies()
+    this.spawnBlockyNPC()
+  }
+
+  private checkRegion() {
+    const px = Math.floor(this.player.x)
+    const py = Math.floor(this.player.y)
+    const margin = 5
+    if (
+      px - this.mapCenterX > this.drawDistance - margin ||
+      this.mapCenterX - px > this.drawDistance - margin ||
+      py - this.mapCenterY > this.drawDistance - margin ||
+      this.mapCenterY - py > this.drawDistance - margin
+    ) {
+      this.buildMapGeometry(px, py)
+    } else {
+      this.addEnemies()
+    }
   }
 
   getArmSettings() {
@@ -556,6 +605,7 @@ export default class DungeonView3D {
     })
 
     this.renderMiniMap()
+    this.checkRegion()
   }
 
   private angleForDir(dir: Direction): number {
