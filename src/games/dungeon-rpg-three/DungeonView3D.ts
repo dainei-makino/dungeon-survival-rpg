@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import DungeonMap from '../dungeon-rpg/DungeonMap'
+import { Biome, forestBiome } from '../world/biomes'
 import Player, { Direction } from '../dungeon-rpg/Player'
 import Hero from '../dungeon-rpg/Hero'
 import Enemy, { skeletonWarrior } from '../dungeon-rpg/Enemy'
@@ -12,6 +13,7 @@ export default class DungeonView3D {
   private camera: THREE.PerspectiveCamera
   private renderer: THREE.WebGLRenderer
   private map: DungeonMap
+  private biome: Biome
   private player: Player
   private hero: Hero
   private enemies: { enemy: Enemy; x: number; y: number; mesh?: THREE.Mesh }[] = []
@@ -38,8 +40,13 @@ export default class DungeonView3D {
   private readonly cellSize = 2
   private readonly wallNoiseScale = 25
 
-  constructor(container: HTMLElement, miniMap?: HTMLCanvasElement) {
-    this.map = new DungeonMap()
+  constructor(
+    container: HTMLElement,
+    miniMap?: HTMLCanvasElement,
+    biome: Biome = forestBiome
+  ) {
+    this.biome = biome
+    this.map = biome.generateMap() as DungeonMap
     this.player = new Player(this.map.playerStart)
     this.hero = new Hero()
     // place a sample enemy for debugging purposes
@@ -124,6 +131,20 @@ export default class DungeonView3D {
 
 
   private buildScene() {
+    if (this.biome.fog) {
+      this.scene.fog = new THREE.Fog(this.biome.fog, 0, 50)
+    }
+    if (this.biome.lighting) {
+      this.scene.add(
+        new THREE.AmbientLight(
+          this.biome.lighting.color,
+          this.biome.lighting.intensity
+        )
+      )
+    } else {
+      this.scene.add(new THREE.AmbientLight(0x666666))
+    }
+    // TODO: use this.biome.weather to add weather effects
     const floorTex = floorTexture()
     floorTex.repeat.set(
       this.map.width * this.cellSize,
@@ -214,7 +235,9 @@ export default class DungeonView3D {
       }
     }
 
-    this.scene.add(new THREE.AmbientLight(0x666666))
+    if (!this.biome.lighting) {
+      this.scene.add(new THREE.AmbientLight(0x666666))
+    }
 
     const torchGeo = new THREE.SphereGeometry(0.1, 8, 8)
     const torchMat = new THREE.MeshBasicMaterial({ color: 0xffaa00 })

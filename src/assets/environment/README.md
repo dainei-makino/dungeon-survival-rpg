@@ -7,4 +7,10 @@ Available character meshes:
 
 - `seaweed.json`
 - `woodPiece.json`
+- `tree.json` (not yet implemented)
+- `bush.json` (not yet implemented)
+- `stalactite.json` (not yet implemented)
+- `mushroom.json` (not yet implemented)
+- `grass.json` (not yet implemented)
+- `stone.json` (not yet implemented)
 
