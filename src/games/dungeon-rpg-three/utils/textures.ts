@@ -70,6 +70,14 @@ export function floorTexture() {
   return perlinTextureColor(256, { r: 80, g: 60, b: 40 }, { r: 30, g: 20, b: 15 }, 40)
 }
 
+export function swampTexture() {
+  return perlinTextureColor(256, { r: 40, g: 50, b: 40 }, { r: 20, g: 20, b: 20 }, 40)
+}
+
+export function treeTexture(scale: number) {
+  return perlinTextureColor(256, { r: 70, g: 40, b: 20 }, { r: 40, g: 30, b: 20 }, scale)
+}
+
 export function wallTexture(scale: number) {
   return perlinTextureColor(256, { r: 70, g: 70, b: 70 }, { r: 50, g: 50, b: 50 }, scale)
 }
@@ -91,3 +99,36 @@ export function checkerTexture(color1: string, color2: string, squares = 8) {
   tex.wrapS = tex.wrapT = THREE.RepeatWrapping
   return tex
 }
+
+export function darkSkyTexture() {
+  const size = 512
+  const canvas = document.createElement('canvas')
+  canvas.width = canvas.height = size
+  const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
+
+  const grad = ctx.createRadialGradient(
+    size / 2,
+    size / 2,
+    10,
+    size / 2,
+    size / 2,
+    size / 2
+  )
+  grad.addColorStop(0, '#222')
+  grad.addColorStop(1, '#000')
+  ctx.fillStyle = grad
+  ctx.fillRect(0, 0, size, size)
+
+  ctx.fillStyle = '#fff'
+  for (let i = 0; i < 1000; i++) {
+    const x = Math.random() * size
+    const y = Math.random() * size
+    const r = Math.random() * 1.5
+    ctx.fillRect(x, y, r, r)
+  }
+
+  const tex = new THREE.CanvasTexture(canvas)
+  tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping
+  return tex
+}
+

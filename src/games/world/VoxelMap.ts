@@ -12,7 +12,7 @@ export default class VoxelMap {
     this.depth = depth
     this.voxels = Array.from({ length: depth }, () =>
       Array.from({ length: height }, () =>
-        Array.from({ length: width }, () => VoxelType.Floor)
+        Array.from({ length: width }, () => VoxelType.Air)
       )
     )
   }
@@ -43,5 +43,21 @@ export default class VoxelMap {
       return
     }
     this.voxels[z][y][x] = type
+  }
+
+  /**
+   * Return the height in voxels of solid ground at the given coordinates.
+   * This is calculated by scanning upward from z=0 until the highest
+   * non-Air voxel is found. The result is one plus that z index,
+   * representing the surface level used when rendering heightmaps.
+   */
+  getHeight(x: number, y: number): number {
+    if (y < 0 || y >= this.height || x < 0 || x >= this.width) return 0
+    for (let z = this.depth - 1; z >= 0; z--) {
+      if (this.voxels[z][y][x] !== VoxelType.Air) {
+        return z + 1
+      }
+    }
+    return 0
   }
 }

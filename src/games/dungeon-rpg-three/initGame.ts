@@ -1,4 +1,5 @@
 import DungeonView3D from './DungeonView3D'
+import { forestBiome } from '../world/biomes'
 
 export default function initThreeGame(
   container: HTMLElement,
@@ -30,7 +31,7 @@ export default function initThreeGame(
   const statusDiv = container.querySelector('#status-display') as HTMLDivElement
   const debugDiv = container.querySelector('#debug-info') as HTMLDivElement
   container.style.position = 'relative'
-  const view = new DungeonView3D(wrapper, miniMap)
+  const view = new DungeonView3D(wrapper, miniMap, forestBiome)
 
   const armControls = container.querySelector('#arm-controls') as HTMLDivElement
   const posY = armControls.querySelector('#arm-pos-y') as HTMLInputElement

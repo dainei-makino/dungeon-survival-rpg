@@ -1,18 +1,27 @@
 import * as THREE from 'three'
 import DungeonMap from '../dungeon-rpg/DungeonMap'
+import { Biome, forestBiome } from '../world/biomes'
+import { VoxelType } from '../world/voxels'
 import Player, { Direction } from '../dungeon-rpg/Player'
 import Hero from '../dungeon-rpg/Hero'
 import Enemy, { skeletonWarrior } from '../dungeon-rpg/Enemy'
 import PlayerArms from './components/PlayerArms'
 import skeletonShape from '../../assets/enemies/json/skeleton-warrior.json'
-import { floorTexture, wallTexture, perlinTexture } from './utils/textures'
+import {
+  floorTexture,
+  wallTexture,
+  perlinTexture,
+  treeTexture,
+} from './utils/textures'
 import sound from '../../audio'
+
 
 export default class DungeonView3D {
   private scene: THREE.Scene
   private camera: THREE.PerspectiveCamera
   private renderer: THREE.WebGLRenderer
   private map: DungeonMap
+  private biome: Biome
   private player: Player
   private hero: Hero
   private enemies: { enemy: Enemy; x: number; y: number; mesh?: THREE.Mesh }[] = []
@@ -39,8 +48,13 @@ export default class DungeonView3D {
   private readonly cellSize = 2
   private readonly wallNoiseScale = 25
 
-  constructor(container: HTMLElement, miniMap?: HTMLCanvasElement) {
-    this.map = new DungeonMap()
+  constructor(
+    container: HTMLElement,
+    miniMap?: HTMLCanvasElement,
+    biome: Biome = forestBiome
+  ) {
+    this.biome = biome
+    this.map = biome.generateMap() as DungeonMap
     this.player = new Player(this.map.playerStart)
     this.hero = new Hero()
     // place a sample enemy for debugging purposes
@@ -111,9 +125,10 @@ export default class DungeonView3D {
     this.buildScene()
     this.arms = new PlayerArms(this.camera)
     // set initial camera state without animation
+    const h0 = this.map.getHeight(this.player.x, this.player.y) * this.cellSize
     this.camera.position.set(
       this.player.x * this.cellSize + this.cellSize / 2,
-      1.6,
+      h0 + 1.6,
       this.player.y * this.cellSize + this.cellSize / 2
     )
     this.camera.rotation.set(0, this.angleForDir(this.player.dir), 0)
@@ -125,20 +140,43 @@ export default class DungeonView3D {
 
 
   private buildScene() {
-    const floorTex = floorTexture()
-    floorTex.repeat.set(
+    if (this.biome.fog) {
+      this.scene.fog = new THREE.Fog(this.biome.fog, 0, 50)
+    }
+    if (this.biome.lighting) {
+      this.scene.add(
+        new THREE.AmbientLight(
+          this.biome.lighting.color,
+          this.biome.lighting.intensity
+        )
+      )
+    } else {
+      this.scene.add(new THREE.AmbientLight(0x666666))
+    }
+    // TODO: use this.biome.weather to add weather effects
+    const floorTex = this.biome.floorTexture
+      ? this.biome.floorTexture()
+      : floorTexture()
+    const geo = new THREE.PlaneGeometry(
       this.map.width * this.cellSize,
-      this.map.height * this.cellSize
+      this.map.height * this.cellSize,
+      this.map.width,
+      this.map.height
     )
-    const floorMaterial = new THREE.MeshBasicMaterial({ map: floorTex })
-    const floor = new THREE.Mesh(
-      new THREE.PlaneGeometry(
-        this.map.width * this.cellSize,
-        this.map.height * this.cellSize
-      ),
-      floorMaterial
-    )
-    floor.rotation.x = -Math.PI / 2
+    const pos = geo.attributes.position as THREE.BufferAttribute
+    for (let y = 0; y <= this.map.height; y++) {
+      for (let x = 0; x <= this.map.width; x++) {
+        const idx = y * (this.map.width + 1) + x
+        const h = this.map.getHeight(Math.min(x, this.map.width - 1), Math.min(y, this.map.height - 1))
+        pos.setZ(idx, h * this.cellSize)
+      }
+    }
+    geo.rotateX(-Math.PI / 2)
+    pos.needsUpdate = true
+    floorTex.wrapS = floorTex.wrapT = THREE.RepeatWrapping
+    floorTex.repeat.set(this.map.width, this.map.height)
+    const floorMaterial = new THREE.MeshBasicMaterial({ map: floorTex, side: THREE.DoubleSide })
+    const floor = new THREE.Mesh(geo, floorMaterial)
     floor.position.set(
       (this.map.width * this.cellSize) / 2,
       0,
@@ -147,34 +185,55 @@ export default class DungeonView3D {
     this.scene.add(floor)
 
 
-    const ceilTex = perlinTexture(256, 10, 20)
+    if (this.biome.hasCeiling !== false) {
+      const ceilTex = perlinTexture(256, 10, 20)
 
-    ceilTex.repeat.set(
-      this.map.width * this.cellSize,
-      this.map.height * this.cellSize
-    )
-    const ceilingMaterial = new THREE.MeshBasicMaterial({ map: ceilTex })
-    const ceiling = new THREE.Mesh(
-      new THREE.PlaneGeometry(
+      ceilTex.repeat.set(
         this.map.width * this.cellSize,
         this.map.height * this.cellSize
-      ),
-      ceilingMaterial
-    )
-    ceiling.rotation.x = Math.PI / 2
-    ceiling.position.set(
-      (this.map.width * this.cellSize) / 2,
-      2,
-      (this.map.height * this.cellSize) / 2
-    )
-    this.scene.add(ceiling)
+      )
+      const ceilingMaterial = new THREE.MeshBasicMaterial({ map: ceilTex })
+      const ceiling = new THREE.Mesh(
+        new THREE.PlaneGeometry(
+          this.map.width * this.cellSize,
+          this.map.height * this.cellSize
+        ),
+        ceilingMaterial
+      )
+      ceiling.rotation.x = Math.PI / 2
+      ceiling.position.set(
+        (this.map.width * this.cellSize) / 2,
+        2,
+        (this.map.height * this.cellSize) / 2
+      )
+      this.scene.add(ceiling)
+    } else if (this.biome.skyColor !== undefined) {
+      this.scene.background = new THREE.Color(this.biome.skyColor)
+      if (this.biome.skyTexture) {
+        const tex = this.biome.skyTexture()
+        tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping
+        const skyGeo = new THREE.SphereGeometry(500, 32, 32)
+        const skyMat = new THREE.MeshBasicMaterial({
+          map: tex,
+          side: THREE.BackSide,
+        })
+        const sky = new THREE.Mesh(skyGeo, skyMat)
+        this.scene.add(sky)
+      }
+    }
 
     const wallTex = wallTexture(this.wallNoiseScale)
     wallTex.wrapS = wallTex.wrapT = THREE.RepeatWrapping
+    const treeTex = this.biome.treeTexture
+      ? this.biome.treeTexture()
+      : treeTexture(this.wallNoiseScale)
+    treeTex.wrapS = treeTex.wrapT = THREE.RepeatWrapping
     const wallScale = this.wallNoiseScale
     for (let y = 0; y < this.map.height; y++) {
       for (let x = 0; x < this.map.width; x++) {
-        if (this.map.tileAt(x, y) === '#') {
+        const h = this.map.getHeight(x, y)
+        const voxel = this.map.voxelAt(x, y, h)
+        if (voxel === VoxelType.Tree || this.map.tileAt(x, y) === '#') {
           const geom = new THREE.BoxGeometry(this.cellSize, 2, this.cellSize)
           const pos = geom.attributes.position as THREE.BufferAttribute
           const normal = geom.attributes.normal as THREE.BufferAttribute
@@ -203,11 +262,12 @@ export default class DungeonView3D {
             uv.push(u, v)
           }
           geom.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2))
-          const mat = new THREE.MeshBasicMaterial({ map: wallTex })
+          const tex = voxel === VoxelType.Tree ? treeTex : wallTex
+          const mat = new THREE.MeshBasicMaterial({ map: tex })
           const wall = new THREE.Mesh(geom, mat)
           wall.position.set(
             (x + 0.5) * this.cellSize,
-            1,
+            h * this.cellSize + 1,
             (y + 0.5) * this.cellSize
           )
           this.scene.add(wall)
@@ -215,14 +275,17 @@ export default class DungeonView3D {
       }
     }
 
-    this.scene.add(new THREE.AmbientLight(0x666666))
+    if (!this.biome.lighting) {
+      this.scene.add(new THREE.AmbientLight(0x666666))
+    }
 
     const torchGeo = new THREE.SphereGeometry(0.1, 8, 8)
     const torchMat = new THREE.MeshBasicMaterial({ color: 0xffaa00 })
     this.torch = new THREE.Mesh(torchGeo, torchMat)
+    const th = this.map.getHeight(this.player.x, this.player.y) * this.cellSize
     this.torch.position.set(
       this.player.x * this.cellSize + this.cellSize / 2,
-      1.6,
+      th + 1.6,
       this.player.y * this.cellSize + this.cellSize / 2
     )
     const light = new THREE.PointLight(0xffaa00, 1, 5)
@@ -402,7 +465,7 @@ export default class DungeonView3D {
       if (this.torch) {
         this.torch.position.set(
           this.camera.position.x,
-          1.6,
+          this.camera.position.y,
           this.camera.position.z
         )
       }
@@ -449,7 +512,7 @@ export default class DungeonView3D {
     this.startRot = this.camera.rotation.y
     this.targetPos.set(
       this.player.x * this.cellSize + this.cellSize / 2,
-      1.6,
+      this.map.getHeight(this.player.x, this.player.y) * this.cellSize + 1.6,
       this.player.y * this.cellSize + this.cellSize / 2
     )
     this.targetRot = this.angleForDir(this.player.dir)
