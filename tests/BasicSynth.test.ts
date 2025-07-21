@@ -30,14 +30,27 @@ class MockContext {
   destination = {}
   createOscillator() { return new MockOscillator() }
   createGain() { return new MockGain() }
+  createBiquadFilter() {
+    return {
+      type: 'lowshelf',
+      frequency: { value: 0 },
+      Q: { value: 1 },
+      gain: { value: 0 },
+      connect() {},
+    } as any
+  }
 }
 
 async function run() {
   const context = new MockContext()
-  const synth = new BasicSynth({ context: context as any })
+  const synth = new BasicSynth({
+    context: context as any,
+    eq: { low: -3, high: -3 },
+  })
   assert.strictEqual((synth as any).master.gain.value, 0.003)
   assert.strictEqual((synth as any).attack, 0.02)
   assert.strictEqual((synth as any).release, 0.1)
+  assert.ok((synth as any).eqNodes, 'eq nodes should be created')
   synth.fadeIn(0.5)
   synth.play(440, 0.01)
   assert.ok((synth as any).oscillator, 'oscillator should be created')

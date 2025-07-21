@@ -7,7 +7,17 @@ export interface BasicSynthOptions {
   attack?: number
   release?: number
   reverb?: number
+  /** Simple three band EQ in dB */
+  eq?: {
+    low?: number
+    mid?: number
+    high?: number
+  }
+  /** Destination node for output */
+  output?: AudioNode
 }
+
+import { getMaster } from './MasterChannel'
 
 export default class BasicSynth {
   private context: any
@@ -20,23 +30,54 @@ export default class BasicSynth {
   private reverb: number
   private delay: DelayNode | null = null
   private feedback: GainNode | null = null
+  private eqNodes?: {
+    low: BiquadFilterNode
+    mid: BiquadFilterNode
+    high: BiquadFilterNode
+  }
 
   constructor(options: BasicSynthOptions = {}) {
     if (options.context) {
       this.context = options.context
     } else if (typeof AudioContext !== 'undefined') {
-      this.context = new AudioContext()
+      this.context = getMaster().context
     } else {
       throw new Error('No AudioContext available')
     }
     this.master = this.context.createGain()
     this.master.gain.value = options.masterGain ?? 0.003
-    this.master.connect(this.context.destination)
+    if (options.output) {
+      this.master.connect(options.output)
+    } else if (options.context) {
+      this.master.connect(this.context.destination)
+    } else {
+      this.master.connect(getMaster().input)
+    }
     this.type = options.type ?? 'sine'
     this.gain = options.gain ?? 0.2
     this.attack = options.attack ?? 0.02
     this.release = options.release ?? 0.1
     this.reverb = options.reverb ?? 0
+
+    if (options.eq) {
+      const low = this.context.createBiquadFilter()
+      low.type = 'lowshelf'
+      low.frequency.value = 200
+      low.gain.value = options.eq.low ?? 0
+      const mid = this.context.createBiquadFilter()
+      mid.type = 'peaking'
+      mid.frequency.value = 1000
+      mid.Q.value = 1
+      mid.gain.value = options.eq.mid ?? 0
+      const high = this.context.createBiquadFilter()
+      high.type = 'highshelf'
+      high.frequency.value = 4000
+      high.gain.value = options.eq.high ?? 0
+      low.connect(mid)
+      mid.connect(high)
+      high.connect(this.master)
+      this.eqNodes = { low, mid, high }
+    }
     if (this.reverb > 0) {
       const delay = this.context.createDelay()
       delay.delayTime.value = 0.3
@@ -44,7 +85,11 @@ export default class BasicSynth {
       feedback.gain.value = this.reverb
       delay.connect(feedback)
       feedback.connect(delay)
-      delay.connect(this.master)
+      if (this.eqNodes) {
+        delay.connect(this.eqNodes.low)
+      } else {
+        delay.connect(this.master)
+      }
       this.delay = delay
       this.feedback = feedback
     }
@@ -56,6 +101,11 @@ export default class BasicSynth {
 
   setGain(gain: number) {
     this.gain = gain
+  }
+
+  setOutput(node: AudioNode) {
+    this.master.disconnect()
+    this.master.connect(node)
   }
 
   fadeIn(duration: number) {
@@ -96,7 +146,8 @@ export default class BasicSynth {
       gain.gain.setValueAtTime(0, stopTime)
     }
     osc.connect(gain)
-    gain.connect(this.master)
+    const dest = this.eqNodes ? this.eqNodes.low : this.master
+    gain.connect(dest)
     if (this.delay) {
       gain.connect(this.delay)
     }
