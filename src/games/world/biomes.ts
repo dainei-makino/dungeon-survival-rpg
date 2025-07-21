@@ -18,6 +18,9 @@ import EnvironmentCharacter, {
   stone,
   seaweed,
   woodPiece,
+  apple,
+  stump,
+  fallenLeaves,
 } from '../dungeon-rpg/Environment'
 
 export interface Biome {
@@ -40,7 +43,7 @@ export const forestBiome: Biome = {
   name: 'forest',
   generateMap: () => new ForestMap(),
   voxels: [VoxelType.Swamp, VoxelType.Tree, VoxelType.Leaves],
-  environment: [tree, bush, woodPiece],
+  environment: [tree, bush, woodPiece, apple, stump, fallenLeaves],
   fog: '#445544',
   weather: 'clear',
   lighting: { color: 0xaaaaaa, intensity: 0.8 },

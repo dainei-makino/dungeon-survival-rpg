@@ -3,10 +3,17 @@ import { MapEnemy, skeletonWarrior } from '../dungeon-rpg/Enemy'
 import VoxelMap from './VoxelMap'
 import { VoxelType } from './voxels'
 import { createTreeObject } from './VoxelObject'
+import {
+  MapEnvironment,
+  apple,
+  stump,
+  fallenLeaves,
+} from '../dungeon-rpg/Environment'
 import { ImprovedNoise } from 'three/examples/jsm/math/ImprovedNoise.js'
 
 export default class ForestMap extends VoxelMap {
   enemies: MapEnemy[] = []
+  environmentItems: MapEnvironment[] = []
   private _playerStart: { x: number; y: number; dir: Direction }
   private heights: number[][]
 
@@ -17,6 +24,7 @@ export default class ForestMap extends VoxelMap {
     this.generate()
     this.buildVoxels()
     this.placeEnemies()
+    this.placeEnvironmentItems()
   }
 
   get playerStart() {
@@ -54,6 +62,23 @@ export default class ForestMap extends VoxelMap {
         const y = this.rand(1, this.height - 1)
         if (this.tileAt(x, y) === '.') {
           this.enemies.push(new MapEnemy(skeletonWarrior, x, y))
+          placed = true
+        }
+      }
+    }
+  }
+
+  private placeEnvironmentItems() {
+    const items = [apple, stump, fallenLeaves]
+    const itemCount = Math.floor((this.width * this.height) * 0.02)
+    for (let i = 0; i < itemCount; i++) {
+      let placed = false
+      while (!placed) {
+        const x = this.rand(1, this.width - 1)
+        const y = this.rand(1, this.height - 1)
+        if (this.tileAt(x, y) === '.') {
+          const template = items[this.rand(0, items.length)]
+          this.environmentItems.push(new MapEnvironment(template, x, y))
           placed = true
         }
       }

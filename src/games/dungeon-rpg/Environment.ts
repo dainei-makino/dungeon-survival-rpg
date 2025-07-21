@@ -18,3 +18,19 @@ export const stalactite = new EnvironmentCharacter('鍾乳石', 3, 0)
 export const mushroom = new EnvironmentCharacter('キノコ', 1, 0)
 export const grass = new EnvironmentCharacter('草', 1, 0)
 export const stone = new EnvironmentCharacter('石', 1, 0)
+
+export const apple = new EnvironmentCharacter('リンゴ', 1, 0)
+export const stump = new EnvironmentCharacter('切り株', 2, 0)
+export const fallenLeaves = new EnvironmentCharacter('落ち葉', 1, 0)
+
+export class MapEnvironment {
+  template: EnvironmentCharacter
+  x: number
+  y: number
+
+  constructor(template: EnvironmentCharacter, x: number, y: number) {
+    this.template = template
+    this.x = x
+    this.y = y
+  }
+}
