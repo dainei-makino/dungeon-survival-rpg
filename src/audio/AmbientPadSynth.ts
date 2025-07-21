@@ -1,15 +1,25 @@
+export type AmbientPatch = 'saw' | 'triangle' | 'square' | 'noise'
+
 export default class AmbientPadSynth {
   private filter: BiquadFilterNode
   private output: GainNode
+  private noiseBuffer: AudioBuffer
 
-  constructor(private ctx: AudioContext) {
+  constructor(private ctx: AudioContext, private patch: AmbientPatch = 'saw') {
     this.filter = ctx.createBiquadFilter()
     this.filter.type = 'lowpass'
     this.filter.frequency.value = 800
     this.output = ctx.createGain()
-    this.output.gain.value = 0.5
+    this.output.gain.value = 0.25
     this.filter.connect(this.output)
     this.output.connect(ctx.destination)
+
+    // create a short noise buffer used by the "noise" patch
+    this.noiseBuffer = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate)
+    const data = this.noiseBuffer.getChannelData(0)
+    for (let i = 0; i < data.length; i++) {
+      data[i] = Math.random() * 2 - 1
+    }
   }
 
   playNote(freq: number, duration = 8) {
@@ -20,10 +30,20 @@ export default class AmbientPadSynth {
     gain.gain.linearRampToValueAtTime(0, now + duration)
     gain.connect(this.filter)
 
+    if (this.patch === 'noise') {
+      const src = this.ctx.createBufferSource()
+      src.buffer = this.noiseBuffer
+      src.loop = true
+      src.connect(gain)
+      src.start(now)
+      src.stop(now + duration)
+      return
+    }
+
     const detunes = [-10, 0, 10]
     for (const d of detunes) {
       const osc = this.ctx.createOscillator()
-      osc.type = 'sawtooth'
+      osc.type = this.patch
       osc.frequency.value = freq
       osc.detune.value = d
       osc.connect(gain)

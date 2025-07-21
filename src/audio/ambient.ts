@@ -1,8 +1,10 @@
-import AmbientPadSynth from './AmbientPadSynth'
+import AmbientPadSynth, { AmbientPatch } from './AmbientPadSynth'
 import AmbientMusicGenerator from './AmbientMusicGenerator'
 
 const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
-const synth = new AmbientPadSynth(ctx)
+const patches: AmbientPatch[] = ['saw', 'triangle', 'square', 'noise']
+const patch = patches[Math.floor(Math.random() * patches.length)]
+const synth = new AmbientPadSynth(ctx, patch)
 const generator = new AmbientMusicGenerator(ctx, synth)
 
 export function startAmbientBgm() {
