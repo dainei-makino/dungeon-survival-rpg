@@ -623,14 +623,7 @@ export default class DungeonView3D {
       }
     }
 
-    // orient billboard enemies toward the camera
-    this.enemies.forEach((e) => {
-      if (e.mesh) {
-        const camPos = this.camera.position.clone()
-        camPos.y = e.mesh.position.y
-        e.mesh.lookAt(camPos)
-      }
-    })
+    // enemies no longer billboard toward the camera
 
     this.renderMiniMap()
     this.checkRegion()
