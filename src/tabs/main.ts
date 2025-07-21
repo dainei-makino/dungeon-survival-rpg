@@ -1,7 +1,7 @@
 
 const content = document.getElementById('content') as HTMLElement;
 
-type Tab = 'top' | 'novel' | 'game';
+type Tab = 'top' | 'novel' | 'game' | 'three';
 
 async function loadTab(tab: Tab) {
   // update location hash so reloading the page keeps the current tab
@@ -16,6 +16,9 @@ async function loadTab(tab: Tab) {
   } else if (tab === 'game') {
     const { default: initGame } = await import('../games/dungeon-rpg/game');
     initGame(content, loadTab);
+  } else if (tab === 'three') {
+    const { default: initThreeDemo } = await import('../games/three-demo/demo');
+    initThreeDemo(content, loadTab);
   }
 }
 
