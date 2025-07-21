@@ -37,7 +37,7 @@ export interface Biome {
 export const forestBiome: Biome = {
   name: 'forest',
   generateMap: () => new ForestMap(),
-  voxels: [VoxelType.Swamp, VoxelType.Tree],
+  voxels: [VoxelType.Swamp, VoxelType.Tree, VoxelType.Leaves],
   environment: [tree, bush, woodPiece],
   fog: '#445544',
   weather: 'clear',

@@ -2,6 +2,7 @@ import type { Direction } from '../dungeon-rpg/Player'
 import { MapEnemy, skeletonWarrior } from '../dungeon-rpg/Enemy'
 import VoxelMap from './VoxelMap'
 import { VoxelType } from './voxels'
+import { createTreeObject } from './VoxelObject'
 import { ImprovedNoise } from 'three/examples/jsm/math/ImprovedNoise.js'
 
 export default class ForestMap extends VoxelMap {
@@ -9,7 +10,7 @@ export default class ForestMap extends VoxelMap {
   private _playerStart: { x: number; y: number; dir: Direction }
   private heights: number[][]
 
-  constructor(width = 96, height = 96, depth = 20, private density = 0.3) {
+  constructor(width = 96, height = 96, depth = 20, private density = 0.1) {
     super(width, height, depth)
     this.heights = Array.from({ length: height }, () => Array(width).fill(1))
     this._playerStart = { x: Math.floor(width / 2), y: Math.floor(height / 2), dir: 'north' }
@@ -59,6 +60,20 @@ export default class ForestMap extends VoxelMap {
     }
   }
 
+  private canPlaceTree(x: number, y: number, radius = 4): boolean {
+    for (let dy = -radius; dy <= radius; dy++) {
+      for (let dx = -radius; dx <= radius; dx++) {
+        const nx = x + dx
+        const ny = y + dy
+        if (ny < 0 || ny >= this.height || nx < 0 || nx >= this.width) continue
+        const h = this.heights[ny][nx]
+        const v = this.voxelAt(nx, ny, h)
+        if (v === VoxelType.Tree) return false
+      }
+    }
+    return true
+  }
+
   private buildVoxels() {
     const caveNoise = new ImprovedNoise()
     const caveScale = 20
@@ -72,10 +87,10 @@ export default class ForestMap extends VoxelMap {
             this.setVoxel(x, y, z, VoxelType.Swamp)
           }
         }
-        if (Math.random() < this.density) {
-          const treeHeight = this.rand(2, Math.min(this.depth - h, 5))
-          for (let z = h; z < h + treeHeight && z < this.depth; z++) {
-            this.setVoxel(x, y, z, VoxelType.Tree)
+        if (Math.random() < this.density && this.canPlaceTree(x, y)) {
+          const available = this.depth - h
+          if (available >= 9) {
+            this.placeObject(x, y, h, createTreeObject(9))
           }
         }
       }
@@ -87,7 +102,8 @@ export default class ForestMap extends VoxelMap {
       for (let x = cx - 3; x <= cx + 3; x++) {
         const h = this.getHeight(x, y)
         for (let z = h; z < this.depth; z++) {
-          if (this.voxelAt(x, y, z) === VoxelType.Tree) {
+          const v = this.voxelAt(x, y, z)
+          if (v === VoxelType.Tree || v === VoxelType.Leaves) {
             this.setVoxel(x, y, z, VoxelType.Air)
           }
         }
