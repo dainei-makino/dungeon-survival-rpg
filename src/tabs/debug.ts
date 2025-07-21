@@ -30,24 +30,26 @@ export default function showDebug(
   const zoomOut = container.querySelector('#zoom-out') as HTMLButtonElement
 
   const characterModules = import.meta.glob('../assets/characters/*.json', {
-    as: 'url',
     eager: true,
   })
   // Ensure arm meshes are bundled
   import.meta.glob('../assets/arms/**/*.json', { as: 'url', eager: true })
   const characters = Object.entries(characterModules)
-    .map(([path, url]) => {
+    .map(([path, mod]) => {
       const file = path.split('/').pop() ?? ''
       const name = file
         .replace(/\.json$/, '')
         .replace(/-/g, ' ')
         .replace(/\b\w/g, (c) => c.toUpperCase())
-      return { name, url: url as string }
+      const assetUrl = new URL(path, import.meta.url).href
+      const baseUrl = assetUrl.substring(0, assetUrl.lastIndexOf('/') + 1)
+      const spec = (mod as any).default
+      return { name, spec, baseUrl }
     })
     .sort((a, b) => a.name.localeCompare(b.name))
   characters.forEach((c) => {
     const opt = document.createElement('option')
-    opt.value = c.url
+    opt.value = c.name
     opt.textContent = c.name
     select.appendChild(opt)
   })
@@ -63,9 +65,11 @@ export default function showDebug(
   scene.add(light)
   let model: THREE.Group | null = null
 
-  async function load(url: string) {
-    const loader = new BlockyCharacterLoader(url)
-    const obj = await loader.load()
+  async function load(name: string) {
+    const ch = characters.find((c) => c.name === name)
+    if (!ch) return
+    const loader = new BlockyCharacterLoader()
+    const obj = await loader.fromSpec(ch.spec, ch.baseUrl)
     if (model) scene.remove(model)
     model = obj
     scene.add(model)

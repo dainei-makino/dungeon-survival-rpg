@@ -28,7 +28,7 @@ export default class BlockyCharacterLoader {
   private material?: THREE.Material
   private textureLoader = new THREE.TextureLoader()
 
-  constructor(url: string, material?: THREE.Material) {
+  constructor(url = '', material?: THREE.Material) {
     this.url = url
     this.material = material
   }
@@ -39,17 +39,18 @@ export default class BlockyCharacterLoader {
     return this.fromSpec(spec)
   }
 
-  async fromSpec(spec: CharacterSpec): Promise<THREE.Group> {
+  async fromSpec(spec: CharacterSpec, baseUrl?: string): Promise<THREE.Group> {
     const group = new THREE.Group()
     ;(group.userData.parts ||= {})
-    const baseUrl = this.url.substring(0, this.url.lastIndexOf('/') + 1)
+    const urlBase =
+      baseUrl || this.url.substring(0, this.url.lastIndexOf('/') + 1)
     if (typeof spec.voxelHeight === 'number') {
       group.userData.voxelHeight = spec.voxelHeight
     }
     for (const p of spec.parts) {
       let geom: THREE.BufferGeometry | THREE.BoxGeometry
       if (p.mesh) {
-        const url = new URL(p.mesh, baseUrl).href
+        const url = new URL(p.mesh, urlBase).href
         const resp = await fetch(url)
         const data: { vertices: number[]; indices: number[] } = await resp.json()
         geom = new THREE.BufferGeometry()
@@ -77,7 +78,7 @@ export default class BlockyCharacterLoader {
         ;(['right', 'left', 'top', 'bottom', 'front', 'back'] as FaceDirection[]).forEach((dir) => {
           const texPath = p.textures![dir]
           if (texPath) {
-            const url = new URL(texPath, baseUrl).href
+            const url = new URL(texPath, urlBase).href
             const tex = this.textureLoader.load(url)
             materials[dirIndex[dir]] = new THREE.MeshLambertMaterial({ map: tex })
           } else {
