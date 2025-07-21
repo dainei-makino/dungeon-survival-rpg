@@ -1,9 +1,11 @@
 import type { Direction } from './Player'
+import { MapEnemy, skeletonWarrior } from './Enemy'
 
 export default class DungeonMap {
   tiles: string[]
   width: number
   height: number
+  enemies: MapEnemy[] = []
   private _playerStart: { x: number; y: number; dir: Direction }
 
   constructor(width = 31, height = 31) {
@@ -12,6 +14,7 @@ export default class DungeonMap {
     this.tiles = Array.from({ length: height }, () => '#'.repeat(width))
     this._playerStart = { x: 1, y: 1, dir: 'north' }
     this.generate()
+    this.placeEnemies()
   }
 
   get playerStart() {
@@ -76,6 +79,21 @@ export default class DungeonMap {
         this._playerStart = { x: Math.floor(x + w / 2), y: Math.floor(y + h / 2), dir: 'north' }
       }
       rooms.push(room)
+    }
+  }
+
+  private placeEnemies() {
+    const enemyCount = 5
+    for (let i = 0; i < enemyCount; i++) {
+      let placed = false
+      while (!placed) {
+        const x = this.rand(1, this.width - 1)
+        const y = this.rand(1, this.height - 1)
+        if (this.tileAt(x, y) === '.') {
+          this.enemies.push(new MapEnemy(skeletonWarrior, x, y))
+          placed = true
+        }
+      }
     }
   }
 
