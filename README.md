@@ -40,4 +40,7 @@ Additional systems like weather effects are planned but not yet implemented.
 
 - [Character Animation Design](docs/character-animation.md)
 - [Player Arm Animation Guide](docs/arm-animation.md)
+- The character loader now creates a simple bone hierarchy using the new
+  [Skeleton](src/games/animation/Skeleton.ts) class. Animations operate on these
+  bones.
 

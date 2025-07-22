@@ -4,14 +4,15 @@
   "scripts": {
     "build": "vite build",
     "preview": "vite preview --config vite.config.ts --port 4173",
-    "test": "ts-node tests/BasicSynth.test.ts && ts-node tests/MusicGenerator.test.ts"
+    "test": "ts-node tests/BasicSynth.test.ts && ts-node tests/MusicGenerator.test.ts && ts-node tests/Skeleton.test.ts"
   },
   "devDependencies": {
-    "three": "^0.178.0",
-    "vite": "^5.0.0",
-    "svgson": "^5.3.1",
+    "@types/three": "^0.178.1",
     "svg-path-properties": "^1.3.0",
+    "svgson": "^5.3.1",
+    "three": "^0.178.0",
+    "ts-node": "^10.9.2",
     "typescript": "^5.0.0",
-    "ts-node": "^10.9.2"
+    "vite": "^5.0.0"
   }
 }
