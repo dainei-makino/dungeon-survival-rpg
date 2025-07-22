@@ -88,6 +88,10 @@ export default class PlayerArms {
     camera.add(this.group)
   }
 
+  setVisible(visible: boolean) {
+    this.group.visible = visible
+  }
+
   startSway() {
     // reset arms to the default baseline before starting a new animation
     this.leftUpper.position.y = this.defaultLeftY
