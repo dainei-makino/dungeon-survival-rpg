@@ -142,6 +142,9 @@ export default class ForestMap extends VoxelMap {
   tileAt(x: number, y: number): string {
     const ix = Math.floor(x)
     const iy = Math.floor(y)
+    if (!Number.isFinite(ix) || !Number.isFinite(iy)) {
+      return '#'
+    }
     if (iy < 0 || iy >= this.height || ix < 0 || ix >= this.width) {
       return '#'
     }
