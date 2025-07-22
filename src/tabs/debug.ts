@@ -56,8 +56,17 @@ export default function showDebug(
         .replace(/-/g, ' ')
         .replace(/\b\w/g, (c) => c.toUpperCase())
       const assetUrl = (assetUrls as Record<string, string>)[path]
-      const absUrl = new URL(assetUrl, import.meta.url)
-      const baseUrl = new URL('./', absUrl).href
+      let absUrl: URL
+      try {
+        if (assetUrl) absUrl = new URL(assetUrl, import.meta.url)
+        else throw new Error('no asset url')
+      } catch {
+        absUrl = new URL(path, import.meta.url)
+      }
+      let baseUrl = new URL('./', absUrl).href
+      if (!baseUrl) {
+        if (typeof window !== 'undefined') baseUrl = window.location.origin + '/'
+      }
       const relDir = path.slice('../assets/'.length, path.lastIndexOf('/') + 1)
       const spec: any = JSON.parse(JSON.stringify((mod as any).default))
       if (!Array.isArray(spec.parts)) return null
