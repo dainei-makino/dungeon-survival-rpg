@@ -29,27 +29,78 @@ export default function showDebug(
   const zoomIn = container.querySelector('#zoom-in') as HTMLButtonElement
   const zoomOut = container.querySelector('#zoom-out') as HTMLButtonElement
 
-  const characters = [
-    {
-      name: 'Blocky Doll',
-      url: new URL('../assets/characters/blocky-doll.json', import.meta.url).href,
-    },
-    {
-      name: 'Skeleton Warrior',
-      url: new URL('../assets/characters/skeleton-warrior-blocky.json', import.meta.url).href,
-    },
-    {
-      name: 'Quadruped Base',
-      url: new URL('../assets/characters/quadruped-base.json', import.meta.url).href,
-    },
-    {
-      name: 'Slime',
-      url: new URL('../assets/characters/slime.json', import.meta.url).href,
-    },
-  ]
+  const characterModules = import.meta.glob('../assets/characters/*.json', {
+    eager: true,
+  })
+  const assetUrls = import.meta.glob('../assets/**/*.json', {
+    as: 'url',
+    eager: true,
+  })
+
+  function normalizePath(...segs: string[]) {
+    const out: string[] = []
+    for (const seg of segs) {
+      for (const part of seg.split('/')) {
+        if (!part || part === '.') continue
+        if (part === '..') out.pop()
+        else out.push(part)
+      }
+    }
+    return out.join('/')
+  }
+  const characters = Object.entries(characterModules)
+    .map(([path, mod]) => {
+      const file = path.split('/').pop() ?? ''
+      const name = file
+        .replace(/\.json$/, '')
+        .replace(/-/g, ' ')
+        .replace(/\b\w/g, (c) => c.toUpperCase())
+      const assetUrl = (assetUrls as Record<string, string>)[path]
+      let absUrl: URL
+      try {
+        if (assetUrl) absUrl = new URL(assetUrl, import.meta.url)
+        else throw new Error('no asset url')
+      } catch {
+        absUrl = new URL(path, import.meta.url)
+      }
+      let baseUrl: string
+      try {
+        baseUrl = new URL('./', absUrl).href
+      } catch {
+        const fallback = new URL(path, import.meta.url)
+        baseUrl = new URL('./', fallback).href
+      }
+      if (!baseUrl) {
+        if (typeof window !== 'undefined') baseUrl = window.location.origin + '/'
+      }
+      const relDir = path.slice('../assets/'.length, path.lastIndexOf('/') + 1)
+      const spec: any = JSON.parse(JSON.stringify((mod as any).default))
+      if (!Array.isArray(spec.parts)) return null
+      for (const part of spec.parts) {
+        if (part.mesh) {
+          const joined = normalizePath(relDir, part.mesh)
+          const key = `../assets/${joined}`
+          const hashed = (assetUrls as Record<string, string>)[key]
+          part.mesh = hashed ? hashed : new URL(part.mesh, baseUrl).href
+        }
+        if (part.textures) {
+          for (const dir in part.textures) {
+            const texPath = part.textures[dir]
+            if (!texPath) continue
+            const joined = normalizePath(relDir, texPath)
+            const key = `../assets/${joined}`
+            const hashed = (assetUrls as Record<string, string>)[key]
+            part.textures[dir] = hashed ? hashed : new URL(texPath, baseUrl).href
+          }
+        }
+      }
+      return { name, spec, baseUrl }
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.name.localeCompare(b.name))
   characters.forEach((c) => {
     const opt = document.createElement('option')
-    opt.value = c.url
+    opt.value = c.name
     opt.textContent = c.name
     select.appendChild(opt)
   })
@@ -65,9 +116,11 @@ export default function showDebug(
   scene.add(light)
   let model: THREE.Group | null = null
 
-  async function load(url: string) {
-    const loader = new BlockyCharacterLoader(url)
-    const obj = await loader.load()
+  async function load(name: string) {
+    const ch = characters.find((c) => c.name === name)
+    if (!ch) return
+    const loader = new BlockyCharacterLoader()
+    const obj = await loader.fromSpec(ch.spec, ch.baseUrl)
     if (model) scene.remove(model)
     model = obj
     scene.add(model)
