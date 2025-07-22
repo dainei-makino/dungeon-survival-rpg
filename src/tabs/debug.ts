@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import BlockyCharacterLoader from '../games/dungeon-rpg-three/components/BlockyCharacterLoader'
+import { floorTexture } from '../games/dungeon-rpg-three/utils/textures'
 
 export default function showDebug(
   container: HTMLElement,
@@ -17,8 +18,7 @@ export default function showDebug(
     </div>
   `
   container.style.position = 'relative'
-  container.style.background =
-    'repeating-conic-gradient(#888 0% 25%, #444 0% 50%) 0/40px 40px'
+  container.style.background = '#000'
   const back = container.querySelector('#back-to-top') as HTMLButtonElement
   back.addEventListener('click', () => loadTab('top'))
 
@@ -30,6 +30,9 @@ export default function showDebug(
   const zoomOut = container.querySelector('#zoom-out') as HTMLButtonElement
 
   const characterModules = import.meta.glob('../assets/characters/*.json', {
+    eager: true,
+  })
+  const environmentModules = import.meta.glob('../assets/environment/json/*.json', {
     eager: true,
   })
   const assetUrls = import.meta.glob('../assets/**/*.json', {
@@ -48,7 +51,10 @@ export default function showDebug(
     }
     return out.join('/')
   }
-  const characters = Object.entries(characterModules)
+  const characters = Object.entries({
+    ...characterModules,
+    ...environmentModules,
+  })
     .map(([path, mod]) => {
       const file = path.split('/').pop() ?? ''
       const name = file
@@ -114,6 +120,13 @@ export default function showDebug(
   const light = new THREE.DirectionalLight(0xffffff, 1)
   light.position.set(2, 3, 2)
   scene.add(light)
+  const floorTex = floorTexture()
+  floorTex.repeat.set(10, 10)
+  const floorMat = new THREE.MeshBasicMaterial({ map: floorTex, side: THREE.DoubleSide })
+  const floorGeo = new THREE.PlaneGeometry(10, 10)
+  floorGeo.rotateX(-Math.PI / 2)
+  const floor = new THREE.Mesh(floorGeo, floorMat)
+  scene.add(floor)
   let model: THREE.Group | null = null
 
   async function load(name: string) {
