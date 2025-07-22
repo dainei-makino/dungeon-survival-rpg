@@ -3,4 +3,10 @@ declare module '*.json' {
   export default value
 }
 
-declare module 'three'
+declare module 'three' {
+  interface Object3D {
+    parts?: Record<string, THREE.Object3D>
+    skeleton?: any
+  }
+}
+

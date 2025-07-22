@@ -22,7 +22,9 @@ It manages a collection of named bones implemented as `THREE.Object3D` nodes.
 Bones can be added dynamically and queried through `getJoints()` which returns
 a record of bone objects keyed by name. `BlockyCharacterLoader` now builds
 characters using this skeleton so that animations can operate on the bones
-directly.
+directly. The resulting `THREE.Group` returned by the loader exposes the
+`skeleton` and a `parts` map on the group itself (not in `userData`) so that
+cloning meshes does not attempt to serialize these structures.
 
 ## Vertex JSON / SVG Animation
 

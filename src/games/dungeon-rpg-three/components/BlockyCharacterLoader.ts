@@ -44,8 +44,9 @@ export default class BlockyCharacterLoader {
   async fromSpec(spec: CharacterSpec, baseUrl?: string): Promise<THREE.Group> {
     const skeleton = new Skeleton()
     const group = skeleton.root.object as THREE.Group
-    ;(group.userData.parts ||= {})
-    group.userData.skeleton = skeleton
+    const parts: Record<string, THREE.Object3D> = {}
+    Object.defineProperty(group, 'skeleton', { value: skeleton })
+    Object.defineProperty(group, 'parts', { value: parts })
     let urlBase = baseUrl || this.url.substring(0, this.url.lastIndexOf('/') + 1)
     if (!urlBase && typeof window !== 'undefined') {
       urlBase = window.location.origin + '/'
@@ -113,7 +114,7 @@ export default class BlockyCharacterLoader {
         bone.object.scale.set(...p.scale)
       }
       bone.object.add(mesh)
-      group.userData.parts[p.name] = bone.object
+      parts[p.name] = bone.object
     }
     return group
   }
