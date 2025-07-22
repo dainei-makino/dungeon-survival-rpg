@@ -12,7 +12,7 @@ export default class Instrument {
     this.preset = preset
   }
 
-  play(frequency: number, duration = 1) {
+  play(frequency: number, duration = 1, startTime?: number) {
     if (typeof this.synth.setType === 'function') {
       this.synth.setType(this.preset.type)
     } else {
@@ -23,6 +23,19 @@ export default class Instrument {
     } else {
       ;(this.synth as any).gain = this.preset.gain
     }
-    this.synth.play(frequency, duration)
+    this.synth.play(frequency, duration, startTime)
+  }
+
+  getCurrentTime(): number {
+    if (typeof this.synth.getCurrentTime === 'function') {
+      return this.synth.getCurrentTime()
+    }
+    return 0
+  }
+
+  fadeIn(duration = 2) {
+    if (typeof this.synth.fadeIn === 'function') {
+      this.synth.fadeIn(duration)
+    }
   }
 }

@@ -1033,8 +1033,8 @@ export default class DungeonView3D {
     const instruments = biome.music.instruments.map((fn) => fn())
     if (instruments.length === 0) return
     this.musicGenerator = new MusicGenerator(instruments[0])
-    const tracks = MusicGenerator.generateFixedTracks(instruments)
-    MusicGenerator.playTracks(tracks)
+    const tracks = MusicGenerator.generateAmbientTracks(instruments)
+    MusicGenerator.playTracks(tracks, true)
   }
 
   setBiome(biome: Biome) {

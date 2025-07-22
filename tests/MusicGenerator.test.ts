@@ -7,11 +7,11 @@ import AmbientPad from '../src/audio/instruments/AmbientPad'
 class MockSynth {
   public type: OscillatorType = 'sine'
   public gain = 0.2
-  public played: {frequency: number; duration: number}[] = []
+  public played: {frequency: number; duration: number; start?: number}[] = []
   setType(type: OscillatorType) { this.type = type }
   setGain(gain: number) { this.gain = gain }
-  play(frequency: number, duration: number) {
-    this.played.push({ frequency, duration })
+  play(frequency: number, duration: number, start?: number) {
+    this.played.push({ frequency, duration, start })
   }
 }
 
@@ -24,6 +24,8 @@ async function run() {
     { frequency: 660, duration: 0.5 },
   ])
   assert.strictEqual(synth.played.length, 2, 'should play two notes')
+  assert.strictEqual(synth.played[0].start, 0)
+  assert.strictEqual(synth.played[1].start, 1)
   assert.strictEqual(synth.type, 'triangle')
   const padSynth = new MockSynth()
   const pad = new Pad(padSynth as any)
@@ -41,6 +43,8 @@ async function run() {
   MusicGenerator.playTracks(tracks)
   assert.ok(padSynth2.played.length > 0, 'pad track should play notes')
   assert.ok(pianoSynth2.played.length > 0, 'piano track should play notes')
+  assert.strictEqual(padSynth2.played[0].start, 0)
+  assert.strictEqual(padSynth2.played[1].start, 1)
 
   const tracksRandom = MusicGenerator.generateRandomTracks([piano2, pad2], 1, [440, 660])
   assert.strictEqual(tracksRandom.length, 2)

@@ -24,6 +24,7 @@ export default class BasicSynth {
       throw new Error('No AudioContext available')
     }
     this.master = this.context.createGain()
+    this.master.gain.value = 1
     this.master.connect(this.context.destination)
 
     if (options.filterFrequency !== undefined) {
@@ -63,7 +64,16 @@ export default class BasicSynth {
     this.delay!.delayTime.value = time
   }
 
-  play(frequency: number, duration = 1) {
+  getCurrentTime() {
+    return this.context.currentTime
+  }
+
+  fadeIn(duration = 2) {
+    this.master.gain.setValueAtTime(0, this.context.currentTime)
+    this.master.gain.linearRampToValueAtTime(1, this.context.currentTime + duration)
+  }
+
+  play(frequency: number, duration = 1, startTime?: number) {
     if (this.oscillator) {
       this.stop()
     }
@@ -83,8 +93,9 @@ export default class BasicSynth {
       node = this.delay
     }
     node.connect(this.master)
-    osc.start()
-    osc.stop(this.context.currentTime + duration)
+    const start = startTime ?? this.context.currentTime
+    osc.start(start)
+    osc.stop(start + duration)
     osc.onended = () => {
       osc.disconnect()
       gain.disconnect()

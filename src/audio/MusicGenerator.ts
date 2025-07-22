@@ -17,9 +17,15 @@ export default class MusicGenerator {
     this.instrument = instrument
   }
 
-  playSequence(sequence: NoteEvent[]) {
+  playSequence(sequence: NoteEvent[], fadeIn = false) {
+    const base = this.instrument.getCurrentTime()
+    let t = base
+    if (fadeIn) {
+      this.instrument.fadeIn(2)
+    }
     for (const note of sequence) {
-      this.instrument.play(note.frequency, note.duration)
+      this.instrument.play(note.frequency, note.duration, t)
+      t += note.duration
     }
   }
 
@@ -90,10 +96,16 @@ export default class MusicGenerator {
     return tracks
   }
 
-  static playTracks(tracks: Track[]) {
+  static playTracks(tracks: Track[], fadeIn = false) {
+    const base = tracks[0]?.instrument.getCurrentTime() ?? 0
     for (const track of tracks) {
+      let t = base
+      if (fadeIn) {
+        track.instrument.fadeIn(2)
+      }
       for (const note of track.sequence) {
-        track.instrument.play(note.frequency, note.duration)
+        track.instrument.play(note.frequency, note.duration, t)
+        t += note.duration
       }
     }
   }
