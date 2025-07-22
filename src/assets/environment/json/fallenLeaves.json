@@ -1,5 +1,6 @@
 {
   "voxelHeight": 0.2,
+  "baseOffset": 0.025,
   "parts": [
     {
       "name": "pile",

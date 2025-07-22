@@ -1,5 +1,6 @@
 {
   "voxelHeight": 0.6,
+  "baseOffset": 0,
   "parts": [
     {
       "name": "log",

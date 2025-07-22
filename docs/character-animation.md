@@ -44,13 +44,18 @@ This design makes it possible to create common animations (walking, attacking, j
 ## JSON Character Format
 
 Characters made from cubes can be described in external JSON files. Each file includes
-a `voxelHeight` property indicating how many vertical map cells the character occupies
-and an array of parts with a body part name, box size and offset.  Parts may also
-specify a display color or textures for individual faces:
+a `voxelHeight` property indicating how many vertical map cells the character occupies,
+an optional `baseOffset` specifying how far the model's origin is above its feet,
+and an array of parts with a body part name, box size and offset. Parts may also
+specify a display color or textures for individual faces.
+
+Environment models use this same format so decorative objects can also define a
+`baseOffset` if their origin does not sit directly on the ground:
 
 ```json
 {
   "voxelHeight": 3,
+  "baseOffset": 0.8,
   "parts": [
     {
       "name": "head",

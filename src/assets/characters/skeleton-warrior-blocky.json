@@ -1,5 +1,6 @@
 {
   "voxelHeight": 3.6,
+  "baseOffset": 0.0,
   "parts": [
     {
       "name": "head",

@@ -1,5 +1,6 @@
 {
   "voxelHeight": 2,
+  "baseOffset": 0,
   "parts": [
     { "name": "spike", "size": [0.4, 1.8, 0.4], "position": [0, 0.9, 0], "color": "#999999" }
   ]

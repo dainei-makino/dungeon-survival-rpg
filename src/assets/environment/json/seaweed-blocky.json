@@ -1,5 +1,6 @@
 {
   "voxelHeight": 2,
+  "baseOffset": 0,
   "parts": [
     {
       "name": "stem1",

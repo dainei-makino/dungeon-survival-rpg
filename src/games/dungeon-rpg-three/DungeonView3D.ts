@@ -337,9 +337,10 @@ export default class DungeonView3D {
         const scale = 0.3 * this.cellSize
         mesh.scale.set(scale, scale, scale)
         const h = (this.map.getHeight(e.x, e.y) + 1) * this.cellSize
+        const offset = (mesh.userData.baseOffset as number) || 0
         mesh.position.set(
           e.x * this.cellSize + this.cellSize / 2,
-          h,
+          h + offset * scale,
           e.y * this.cellSize + this.cellSize / 2
         )
         mesh.rotation.y = e.rot
@@ -424,9 +425,10 @@ export default class DungeonView3D {
       }
       if (e.mesh) {
         const h = (this.map.getHeight(e.x, e.y) + 1) * this.cellSize
+        const offset = (e.mesh.userData.baseOffset as number) || 0
         e.mesh.position.set(
           e.x * this.cellSize + this.cellSize / 2,
-          h,
+          h + offset * e.mesh.scale.y,
           e.y * this.cellSize + this.cellSize / 2
         )
         e.mesh.rotation.y = e.rot
@@ -466,9 +468,10 @@ export default class DungeonView3D {
         return
       }
       const h = (baseH + 1) * this.cellSize
+      const offset = (doll.userData.baseOffset as number) || 0
       doll.position.set(
         x * this.cellSize + this.cellSize / 2,
-        h,
+        h + offset,
         y * this.cellSize + this.cellSize / 2
       )
       this.blockyNPC = doll
@@ -518,7 +521,12 @@ export default class DungeonView3D {
     const baseH = this.map.getHeight(x, y)
     if (!this.map.isClearAbove(x, y, baseH + 1, vh)) return
     const h = (baseH + 1) * this.cellSize
-    mesh.position.set(x * this.cellSize + this.cellSize / 2, h, y * this.cellSize + this.cellSize / 2)
+    const offset = (mesh.userData.baseOffset as number) || 0
+    mesh.position.set(
+      x * this.cellSize + this.cellSize / 2,
+      h + offset * scale,
+      y * this.cellSize + this.cellSize / 2
+    )
     this.scene.add(mesh)
     this.environmentInstances.push({ template, x, y })
   }

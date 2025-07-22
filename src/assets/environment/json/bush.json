@@ -1,5 +1,6 @@
 {
   "voxelHeight": 1,
+  "baseOffset": 0,
   "parts": [
     { "name": "body", "size": [1.2, 0.6, 1.2], "position": [0, 0.3, 0], "color": "#228833" }
   ]

@@ -1,5 +1,6 @@
 {
   "voxelHeight": 1,
+  "baseOffset": 0,
   "parts": [
     {
       "name": "trunk",

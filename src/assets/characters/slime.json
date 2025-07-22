@@ -1,5 +1,6 @@
 {
   "voxelHeight": 1,
+  "baseOffset": 0.0,
   "parts": [
     { "name": "body", "size": [1.0, 0.8, 1.0], "position": [0, 0.4, 0], "color": "#66ff66" },
     { "name": "leftEye", "size": [0.1, 0.1, 0.1], "position": [-0.2, 0.6, 0.5], "color": "#000000" },

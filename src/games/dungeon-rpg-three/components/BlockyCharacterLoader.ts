@@ -20,6 +20,7 @@ export interface PartSpec {
 
 export interface CharacterSpec {
   voxelHeight?: number
+  baseOffset?: number
   parts: PartSpec[]
 }
 
@@ -48,6 +49,9 @@ export default class BlockyCharacterLoader {
     }
     if (typeof spec.voxelHeight === 'number') {
       group.userData.voxelHeight = spec.voxelHeight
+    }
+    if (typeof spec.baseOffset === 'number') {
+      group.userData.baseOffset = spec.baseOffset
     }
     if (!Array.isArray(spec.parts)) {
       return group
