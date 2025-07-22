@@ -43,23 +43,29 @@ export default class BlockyCharacterLoader {
     const group = new THREE.Group()
     ;(group.userData.parts ||= {})
     let urlBase = baseUrl || this.url.substring(0, this.url.lastIndexOf('/') + 1)
-    // ensure the base URL is valid so relative asset paths resolve correctly
-    if (!urlBase) {
-      if (typeof window !== 'undefined') urlBase = window.location.origin + '/'
+    if (!urlBase && typeof window !== 'undefined') {
+      urlBase = window.location.origin + '/'
     }
     if (typeof spec.voxelHeight === 'number') {
       group.userData.voxelHeight = spec.voxelHeight
     }
+    if (!Array.isArray(spec.parts)) {
+      return group
+    }
     for (const p of spec.parts) {
       let geom: THREE.BufferGeometry | THREE.BoxGeometry
       if (p.mesh) {
-        const url = new URL(p.mesh, urlBase).href
-        const resp = await fetch(url)
-        const data: { vertices: number[]; indices: number[] } = await resp.json()
-        geom = new THREE.BufferGeometry()
-        geom.setAttribute('position', new THREE.Float32BufferAttribute(data.vertices, 3))
-        geom.setIndex(data.indices)
-        geom.computeVertexNormals()
+        try {
+          const url = new URL(p.mesh, urlBase).href
+          const resp = await fetch(url)
+          const data: { vertices: number[]; indices: number[] } = await resp.json()
+          geom = new THREE.BufferGeometry()
+          geom.setAttribute('position', new THREE.Float32BufferAttribute(data.vertices, 3))
+          geom.setIndex(data.indices)
+          geom.computeVertexNormals()
+        } catch {
+          continue
+        }
       } else if (p.size) {
         geom = new THREE.BoxGeometry(...p.size)
       } else {
@@ -81,9 +87,13 @@ export default class BlockyCharacterLoader {
         ;(['right', 'left', 'top', 'bottom', 'front', 'back'] as FaceDirection[]).forEach((dir) => {
           const texPath = p.textures![dir]
           if (texPath) {
-            const url = new URL(texPath, urlBase).href
-            const tex = this.textureLoader.load(url)
-            materials[dirIndex[dir]] = new THREE.MeshLambertMaterial({ map: tex })
+            try {
+              const url = new URL(texPath, urlBase).href
+              const tex = this.textureLoader.load(url)
+              materials[dirIndex[dir]] = new THREE.MeshLambertMaterial({ map: tex })
+            } catch {
+              materials[dirIndex[dir]] = defaultMat
+            }
           } else {
             materials[dirIndex[dir]] = defaultMat
           }
