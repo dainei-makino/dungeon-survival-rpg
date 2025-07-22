@@ -63,7 +63,13 @@ export default function showDebug(
       } catch {
         absUrl = new URL(path, import.meta.url)
       }
-      let baseUrl = new URL('./', absUrl).href
+      let baseUrl: string
+      try {
+        baseUrl = new URL('./', absUrl).href
+      } catch {
+        const fallback = new URL(path, import.meta.url)
+        baseUrl = new URL('./', fallback).href
+      }
       if (!baseUrl) {
         if (typeof window !== 'undefined') baseUrl = window.location.origin + '/'
       }
