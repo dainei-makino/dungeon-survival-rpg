@@ -15,6 +15,17 @@ Characters are built from the following joints and parts. Each part is represent
 
 Additional joints can be defined as needed. Parts are connected in a hierarchy to mimic a simple skeleton.
 
+## Skeleton Class
+
+Version 2 introduces a small `Skeleton` helper (see `src/games/animation/Skeleton.ts`).
+It manages a collection of named bones implemented as `THREE.Object3D` nodes.
+Bones can be added dynamically and queried through `getJoints()` which returns
+a record of bone objects keyed by name. `BlockyCharacterLoader` now builds
+characters using this skeleton so that animations can operate on the bones
+directly. The resulting `THREE.Group` returned by the loader exposes the
+`skeleton` and a `parts` map on the group itself (not in `userData`) so that
+cloning meshes does not attempt to serialize these structures.
+
 ## Vertex JSON / SVG Animation
 
 Shapes for each part can be designed in SVG and converted to vertex JSON using the existing conversion script (`npm run convert-svgs`). The resulting JSON files contain vertex arrays that can be loaded into `THREE.BufferGeometry` objects. By keeping geometry for each part separate, the same animation data can be reused with different meshes.

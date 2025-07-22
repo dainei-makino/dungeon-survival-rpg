@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import Skeleton from '../../animation/Skeleton'
 
 export type FaceDirection =
   | 'front'
@@ -11,6 +12,7 @@ export type FaceDirection =
 export interface PartSpec {
   name: string
   position: [number, number, number]
+  parent?: string
   size?: [number, number, number]
   mesh?: string
   scale?: [number, number, number]
@@ -40,8 +42,11 @@ export default class BlockyCharacterLoader {
   }
 
   async fromSpec(spec: CharacterSpec, baseUrl?: string): Promise<THREE.Group> {
-    const group = new THREE.Group()
-    ;(group.userData.parts ||= {})
+    const skeleton = new Skeleton()
+    const group = skeleton.root.object as THREE.Group
+    const parts: Record<string, THREE.Object3D> = {}
+    Object.defineProperty(group, 'skeleton', { value: skeleton })
+    Object.defineProperty(group, 'parts', { value: parts })
     let urlBase = baseUrl || this.url.substring(0, this.url.lastIndexOf('/') + 1)
     if (!urlBase && typeof window !== 'undefined') {
       urlBase = window.location.origin + '/'
@@ -103,12 +108,13 @@ export default class BlockyCharacterLoader {
         const mat = this.material || new THREE.MeshLambertMaterial({ color })
         mesh = new THREE.Mesh(geom, mat)
       }
-      mesh.position.set(...p.position)
+      const bone = skeleton.addBone(p.name, p.parent)
+      bone.object.position.set(...p.position)
       if (p.scale) {
-        mesh.scale.set(...p.scale)
+        bone.object.scale.set(...p.scale)
       }
-      group.add(mesh)
-      group.userData.parts[p.name] = mesh
+      bone.object.add(mesh)
+      parts[p.name] = bone.object
     }
     return group
   }
