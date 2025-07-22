@@ -32,6 +32,7 @@ export default function initThreeGame(
           <div>Hunger <input id="hero-hunger" type="number" style="width:60px;"></div>
           <div>Stamina <input id="hero-stamina" type="number" style="width:60px;"></div>
           <button id="float-btn">Float: OFF</button>
+          <button id="camera-btn">Camera: FP</button>
         </div>
         </div>
         <div id="character-panel" style="padding:10px;border-left:1px solid #888;min-width:200px;">
@@ -65,6 +66,7 @@ export default function initThreeGame(
   const heroHunger = heroControls.querySelector('#hero-hunger') as HTMLInputElement
   const heroStamina = heroControls.querySelector('#hero-stamina') as HTMLInputElement
   const floatBtn = heroControls.querySelector('#float-btn') as HTMLButtonElement
+  const cameraBtn = heroControls.querySelector('#camera-btn') as HTMLButtonElement
   container.style.position = 'relative'
   const view = new DungeonView3D(wrapper, miniMap, forestBiome)
 
@@ -93,6 +95,10 @@ export default function initThreeGame(
   floatBtn.addEventListener('click', () => {
     const on = view.toggleFloatMode()
     floatBtn.textContent = on ? 'Float: ON' : 'Float: OFF'
+  })
+  cameraBtn.addEventListener('click', () => {
+    const tp = view.toggleThirdPerson()
+    cameraBtn.textContent = tp ? 'Camera: TP' : 'Camera: FP'
   })
 
   let dragging = false

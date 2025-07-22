@@ -79,6 +79,9 @@ export default class DungeonView3D {
   private items: { name: string; x: number; y: number; mesh: THREE.Object3D }[] = []
   private floatMode = false
   private floatOffset = 0
+  private thirdPerson = false
+  private readonly thirdPersonDistance = this.cellSize * 2
+  private readonly thirdPersonHeight = 1
   private environmentBases = new Map<EnvironmentCharacter, THREE.Group>()
   private environmentInstances: { template: EnvironmentCharacter; x: number; y: number }[] = []
   private nextEnvSpawn = 0
@@ -785,11 +788,21 @@ export default class DungeonView3D {
   updateCamera() {
     this.startPos.copy(this.camera.position)
     this.startRot = this.camera.rotation.y
+    const baseX = this.player.x * this.cellSize + this.cellSize / 2
+    const baseY = this.player.y * this.cellSize + this.cellSize / 2
+    let camX = baseX
+    let camY = baseY
+    const vec = this.dirVectors[this.player.dir]
+    if (this.thirdPerson) {
+      camX -= vec.dx * this.thirdPersonDistance
+      camY -= vec.dy * this.thirdPersonDistance
+    }
     this.targetPos.set(
-      this.player.x * this.cellSize + this.cellSize / 2,
+      camX,
       this.map.getHeight(this.player.x, this.player.y) * this.cellSize +
-        this.eyeLevel + (this.floatMode ? this.floatOffset : 0),
-      this.player.y * this.cellSize + this.cellSize / 2
+        this.eyeLevel + (this.floatMode ? this.floatOffset : 0) +
+        (this.thirdPerson ? this.thirdPersonHeight : 0),
+      camY
     )
     this.targetRot = this.angleForDir(this.player.dir)
     this.animStart = performance.now()
@@ -838,6 +851,17 @@ export default class DungeonView3D {
       this.updateCamera()
     }
     return this.floatMode
+  }
+
+  toggleThirdPerson() {
+    this.thirdPerson = !this.thirdPerson
+    this.arms.setVisible(!this.thirdPerson)
+    this.updateCamera()
+    return this.thirdPerson
+  }
+
+  isThirdPerson() {
+    return this.thirdPerson
   }
 
   isFloatMode() {
