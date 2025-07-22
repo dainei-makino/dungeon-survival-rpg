@@ -54,6 +54,24 @@ export default class MusicGenerator {
     return tracks
   }
 
+  static generateRandomTracks(
+    instruments: Instrument[],
+    bars = 4,
+    scale: number[] = [261.63, 293.66, 329.63, 349.23, 392.0, 440.0, 493.88]
+  ): Track[] {
+    const tracks: Track[] = []
+    const steps = bars * 4
+    for (const instrument of instruments) {
+      const seq: NoteEvent[] = []
+      for (let i = 0; i < steps; i++) {
+        const freq = scale[Math.floor(Math.random() * scale.length)]
+        seq.push({ frequency: freq, duration: 0.25 })
+      }
+      tracks.push({ instrument, sequence: seq })
+    }
+    return tracks
+  }
+
   static playTracks(tracks: Track[]) {
     for (const track of tracks) {
       for (const note of track.sequence) {

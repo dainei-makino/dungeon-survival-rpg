@@ -16,3 +16,7 @@ export const caveMusic: MusicSettings = {
 export const plainMusic: MusicSettings = {
   instruments: [() => new Piano()],
 }
+
+export const desertMusic: MusicSettings = {
+  instruments: [() => new Pad(), () => new Piano()],
+}

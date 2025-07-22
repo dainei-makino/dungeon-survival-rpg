@@ -2,6 +2,8 @@ export interface BasicSynthOptions {
   type?: OscillatorType
   gain?: number
   context?: any
+  filterFrequency?: number
+  delayTime?: number
 }
 
 export default class BasicSynth {
@@ -10,6 +12,8 @@ export default class BasicSynth {
   private oscillator: OscillatorNode | null = null
   private type: OscillatorType
   private gain: number
+  private filter?: BiquadFilterNode
+  private delay?: DelayNode
 
   constructor(options: BasicSynthOptions = {}) {
     if (options.context) {
@@ -21,6 +25,18 @@ export default class BasicSynth {
     }
     this.master = this.context.createGain()
     this.master.connect(this.context.destination)
+
+    if (options.filterFrequency !== undefined) {
+      const filter = this.context.createBiquadFilter()
+      filter.frequency.value = options.filterFrequency
+      this.filter = filter
+    }
+
+    if (options.delayTime !== undefined) {
+      const delay = this.context.createDelay()
+      delay.delayTime.value = options.delayTime
+      this.delay = delay
+    }
     this.type = options.type ?? 'sine'
     this.gain = options.gain ?? 0.2
   }
@@ -33,6 +49,20 @@ export default class BasicSynth {
     this.gain = gain
   }
 
+  setFilterFrequency(freq: number) {
+    if (!this.filter) {
+      this.filter = this.context.createBiquadFilter()
+    }
+    this.filter!.frequency.value = freq
+  }
+
+  setDelayTime(time: number) {
+    if (!this.delay) {
+      this.delay = this.context.createDelay()
+    }
+    this.delay!.delayTime.value = time
+  }
+
   play(frequency: number, duration = 1) {
     if (this.oscillator) {
       this.stop()
@@ -43,7 +73,16 @@ export default class BasicSynth {
     osc.frequency.value = frequency
     gain.gain.value = this.gain
     osc.connect(gain)
-    gain.connect(this.master)
+    let node: AudioNode = gain
+    if (this.filter) {
+      node.connect(this.filter)
+      node = this.filter
+    }
+    if (this.delay) {
+      node.connect(this.delay)
+      node = this.delay
+    }
+    node.connect(this.master)
     osc.start()
     osc.stop(this.context.currentTime + duration)
     osc.onended = () => {
