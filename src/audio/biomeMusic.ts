@@ -3,20 +3,20 @@ export interface MusicSettings {
 }
 
 import Piano from './instruments/Piano'
-import Pad from './instruments/Pad'
+import AmbientPad from './instruments/AmbientPad'
 
 export const forestMusic: MusicSettings = {
-  instruments: [() => new Pad(), () => new Piano()],
+  instruments: [() => new AmbientPad(), () => new Piano()],
 }
 
 export const caveMusic: MusicSettings = {
-  instruments: [() => new Pad()],
+  instruments: [() => new AmbientPad()],
 }
 
 export const plainMusic: MusicSettings = {
-  instruments: [() => new Piano()],
+  instruments: [() => new AmbientPad()],
 }
 
 export const desertMusic: MusicSettings = {
-  instruments: [() => new Pad(), () => new Piano()],
+  instruments: [() => new AmbientPad(), () => new Piano()],
 }

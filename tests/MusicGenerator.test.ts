@@ -2,6 +2,7 @@ import assert from 'assert'
 import MusicGenerator from '../src/audio/MusicGenerator'
 import Piano from '../src/audio/instruments/Piano'
 import Pad from '../src/audio/instruments/Pad'
+import AmbientPad from '../src/audio/instruments/AmbientPad'
 
 class MockSynth {
   public type: OscillatorType = 'sine'
@@ -44,6 +45,13 @@ async function run() {
   const tracksRandom = MusicGenerator.generateRandomTracks([piano2, pad2], 1, [440, 660])
   assert.strictEqual(tracksRandom.length, 2)
   assert.strictEqual(tracksRandom[0].sequence.length, 4)
+
+  const ambientSynth = new MockSynth()
+  const ambientPad = new AmbientPad(ambientSynth as any)
+  const ambientTracks = MusicGenerator.generateAmbientTracks([ambientPad], 1, [220])
+  assert.strictEqual(ambientTracks[0].sequence[0].duration, 2)
+  MusicGenerator.playTracks(ambientTracks)
+  assert.ok(ambientSynth.played.length > 0)
 
   console.log('MusicGenerator test passed')
 }

@@ -4,6 +4,9 @@ This project is a small website built with Vite. It contains a 3D dungeon game i
 The game now supports **biomes** which control map generation and environmental
 features. Currently available biomes are **forest**, **cave**, and **plain**.
 
+Ambient background music is generated automatically using a small
+synthesizer. See `docs/ambient-music.md` for an overview of the system.
+
 ## Development
 
 Install dependencies and start the development server:
